@@ -2,14 +2,19 @@
   "name": "faro-sourcemap-webpack-plugin",
   "version": "1.0.0",
   "description": "Upload a sourcemap to the Faro sourcemap API from a Webpack build pipeline ",
-  "main": "index.ts",
+  "main": "src/index.js",
   "repository": "https://github.com/grafana/faro-sourcemap-webpack-plugin.git",
   "author": "Elliot Kirk <elliot.kirk@grafana.com>",
   "license": "Apache-2.0",
+  "scripts": {
+    "build": "webpack"
+  },
   "dependencies": {
-    "webpack-sources": "^3.2.3"
+    "typescript": "^5.3.3",
+    "webpack": "^5.89.0"
   },
   "devDependencies": {
+    "@grafana/tsconfig": "^1.3.0-rc1",
     "@types/node": "^20.10.5"
   }
 }

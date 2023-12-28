@@ -1,43 +1,46 @@
-import { RawSource } from "webpack-sources";
+import * as webpack from "webpack";
 
-class FaroSourcemapUploaderPlugin {
+class FaroSourcemapUploaderPlugin implements webpack.WebpackPluginInstance {
   // Define `apply` as its prototype method which is supplied with compiler as its argument
-  apply(compiler) {
+  apply(compiler: webpack.Compiler): void {
     // Specify the event hook to attach to
     compiler.hooks.make.tapAsync(
       "FaroSourcemapUploaderPlugin",
-      (compilation, cb) => {
-        compilation.hooks.afterCodeGeneration.tap("FaroSourcemapUploaderPlugin", () => {
-          compilation.modules.forEach((module) => {
-            const sourceMap =
-              compilation.codeGenerationResults.get(module).sources;
-            const rawSource = sourceMap.get("javascript");
-            const OPTIONS = {
-              project: "project",
-              org: "org",
-              version: 1,
-            };
+      (compilation, callback) => {
+        const { RawSource } = webpack.sources;
 
-            if (rawSource) {
-              sourceMap.set(
-                "javascript",
-                new RawSource(
-                  `${rawSource.source()}
+        compilation.hooks.afterCodeGeneration.tap(
+          "FaroSourcemapUploaderPlugin",
+          () => {
+            compilation.modules.forEach((module) => {
+              const sourceMap = compilation.codeGenerationResults.get(
+                module,
+                "javascript"
+              ).sources;
+
+              const stats = compilation.getStats().toJson();
+              const rawSource = sourceMap.get("javascript");
+
+              if (rawSource) {
+                sourceMap.set(
+                  "javascript",
+                  new RawSource(
+                    `${rawSource.source()}
 (function (){
-var globalThis = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});
-globalThis.FARO_BUILD_ID = globalThis.FARO_BUILD_ID || {};
-globalThis.FARO_BUILD_ID["${OPTIONS.project}@${OPTIONS.org}"] = {"id":"${
-                    OPTIONS.version
-                  }"};
+var globalObj = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});
+globalObj.FARO_BUILD_ID = "${stats.hash}";
 })();`
-                )
-              );
-            }
+                  )
+                );
 
-            // after injecting the build id, we need to upload the source map to the endpoint
-            console.log(sourceMap.source());
-          });
-        });
+                // after injecting the build id, we need to upload the source map to the endpoint
+                console.log(sourceMap.get("javascript"));
+              }
+            });
+
+            callback();
+          }
+        );
       }
     );
   }
