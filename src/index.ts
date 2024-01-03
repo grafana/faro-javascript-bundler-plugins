@@ -1,49 +1,74 @@
 import * as webpack from "webpack";
 
-class FaroSourcemapUploaderPlugin implements webpack.WebpackPluginInstance {
-  // Define `apply` as its prototype method which is supplied with compiler as its argument
+const PLUGIN_NAME = "FaroSourcemapUploaderPlugin";
+
+export default class FaroSourcemapUploaderPlugin
+  implements webpack.WebpackPluginInstance
+{
   apply(compiler: webpack.Compiler): void {
-    // Specify the event hook to attach to
-    compiler.hooks.make.tapAsync(
-      "FaroSourcemapUploaderPlugin",
-      (compilation, callback) => {
-        const { RawSource } = webpack.sources;
+    compiler.hooks.make.tap(PLUGIN_NAME, (compilation) => {
+      // modify the compilation to add a build ID to the end of the bundle
+      compilation.hooks.processAssets.tap(
+        {
+          name: PLUGIN_NAME,
+          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+        },
+        (assets) => {
+          const { devtool } = compiler.options;
+          const { RawSource, SourceMapSource } = webpack.sources;
+          const stats = compilation.getStats().toJson();
 
-        compilation.hooks.afterCodeGeneration.tap(
-          "FaroSourcemapUploaderPlugin",
-          () => {
-            compilation.modules.forEach((module) => {
-              const sourceMap = compilation.codeGenerationResults.get(
-                module,
-                "javascript"
-              ).sources;
+          for (let a in assets) {
+            const asset = compilation.getAsset(a);
 
-              const stats = compilation.getStats().toJson();
-              const rawSource = sourceMap.get("javascript");
+            if (!asset) {
+              continue;
+            }
 
-              if (rawSource) {
-                sourceMap.set(
-                  "javascript",
-                  new RawSource(
-                    `${rawSource.source()}
-(function (){
-var globalObj = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});
-globalObj.FARO_BUILD_ID = "${stats.hash}";
-})();`
-                  )
-                );
+            const contents = asset.source.source();
+            const { map } = asset.source.sourceAndMap();
 
-                // after injecting the build id, we need to upload the source map to the endpoint
-                console.log(sourceMap.get("javascript"));
-              }
-            });
+            if (a.endsWith(".js")) {
+              const newContent = `${contents}
+              (function (){
+                var globalObj = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});
+                globalObj.FARO_BUILD_ID = "${stats.hash}";
+                })();`;
 
-            callback();
+              compilation.updateAsset(
+                a,
+                devtool
+                  ? new SourceMapSource(newContent, a, map)
+                  : new RawSource(newContent)
+              );
+            }
           }
-        );
-      }
-    );
+        }
+      );
+
+      // upload the sourcemaps to the provided endpoint after the build is modified and done
+      compilation.hooks.afterProcessAssets.tap(
+        {
+          name: PLUGIN_NAME,
+        },
+        (assets) => {
+          for (let a in assets) {
+            if (a.endsWith(".map")) {
+              const asset = compilation.getAsset(a);
+
+              if (!asset) {
+                continue;
+              }
+
+              // const { map } = asset.source.sourceAndMap();
+
+              console.log("UPLOADING MAP");
+            }
+          }
+        }
+      );
+    });
   }
 }
 
-module.exports.default = FaroSourcemapUploaderPlugin;
+module.exports = FaroSourcemapUploaderPlugin;
