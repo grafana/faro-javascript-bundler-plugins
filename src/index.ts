@@ -2,10 +2,27 @@ import * as webpack from "webpack";
 
 const PLUGIN_NAME = "FaroSourcemapUploaderPlugin";
 
+interface FaroSourcemapUploaderPluginOptions {
+  endpoint: string;
+  appId: string;
+  outputFiles: string[];
+}
+
 export default class FaroSourcemapUploaderPlugin
   implements webpack.WebpackPluginInstance
 {
+  private endpoint: string;
+  private outputFiles: string[];
+
+  constructor(options: FaroSourcemapUploaderPluginOptions) {
+    this.endpoint =
+      options.endpoint.split("collect/")[0] + `app/${options.appId}/sourcemap/`;
+    this.outputFiles = options.outputFiles;
+  }
+
   apply(compiler: webpack.Compiler): void {
+    let stats: webpack.StatsCompilation;
+
     compiler.hooks.make.tap(PLUGIN_NAME, (compilation) => {
       // modify the compilation to add a build ID to the end of the bundle
       compilation.hooks.processAssets.tap(
@@ -16,7 +33,7 @@ export default class FaroSourcemapUploaderPlugin
         (assets) => {
           const { devtool } = compiler.options;
           const { RawSource, SourceMapSource } = webpack.sources;
-          const stats = compilation.getStats().toJson();
+          stats = compilation.getStats().toJson();
 
           for (let a in assets) {
             const asset = compilation.getAsset(a);
@@ -28,7 +45,11 @@ export default class FaroSourcemapUploaderPlugin
             const contents = asset.source.source();
             const { map } = asset.source.sourceAndMap();
 
-            if (a.endsWith(".js")) {
+            if (
+              this.outputFiles.length
+                ? this.outputFiles.includes(a)
+                : a.endsWith(".js")
+            ) {
               const newContent = `${contents}
               (function (){
                 var globalObj = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});
@@ -53,16 +74,23 @@ export default class FaroSourcemapUploaderPlugin
         },
         (assets) => {
           for (let a in assets) {
-            if (a.endsWith(".map")) {
-              const asset = compilation.getAsset(a);
+            const asset = compilation.getAsset(a);
 
-              if (!asset) {
-                continue;
-              }
+            if (!asset) {
+              continue;
+            }
 
-              // const { map } = asset.source.sourceAndMap();
+            if (
+              this.outputFiles.length
+                ? this.outputFiles.includes(a.split(".map")[0])
+                : a.endsWith(".map")
+            ) {
+              const map = asset.source.source();
+              const sourcemapEndpoint = this.endpoint + stats.hash;
 
-              console.log("UPLOADING MAP");
+              console.log("UPLOADING MAP TO: ", sourcemapEndpoint);
+              console.log("------------------------------------");
+              console.log(map.slice(0, 1000));
             }
           }
         }
