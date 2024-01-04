@@ -1,0 +1,17 @@
+{
+  "name": "@grafana/faro-rollup-plugin",
+  "version": "1.0.0",
+  "description": "Upload a sourcemap to the Faro sourcemap API from a Rollup build pipeline",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
+    "directory": "packages/faro-rollup"
+  },
+  "author": "Elliot Kirk <elliot.kirk@grafana.com>",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "rollup --config rollup.config.mjs"
+  }
+}

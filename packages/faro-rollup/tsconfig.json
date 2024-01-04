@@ -1,0 +1,7 @@
+{
+  "extends": "@grafana/tsconfig",
+  "include": ["./**/*", "./package.json"],
+  "compilerOptions": {
+    "esModuleInterop": true,
+  }
+}
