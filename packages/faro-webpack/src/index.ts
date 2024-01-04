@@ -1,5 +1,5 @@
 import * as webpack from "webpack";
-import axios from "axios";
+import fetch from "cross-fetch";
 
 const PLUGIN_NAME = "FaroSourcemapUploaderPlugin";
 
@@ -89,12 +89,17 @@ export default class FaroSourcemapUploaderPlugin
               const sourcemap = JSON.parse(asset.source.source().toString());
               const sourcemapEndpoint = this.endpoint + stats.hash;
 
-              const response = axios.post(sourcemapEndpoint, sourcemap)
-              response.then((res) => {
-                console.log("SOURCEMAP UPLOAD RESPONSE: ", res.status);
-              }).catch((err) => {
-                console.log("SOURCEMAP UPLOAD ERROR: ", err);
+              const response = fetch(sourcemapEndpoint, {
+                method: "POST",
+                body: sourcemap,
               });
+              response
+                .then((res) => {
+                  console.log("SOURCEMAP UPLOAD RESPONSE: ", res.status);
+                })
+                .catch((err) => {
+                  console.log("SOURCEMAP UPLOAD ERROR: ", err);
+                });
             }
           }
         }
