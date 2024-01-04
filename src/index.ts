@@ -82,15 +82,19 @@ export default class FaroSourcemapUploaderPlugin
 
             if (
               this.outputFiles.length
-                ? this.outputFiles.includes(a.split(".map")[0])
+                ? this.outputFiles.map((o) => o + ".map").includes(a)
                 : a.endsWith(".map")
             ) {
-              const map = asset.source.source();
+              const sourcemap = JSON.parse(asset.source.source().toString());
               const sourcemapEndpoint = this.endpoint + stats.hash;
 
-              console.log("UPLOADING MAP TO: ", sourcemapEndpoint);
-              console.log("------------------------------------");
-              console.log(map.slice(0, 1000));
+              // upload to the sourcemap endpoint
+              fetch(sourcemapEndpoint, {
+                method: "POST",
+                body: sourcemap,
+              }).then((res) => {
+                console.log("SOURCEMAP UPLOAD RESPONSE: ", res.status);
+              });
             }
           }
         }
