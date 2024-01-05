@@ -9,9 +9,10 @@
     "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
     "directory": "packages/faro-rollup"
   },
-  "author": "Elliot Kirk <elliot.kirk@grafana.com>",
   "license": "Apache-2.0",
   "scripts": {
     "build": "rollup --config rollup.config.mjs"
-  }
+  },
+  "devDependencies": {},
+  "dependencies": {}
 }

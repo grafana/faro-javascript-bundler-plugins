@@ -1,8 +1,16 @@
-import typescript from '@rollup/plugin-typescript';
+import resolve from "@rollup/plugin-node-resolve";
+import babel from "@rollup/plugin-babel";
+import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
 import packageJson from "./package.json" assert { type: "json" };
 
+const extensions = [".ts"];
+
 export default {
-  input: 'src/index.ts',
+  input: "src/index.ts",
+  external: [
+    ...Object.keys(packageJson.dependencies),
+  ],
   output: [
     {
       file: packageJson.module,
@@ -17,6 +25,21 @@ export default {
       sourcemap: true,
     },
   ],
-  plugins: [typescript()],
-  external: ['webpack'],
+  plugins: [
+    babel({
+      extensions,
+      babelHelpers: "bundled",
+      include: ["src/**/*"],
+      exclude: /node_modules/
+    }),
+    json(),
+    resolve({
+      extensions,
+      rootDir: "./src",
+      preferBuiltins: true,
+    }),
+    commonjs({
+      include: /node_modules/
+    }),
+  ],
 };

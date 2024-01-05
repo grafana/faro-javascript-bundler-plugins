@@ -44,5 +44,4 @@ export default {
       include: /node_modules/
     }),
   ],
-  external: ["webpack"],
 };
