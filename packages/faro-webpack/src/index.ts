@@ -1,14 +1,7 @@
 import * as webpack from "webpack";
 import fetch from "cross-fetch";
 
-const PLUGIN_NAME = "FaroSourcemapUploaderPlugin";
-
-// TODO - add this interface to a shared package
-interface FaroSourcemapUploaderPluginOptions {
-  endpoint: string;
-  appId: string;
-  outputFiles: string[];
-}
+import { WEBPACK_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet } from "../../consts";
 
 export default class FaroSourcemapUploaderPlugin
   implements webpack.WebpackPluginInstance
@@ -25,11 +18,11 @@ export default class FaroSourcemapUploaderPlugin
   apply(compiler: webpack.Compiler): void {
     let stats: webpack.StatsCompilation;
 
-    compiler.hooks.make.tap(PLUGIN_NAME, (compilation) => {
+    compiler.hooks.make.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
       // modify the compilation to add a build ID to the end of the bundle
       compilation.hooks.processAssets.tap(
         {
-          name: PLUGIN_NAME,
+          name: WEBPACK_PLUGIN_NAME,
           stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
         },
         (assets) => {
@@ -52,11 +45,7 @@ export default class FaroSourcemapUploaderPlugin
                 ? this.outputFiles.includes(a)
                 : a.endsWith(".js")
             ) {
-              const newContent = `${contents}
-              (function (){
-                var globalObj = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});
-                globalObj.FARO_BUILD_ID = "${stats.hash}";
-                })();`;
+              const newContent = `${contents}${faroBuildIdSnippet(stats?.hash || "")}`;
 
               compilation.updateAsset(
                 a,
@@ -72,7 +61,7 @@ export default class FaroSourcemapUploaderPlugin
       // upload the sourcemaps to the provided endpoint after the build is modified and done
       compilation.hooks.afterProcessAssets.tap(
         {
-          name: PLUGIN_NAME,
+          name: WEBPACK_PLUGIN_NAME,
         },
         (assets) => {
           for (let a in assets) {

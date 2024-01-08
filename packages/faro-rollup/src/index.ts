@@ -7,13 +7,7 @@ import {
 } from "rollup";
 import fetch from "cross-fetch";
 import MagicString from "magic-string";
-
-// TODO - add this interface to a shared package
-interface FaroSourcemapUploaderPluginOptions {
-  endpoint: string;
-  appId: string;
-  outputFiles: string[];
-}
+import { ROLLUP_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet } from "../../consts";
 
 interface FaroSourcemapRollupPluginContext {
   endpoint: string;
@@ -30,13 +24,13 @@ export default function faroUploader(
   };
 
   return {
-    name: "rollup-plugin-faro-sourcemap-uploader",
+    name: ROLLUP_PLUGIN_NAME,
     renderChunk(code, chunk, options, meta) {
       this.info(`adding code here - ${chunk.fileName}`);
       this.info(`chunks - ${Object.keys(meta.chunks).toString()}`);
 
       const newCode = new MagicString(code);
-      newCode.append(`(function (){var globalObj = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});globalObj.FARO_BUILD_ID = "${chunk.fileName}";})();`);
+      newCode.append(faroBuildIdSnippet(chunk.fileName));
 
       const map = newCode.generateMap({
         source: chunk.fileName,
