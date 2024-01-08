@@ -3,6 +3,7 @@ import fetch from "cross-fetch";
 
 const PLUGIN_NAME = "FaroSourcemapUploaderPlugin";
 
+// TODO - add this interface to a shared package
 interface FaroSourcemapUploaderPluginOptions {
   endpoint: string;
   appId: string;

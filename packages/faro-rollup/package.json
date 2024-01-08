@@ -14,5 +14,8 @@
     "build": "rollup --config rollup.config.mjs"
   },
   "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {
+    "cross-fetch": "^4.0.0",
+    "magic-string": "^0.30.5"
+  }
 }
