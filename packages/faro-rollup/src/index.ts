@@ -7,7 +7,7 @@ import {
 } from "rollup";
 import fetch from "cross-fetch";
 import MagicString from "magic-string";
-import { ROLLUP_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet } from "../../consts";
+import { ROLLUP_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet, stringToUUID } from "../../consts";
 
 interface FaroSourcemapRollupPluginContext {
   endpoint: string;
@@ -25,17 +25,15 @@ export default function faroUploader(
 
   return {
     name: ROLLUP_PLUGIN_NAME,
-    renderChunk(code, chunk, options, meta) {
-      this.info(`adding code here - ${chunk.fileName}`);
-      this.info(`chunks - ${Object.keys(meta.chunks).toString()}`);
-
+    renderChunk(code, chunk) {
       const newCode = new MagicString(code);
-      newCode.append(faroBuildIdSnippet(chunk.fileName));
+      const buildId = stringToUUID(code);
+      context.hash = buildId;
+      newCode.append(faroBuildIdSnippet(buildId));
 
       const map = newCode.generateMap({
         source: chunk.fileName,
-        file: `${chunk.fileName}.map`,
-        includeContent: true
+        file: `${chunk.fileName}.map`
       });
 
       return {
@@ -44,14 +42,8 @@ export default function faroUploader(
       };
     },
     writeBundle(options: OutputOptions, bundle: OutputBundle): void {
-      this.info(`${Object.keys(bundle).toString()} - bundle`);
-
-      const files = Object.keys(bundle).map((f) => f.split("/").pop());
-      this.info(files.toString());
-
       for (let a in bundle) {
         const asset = bundle[a];
-        this.info(Object.keys(asset).toString());
         const source =
           (asset as OutputAsset).source || (asset as OutputChunk).code;
 
