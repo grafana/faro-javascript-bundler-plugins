@@ -1,0 +1,20 @@
+{
+  "name": "@grafana/faro-bundlers-shared",
+  "version": "1.0.0",
+  "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "module": "dist/esm/index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
+    "directory": "packages/faro-bundlers-shared"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "rollup --config rollup.config.mjs"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.5"
+  },
+  "dependencies": {}
+}

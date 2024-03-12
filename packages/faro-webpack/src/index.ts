@@ -1,7 +1,7 @@
 import * as webpack from "webpack";
 import fetch from "cross-fetch";
 
-import { WEBPACK_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet } from "../../consts";
+import { WEBPACK_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet } from "@grafana/faro-bundlers-shared";
 
 export default class FaroSourcemapUploaderPlugin
   implements webpack.WebpackPluginInstance
@@ -17,46 +17,56 @@ export default class FaroSourcemapUploaderPlugin
 
   apply(compiler: webpack.Compiler): void {
     let stats: webpack.StatsCompilation;
+    const BannerPlugin = compiler.webpack.BannerPlugin;
+
+    compiler.options.plugins = compiler.options.plugins || [];
+    compiler.options.plugins.push(
+      new BannerPlugin({
+        raw: true,
+        include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
+        banner: () => faroBuildIdSnippet(stats?.hash || ""),
+      })
+    );
 
     compiler.hooks.make.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
       // modify the compilation to add a build ID to the end of the bundle
-      compilation.hooks.processAssets.tap(
-        {
-          name: WEBPACK_PLUGIN_NAME,
-          stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
-        },
-        (assets) => {
-          const { devtool } = compiler.options;
-          const { RawSource, SourceMapSource } = webpack.sources;
-          stats = compilation.getStats().toJson();
+      // compilation.hooks.processAssets.tap(
+      //   {
+      //     name: WEBPACK_PLUGIN_NAME,
+      //     stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
+      //   },
+      //   (assets) => {
+      //     const { devtool } = compiler.options;
+      //     const { RawSource, SourceMapSource } = webpack.sources;
+      //     stats = compilation.getStats().toJson();
 
-          for (let a in assets) {
-            const asset = compilation.getAsset(a);
+      //     for (let a in assets) {
+      //       const asset = compilation.getAsset(a);
 
-            if (!asset) {
-              continue;
-            }
+      //       if (!asset) {
+      //         continue;
+      //       }
 
-            const contents = asset.source.source();
-            const { map } = asset.source.sourceAndMap();
+      //       const contents = asset.source.source();
+      //       const { map } = asset.source.sourceAndMap();
 
-            if (
-              this.outputFiles.length
-                ? this.outputFiles.includes(a)
-                : a.endsWith(".js")
-            ) {
-              const newContent = `${contents}${faroBuildIdSnippet(stats?.hash || "")}`;
+      //       if (
+      //         this.outputFiles.length
+      //           ? this.outputFiles.includes(a)
+      //           : a.endsWith(".js")
+      //       ) {
+      //         const newContent = `${contents}${faroBuildIdSnippet(stats?.hash || "")}`;
 
-              compilation.updateAsset(
-                a,
-                devtool
-                  ? new SourceMapSource(newContent, a, map)
-                  : new RawSource(newContent)
-              );
-            }
-          }
-        }
-      );
+      //         compilation.updateAsset(
+      //           a,
+      //           devtool
+      //             ? new SourceMapSource(newContent, a, map)
+      //             : new RawSource(newContent)
+      //         );
+      //       }
+      //     }
+      //   }
+      // );
 
       // upload the sourcemaps to the provided endpoint after the build is modified and done
       compilation.hooks.afterProcessAssets.tap(

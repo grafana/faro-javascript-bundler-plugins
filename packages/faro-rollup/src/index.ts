@@ -7,7 +7,12 @@ import {
 } from "rollup";
 import fetch from "cross-fetch";
 import MagicString from "magic-string";
-import { ROLLUP_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet, stringToUUID } from "../../consts";
+import {
+  ROLLUP_PLUGIN_NAME,
+  FaroSourcemapUploaderPluginOptions,
+  faroBuildIdSnippet,
+  stringToUUID,
+} from "@grafana/faro-bundlers-shared";
 
 interface FaroSourcemapRollupPluginContext {
   endpoint: string;
@@ -26,20 +31,28 @@ export default function faroUploader(
   return {
     name: ROLLUP_PLUGIN_NAME,
     renderChunk(code, chunk) {
-      const newCode = new MagicString(code);
-      const buildId = stringToUUID(code);
-      context.hash = buildId;
-      newCode.append(faroBuildIdSnippet(buildId));
+      if (
+        [".js", ".mjs", ".cjs"].some((ending) =>
+          chunk.fileName.endsWith(ending)
+        )
+      ) {
+        const newCode = new MagicString(code);
+        const buildId = stringToUUID(code);
+        context.hash = buildId;
+        newCode.append(faroBuildIdSnippet(buildId));
 
-      const map = newCode.generateMap({
-        source: chunk.fileName,
-        file: `${chunk.fileName}.map`
-      });
+        const map = newCode.generateMap({
+          source: chunk.fileName,
+          file: `${chunk.fileName}.map`,
+        });
 
-      return {
-        code: newCode.toString(),
-        map
-      };
+        return {
+          code: newCode.toString(),
+          map,
+        };
+      }
+
+      return null;
     },
     writeBundle(options: OutputOptions, bundle: OutputBundle): void {
       for (let a in bundle) {
