@@ -978,6 +978,9 @@
     "@babel/helper-validator-identifier" "^7.22.20"
     to-fast-properties "^2.0.0"
 
+"@grafana/faro-bundlers-shared@file:packages/faro-webpack/.yalc/@grafana/faro-bundlers-shared":
+  version "1.0.0"
+
 "@grafana/tsconfig@^1.3.0-rc1":
   version "1.3.0-rc1"
   resolved "https://registry.npmjs.org/@grafana/tsconfig/-/tsconfig-1.3.0-rc1.tgz#ca5ffa03edb3cb59bd503a7e6b3a3e15ac528d77"

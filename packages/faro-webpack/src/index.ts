@@ -3,6 +3,12 @@ import fetch from "cross-fetch";
 
 import { WEBPACK_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet } from "@grafana/faro-bundlers-shared";
 
+interface BannerPluginOptions {
+  hash: string;
+  chunk: webpack.Chunk;
+  filename: string;
+}
+
 export default class FaroSourcemapUploaderPlugin
   implements webpack.WebpackPluginInstance
 {
@@ -16,7 +22,7 @@ export default class FaroSourcemapUploaderPlugin
   }
 
   apply(compiler: webpack.Compiler): void {
-    let stats: webpack.StatsCompilation;
+    let hash: string;
     const BannerPlugin = compiler.webpack.BannerPlugin;
 
     compiler.options.plugins = compiler.options.plugins || [];
@@ -24,50 +30,14 @@ export default class FaroSourcemapUploaderPlugin
       new BannerPlugin({
         raw: true,
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
-        banner: () => faroBuildIdSnippet(stats?.hash || ""),
+        banner: (options: BannerPluginOptions) => {
+          hash = options.chunk?.hash ?? '';
+          return faroBuildIdSnippet(options.chunk?.hash || options.filename)
+        },
       })
     );
 
     compiler.hooks.make.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
-      // modify the compilation to add a build ID to the end of the bundle
-      // compilation.hooks.processAssets.tap(
-      //   {
-      //     name: WEBPACK_PLUGIN_NAME,
-      //     stage: webpack.Compilation.PROCESS_ASSETS_STAGE_ADDITIONS,
-      //   },
-      //   (assets) => {
-      //     const { devtool } = compiler.options;
-      //     const { RawSource, SourceMapSource } = webpack.sources;
-      //     stats = compilation.getStats().toJson();
-
-      //     for (let a in assets) {
-      //       const asset = compilation.getAsset(a);
-
-      //       if (!asset) {
-      //         continue;
-      //       }
-
-      //       const contents = asset.source.source();
-      //       const { map } = asset.source.sourceAndMap();
-
-      //       if (
-      //         this.outputFiles.length
-      //           ? this.outputFiles.includes(a)
-      //           : a.endsWith(".js")
-      //       ) {
-      //         const newContent = `${contents}${faroBuildIdSnippet(stats?.hash || "")}`;
-
-      //         compilation.updateAsset(
-      //           a,
-      //           devtool
-      //             ? new SourceMapSource(newContent, a, map)
-      //             : new RawSource(newContent)
-      //         );
-      //       }
-      //     }
-      //   }
-      // );
-
       // upload the sourcemaps to the provided endpoint after the build is modified and done
       compilation.hooks.afterProcessAssets.tap(
         {
@@ -87,7 +57,7 @@ export default class FaroSourcemapUploaderPlugin
                 : a.endsWith(".map")
             ) {
               const sourcemap = JSON.parse(asset.source.source().toString());
-              const sourcemapEndpoint = this.endpoint + stats.hash;
+              const sourcemapEndpoint = this.endpoint + hash;
 
               const response = fetch(sourcemapEndpoint, {
                 method: "POST",
