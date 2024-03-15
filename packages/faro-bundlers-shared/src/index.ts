@@ -4,10 +4,15 @@ export interface FaroSourcemapUploaderPluginOptions {
   endpoint: string;
   appId: string;
   outputFiles: string[];
+  bundleId?: string;
 }
 
 export const faroBuildIdSnippet = (buildId: string) => {
-  return `(function (){var globalObj = (typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {});globalObj.FARO_BUILD_ID = "${buildId}";})();`;
+  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{},e=new Error().stack;e&&(g.__faroBuildIds=g.__faroBuildIds.set(e,"${buildId}")||new Map([[e,"${buildId}"]]))((g.__faroBuildID="${buildId}"))}catch(l){}})();`;
+}
+
+export function randomString(length?: number): string {
+  return crypto.randomBytes(length ?? 10).toString('hex');
 }
 
 export function stringToUUID(str: string): string {

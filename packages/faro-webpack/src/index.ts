@@ -1,7 +1,7 @@
 import * as webpack from "webpack";
 import fetch from "cross-fetch";
 
-import { WEBPACK_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet } from "@grafana/faro-bundlers-shared";
+import { WEBPACK_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet, stringToUUID, randomString } from "@grafana/faro-bundlers-shared";
 
 interface BannerPluginOptions {
   hash: string;
@@ -14,15 +14,17 @@ export default class FaroSourcemapUploaderPlugin
 {
   private endpoint: string;
   private outputFiles: string[];
+  private bundleId: string;
+  private fileToHashMap: Map<string, string> = new Map();
 
   constructor(options: FaroSourcemapUploaderPluginOptions) {
     this.endpoint =
       options.endpoint.split("collect/")[0] + `app/${options.appId}/sourcemap/`;
     this.outputFiles = options.outputFiles;
+    this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
   }
 
   apply(compiler: webpack.Compiler): void {
-    let hash: string;
     const BannerPlugin = compiler.webpack.BannerPlugin;
 
     compiler.options.plugins = compiler.options.plugins || [];
@@ -31,8 +33,11 @@ export default class FaroSourcemapUploaderPlugin
         raw: true,
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
         banner: (options: BannerPluginOptions) => {
-          hash = options.chunk?.hash ?? '';
-          return faroBuildIdSnippet(options.chunk?.hash || options.filename)
+          const fileHash = stringToUUID(options.filename);
+          const chunkId = `${this.bundleId}::${fileHash}`;
+          this.fileToHashMap.set(options.filename, fileHash);
+
+          return faroBuildIdSnippet(chunkId)
         },
       })
     );
@@ -56,8 +61,11 @@ export default class FaroSourcemapUploaderPlugin
                 ? this.outputFiles.map((o) => o + ".map").includes(a)
                 : a.endsWith(".map")
             ) {
+              const sourceFile = a.replace(/(.map)/, '');
               const sourcemap = JSON.parse(asset.source.source().toString());
-              const sourcemapEndpoint = this.endpoint + hash;
+              const sourcemapEndpoint = `${this.endpoint}${this.bundleId}/${this.fileToHashMap.get(sourceFile)}`;
+
+              console.log("ASSET: ", a, this.fileToHashMap.get(sourceFile), sourcemapEndpoint);
 
               const response = fetch(sourcemapEndpoint, {
                 method: "POST",
@@ -65,10 +73,10 @@ export default class FaroSourcemapUploaderPlugin
               });
               response
                 .then((res) => {
-                  console.log("SOURCEMAP UPLOAD RESPONSE: ", res.status);
+                  // console.log("SOURCEMAP UPLOAD RESPONSE: ", res.status);
                 })
                 .catch((err) => {
-                  console.log("SOURCEMAP UPLOAD ERROR: ", err);
+                  // console.log("SOURCEMAP UPLOAD ERROR: ", err);
                 });
             }
           }
