@@ -15,7 +15,7 @@
   },
   "devDependencies": {},
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "^1.0.0",
+    "@grafana/faro-bundlers-shared": "file:.yalc/@grafana/faro-bundlers-shared",
     "cross-fetch": "^4.0.0",
     "magic-string": "^0.30.5"
   }

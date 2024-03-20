@@ -12,12 +12,14 @@ interface BannerPluginOptions {
 export default class FaroSourcemapUploaderPlugin
   implements webpack.WebpackPluginInstance
 {
+  private appName: string;
   private endpoint: string;
   private outputFiles: string[];
   private bundleId: string;
   private fileToHashMap: Map<string, string> = new Map();
 
   constructor(options: FaroSourcemapUploaderPluginOptions) {
+    this.appName = options.appName;
     this.endpoint =
       options.endpoint.split("collect/")[0] + `app/${options.appId}/sourcemap/`;
     this.outputFiles = options.outputFiles;
@@ -37,7 +39,7 @@ export default class FaroSourcemapUploaderPlugin
           const chunkId = `${this.bundleId}::${fileHash}`;
           this.fileToHashMap.set(options.filename, fileHash);
 
-          return faroBuildIdSnippet(chunkId)
+          return faroBuildIdSnippet(chunkId, this.appName)
         },
       })
     );

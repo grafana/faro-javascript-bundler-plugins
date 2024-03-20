@@ -978,6 +978,9 @@
     "@babel/helper-validator-identifier" "^7.22.20"
     to-fast-properties "^2.0.0"
 
+"@grafana/faro-bundlers-shared@file:packages/faro-rollup/.yalc/@grafana/faro-bundlers-shared":
+  version "1.0.0"
+
 "@grafana/faro-bundlers-shared@file:packages/faro-webpack/.yalc/@grafana/faro-bundlers-shared":
   version "1.0.0"
 

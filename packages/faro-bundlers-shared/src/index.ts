@@ -2,17 +2,18 @@ import crypto from "crypto";
 
 export interface FaroSourcemapUploaderPluginOptions {
   endpoint: string;
+  appName: string;
   appId: string;
   outputFiles: string[];
   bundleId?: string;
 }
 
-export const faroBuildIdSnippet = (buildId: string) => {
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{},e=new Error().stack;e&&(g.__faroBuildIds=g.__faroBuildIds.set(e,"${buildId}")||new Map([[e,"${buildId}"]]))((g.__faroBuildID="${buildId}"))}catch(l){}})();`;
-}
+export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
+  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{},e=new Error();e&&(g.__faroBundleIds=g.__faroBundleIds.set(e,"${bundleId}")||new Map([[e,"${bundleId}"]]))((g.__faroBundleId_${appName}="${bundleId}"))}catch(l){}})();`;
+};
 
 export function randomString(length?: number): string {
-  return crypto.randomBytes(length ?? 10).toString('hex');
+  return crypto.randomBytes(length ?? 10).toString("hex");
 }
 
 export function stringToUUID(str: string): string {
@@ -22,7 +23,9 @@ export function stringToUUID(str: string): string {
 
   // Position 16 is fixed to either 8, 9, a, or b in the uuid v4 spec (10xx in binary)
   // RFC 4122 section 4.4
-  const v4variant = ["8", "9", "a", "b"][md5Hash.substring(16, 17).charCodeAt(0) % 4] as string;
+  const v4variant = ["8", "9", "a", "b"][
+    md5Hash.substring(16, 17).charCodeAt(0) % 4
+  ] as string;
 
   return (
     md5Hash.substring(0, 8) +

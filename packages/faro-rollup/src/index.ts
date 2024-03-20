@@ -10,7 +10,7 @@ import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
-  faroBuildIdSnippet,
+  faroBundleIdSnippet,
   stringToUUID,
 } from "@grafana/faro-bundlers-shared";
 
@@ -22,7 +22,7 @@ interface FaroSourcemapRollupPluginContext {
 export default function faroUploader(
   pluginOptions: FaroSourcemapUploaderPluginOptions
 ): Plugin {
-  const { endpoint, appId, outputFiles } = pluginOptions;
+  const { endpoint, appId, appName, outputFiles } = pluginOptions;
   const context: FaroSourcemapRollupPluginContext = {
     endpoint: endpoint.split("collect/")[0] + `app/${appId}/sourcemap/`,
     hash: "",
@@ -37,9 +37,9 @@ export default function faroUploader(
         )
       ) {
         const newCode = new MagicString(code);
-        const buildId = stringToUUID(code);
-        context.hash = buildId;
-        newCode.append(faroBuildIdSnippet(buildId));
+        const bundleId = stringToUUID(code);
+        context.hash = bundleId;
+        newCode.append(faroBundleIdSnippet(bundleId, appName));
 
         const map = newCode.generateMap({
           source: chunk.fileName,
