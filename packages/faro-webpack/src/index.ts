@@ -1,7 +1,13 @@
 import * as webpack from "webpack";
 import fetch from "cross-fetch";
 
-import { WEBPACK_PLUGIN_NAME, FaroSourcemapUploaderPluginOptions, faroBuildIdSnippet, stringToUUID, randomString } from "@grafana/faro-bundlers-shared";
+import {
+  WEBPACK_PLUGIN_NAME,
+  FaroSourcemapUploaderPluginOptions,
+  faroBundleIdSnippet,
+  stringToMD5,
+  randomString,
+} from "@grafana/faro-bundlers-shared";
 
 interface BannerPluginOptions {
   hash: string;
@@ -35,11 +41,11 @@ export default class FaroSourcemapUploaderPlugin
         raw: true,
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
         banner: (options: BannerPluginOptions) => {
-          const fileHash = stringToUUID(options.filename);
+          const fileHash = stringToMD5(options.filename);
           const chunkId = `${this.bundleId}::${fileHash}`;
           this.fileToHashMap.set(options.filename, fileHash);
 
-          return faroBuildIdSnippet(chunkId, this.appName)
+          return faroBundleIdSnippet(chunkId, this.appName);
         },
       })
     );
@@ -63,11 +69,18 @@ export default class FaroSourcemapUploaderPlugin
                 ? this.outputFiles.map((o) => o + ".map").includes(a)
                 : a.endsWith(".map")
             ) {
-              const sourceFile = a.replace(/(.map)/, '');
+              const sourceFile = a.replace(/(.map)/, "");
               const sourcemap = JSON.parse(asset.source.source().toString());
-              const sourcemapEndpoint = `${this.endpoint}${this.bundleId}/${this.fileToHashMap.get(sourceFile)}`;
+              const sourcemapEndpoint = `${this.endpoint}${
+                this.bundleId
+              }/${this.fileToHashMap.get(sourceFile)}`;
 
-              console.log("ASSET: ", a, this.fileToHashMap.get(sourceFile), sourcemapEndpoint);
+              console.log(
+                "ASSET: ",
+                a,
+                this.fileToHashMap.get(sourceFile),
+                sourcemapEndpoint
+              );
 
               const response = fetch(sourcemapEndpoint, {
                 method: "POST",

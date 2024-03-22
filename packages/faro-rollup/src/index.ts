@@ -11,7 +11,7 @@ import {
   ROLLUP_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
   faroBundleIdSnippet,
-  stringToUUID,
+  stringToMD5,
 } from "@grafana/faro-bundlers-shared";
 
 interface FaroSourcemapRollupPluginContext {
@@ -37,7 +37,7 @@ export default function faroUploader(
         )
       ) {
         const newCode = new MagicString(code);
-        const bundleId = stringToUUID(code);
+        const bundleId = stringToMD5(code);
         context.hash = bundleId;
         newCode.append(faroBundleIdSnippet(bundleId, appName));
 
