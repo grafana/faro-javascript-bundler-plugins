@@ -12,17 +12,20 @@ import {
   FaroSourcemapUploaderPluginOptions,
   faroBundleIdSnippet,
   stringToMD5,
+  randomString,
 } from "@grafana/faro-bundlers-shared";
 
 interface FaroSourcemapRollupPluginContext {
   endpoint: string;
   hash: string;
+  bundleId?: string;
 }
 
 export default function faroUploader(
   pluginOptions: FaroSourcemapUploaderPluginOptions
 ): Plugin {
   const { endpoint, appId, appName, outputFiles } = pluginOptions;
+  const bundleId = pluginOptions.bundleId ?? String(Date.now() + randomString(5));
   const context: FaroSourcemapRollupPluginContext = {
     endpoint: endpoint.split("collect/")[0] + `app/${appId}/sourcemap/`,
     hash: "",
@@ -37,9 +40,9 @@ export default function faroUploader(
         )
       ) {
         const newCode = new MagicString(code);
-        const bundleId = stringToMD5(code);
+        const fileHash = stringToMD5(chunk.fileName);
         context.hash = bundleId;
-        newCode.append(faroBundleIdSnippet(bundleId, appName));
+        newCode.append(faroBundleIdSnippet(`${bundleId}::${fileHash}`, appName));
 
         const map = newCode.generateMap({
           source: chunk.fileName,
@@ -72,7 +75,7 @@ export default function faroUploader(
             : a.endsWith(".map")
         ) {
           const sourcemap = JSON.parse(source.toString());
-          const sourcemapEndpoint = context.endpoint + context.hash;
+          const sourcemapEndpoint = context.endpoint + bundleId;
 
           const response = fetch(sourcemapEndpoint, {
             method: "POST",
