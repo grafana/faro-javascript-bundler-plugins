@@ -4,7 +4,7 @@ import fetch from "cross-fetch";
 import {
   WEBPACK_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
-  faroBundleIdSnippet,
+  faroArtifactIdSnippet,
   stringToMD5,
   randomString,
 } from "@grafana/faro-bundlers-shared";
@@ -21,7 +21,7 @@ export default class FaroSourcemapUploaderPlugin
   private appName: string;
   private endpoint: string;
   private outputFiles: string[];
-  private bundleId: string;
+  private buildId: string;
   private fileToHashMap: Map<string, string> = new Map();
 
   constructor(options: FaroSourcemapUploaderPluginOptions) {
@@ -29,7 +29,7 @@ export default class FaroSourcemapUploaderPlugin
     this.endpoint =
       options.endpoint.split("collect/")[0] + `app/${options.appId}/sourcemap/`;
     this.outputFiles = options.outputFiles;
-    this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
+    this.buildId = options.buildId ?? String(Date.now() + randomString(5));
   }
 
   apply(compiler: webpack.Compiler): void {
@@ -42,10 +42,10 @@ export default class FaroSourcemapUploaderPlugin
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
         banner: (options: BannerPluginOptions) => {
           const fileHash = stringToMD5(options.filename);
-          const chunkId = `${this.bundleId}::${fileHash}`;
+          const artifactId = `${this.buildId}::${fileHash}`;
           this.fileToHashMap.set(options.filename, fileHash);
 
-          return faroBundleIdSnippet(chunkId, this.appName);
+          return faroArtifactIdSnippet(artifactId, this.appName);
         },
       })
     );
@@ -72,7 +72,7 @@ export default class FaroSourcemapUploaderPlugin
               const sourceFile = a.replace(/(.map)/, "");
               const sourcemap = JSON.parse(asset.source.source().toString());
               const sourcemapEndpoint = `${this.endpoint}${
-                this.bundleId
+                this.buildId
               }/${this.fileToHashMap.get(sourceFile)}`;
 
               console.log(

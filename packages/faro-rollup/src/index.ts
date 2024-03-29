@@ -10,7 +10,7 @@ import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
-  faroBundleIdSnippet,
+  faroArtifactIdSnippet,
   stringToMD5,
   randomString,
 } from "@grafana/faro-bundlers-shared";
@@ -18,14 +18,14 @@ import {
 interface FaroSourcemapRollupPluginContext {
   endpoint: string;
   hash: string;
-  bundleId?: string;
+  buildId?: string;
 }
 
 export default function faroUploader(
   pluginOptions: FaroSourcemapUploaderPluginOptions
 ): Plugin {
   const { endpoint, appId, appName, outputFiles } = pluginOptions;
-  const bundleId = pluginOptions.bundleId ?? String(Date.now() + randomString(5));
+  const buildId = pluginOptions.buildId ?? String(Date.now() + randomString(5));
   const context: FaroSourcemapRollupPluginContext = {
     endpoint: endpoint.split("collect/")[0] + `app/${appId}/sourcemap/`,
     hash: "",
@@ -40,9 +40,10 @@ export default function faroUploader(
         )
       ) {
         const newCode = new MagicString(code);
-        const fileHash = stringToMD5(chunk.fileName);
-        context.hash = bundleId;
-        newCode.append(faroBundleIdSnippet(`${bundleId}::${fileHash}`, appName));
+        const md5sum = stringToMD5(chunk.fileName);
+        const artifactId = `${buildId}::${md5sum}`;
+
+        newCode.append(faroArtifactIdSnippet(artifactId, appName));
 
         const map = newCode.generateMap({
           source: chunk.fileName,
@@ -74,8 +75,9 @@ export default function faroUploader(
                 .includes(a.split("/").pop() || "")
             : a.endsWith(".map")
         ) {
+          const md5sum = stringToMD5(a.split('.map')[0]);
           const sourcemap = JSON.parse(source.toString());
-          const sourcemapEndpoint = context.endpoint + bundleId;
+          const sourcemapEndpoint = context.endpoint + buildId + md5sum;
 
           const response = fetch(sourcemapEndpoint, {
             method: "POST",

@@ -5,11 +5,11 @@ export interface FaroSourcemapUploaderPluginOptions {
   appName: string;
   appId: string;
   outputFiles: string[];
-  bundleId?: string;
+  artifactId?: string;
 }
 
-export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{},e=new Error();e&&(g.__faroBundleIds=g.__faroBundleIds?.set(e,"${bundleId}")||new Map([[e,"${bundleId}"]]));g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;
+export const faroArtifactIdSnippet = (artifactId: string, appName: string) => {
+  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{},e=new Error();e&&(g.__faroArtifactIds=g.__faroArtifactIds?.set(e,"${artifactId}")||new Map([[e,"${artifactId}"]]));g["__faroArtifactId_${appName}"]="${artifactId}"}catch(l){}})();`;
 };
 
 export function randomString(length?: number): string {
