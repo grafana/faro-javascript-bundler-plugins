@@ -18,14 +18,14 @@ import {
 interface FaroSourcemapRollupPluginContext {
   endpoint: string;
   hash: string;
-  buildId?: string;
+  bundleId?: string;
 }
 
 export default function faroUploader(
   pluginOptions: FaroSourcemapUploaderPluginOptions
 ): Plugin {
   const { endpoint, appId, appName, outputFiles } = pluginOptions;
-  const buildId = pluginOptions.buildId ?? String(Date.now() + randomString(5));
+  const bundleId = pluginOptions.bundleId ?? String(Date.now() + randomString(5));
   const context: FaroSourcemapRollupPluginContext = {
     endpoint: endpoint.split("collect/")[0] + `app/${appId}/sourcemap/`,
     hash: "",
@@ -41,7 +41,7 @@ export default function faroUploader(
       ) {
         const newCode = new MagicString(code);
         const md5sum = stringToMD5(chunk.fileName);
-        const artifactId = `${buildId}::${md5sum}`;
+        const artifactId = `${bundleId}::${md5sum}`;
 
         newCode.append(faroArtifactIdSnippet(artifactId, appName));
 
@@ -77,7 +77,7 @@ export default function faroUploader(
         ) {
           const md5sum = stringToMD5(a.split('.map')[0]);
           const sourcemap = JSON.parse(source.toString());
-          const sourcemapEndpoint = context.endpoint + buildId + md5sum;
+          const sourcemapEndpoint = context.endpoint + bundleId + md5sum;
 
           const response = fetch(sourcemapEndpoint, {
             method: "POST",

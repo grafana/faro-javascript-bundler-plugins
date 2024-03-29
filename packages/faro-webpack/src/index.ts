@@ -21,7 +21,7 @@ export default class FaroSourcemapUploaderPlugin
   private appName: string;
   private endpoint: string;
   private outputFiles: string[];
-  private buildId: string;
+  private bundleId: string;
   private fileToHashMap: Map<string, string> = new Map();
 
   constructor(options: FaroSourcemapUploaderPluginOptions) {
@@ -29,7 +29,7 @@ export default class FaroSourcemapUploaderPlugin
     this.endpoint =
       options.endpoint.split("collect/")[0] + `app/${options.appId}/sourcemap/`;
     this.outputFiles = options.outputFiles;
-    this.buildId = options.buildId ?? String(Date.now() + randomString(5));
+    this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
   }
 
   apply(compiler: webpack.Compiler): void {
@@ -42,7 +42,7 @@ export default class FaroSourcemapUploaderPlugin
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
         banner: (options: BannerPluginOptions) => {
           const fileHash = stringToMD5(options.filename);
-          const artifactId = `${this.buildId}::${fileHash}`;
+          const artifactId = `${this.bundleId}::${fileHash}`;
           this.fileToHashMap.set(options.filename, fileHash);
 
           return faroArtifactIdSnippet(artifactId, this.appName);
@@ -72,7 +72,7 @@ export default class FaroSourcemapUploaderPlugin
               const sourceFile = a.replace(/(.map)/, "");
               const sourcemap = JSON.parse(asset.source.source().toString());
               const sourcemapEndpoint = `${this.endpoint}${
-                this.buildId
+                this.bundleId
               }/${this.fileToHashMap.get(sourceFile)}`;
 
               console.log(
