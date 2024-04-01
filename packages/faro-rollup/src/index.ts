@@ -10,8 +10,7 @@ import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
-  faroArtifactIdSnippet,
-  stringToMD5,
+  faroBundleIdSnippet,
   randomString,
 } from "@grafana/faro-bundlers-shared";
 
@@ -40,10 +39,8 @@ export default function faroUploader(
         )
       ) {
         const newCode = new MagicString(code);
-        const md5sum = stringToMD5(chunk.fileName);
-        const artifactId = `${bundleId}::${md5sum}`;
 
-        newCode.append(faroArtifactIdSnippet(artifactId, appName));
+        newCode.append(faroBundleIdSnippet(bundleId, appName));
 
         const map = newCode.generateMap({
           source: chunk.fileName,
@@ -75,9 +72,8 @@ export default function faroUploader(
                 .includes(a.split("/").pop() || "")
             : a.endsWith(".map")
         ) {
-          const md5sum = stringToMD5(a.split('.map')[0]);
           const sourcemap = JSON.parse(source.toString());
-          const sourcemapEndpoint = context.endpoint + bundleId + md5sum;
+          const sourcemapEndpoint = context.endpoint + bundleId;
 
           const response = fetch(sourcemapEndpoint, {
             method: "POST",

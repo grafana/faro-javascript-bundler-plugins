@@ -4,8 +4,7 @@ import fetch from "cross-fetch";
 import {
   WEBPACK_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
-  faroArtifactIdSnippet,
-  stringToMD5,
+  faroBundleIdSnippet,
   randomString,
 } from "@grafana/faro-bundlers-shared";
 
@@ -41,11 +40,7 @@ export default class FaroSourcemapUploaderPlugin
         raw: true,
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
         banner: (options: BannerPluginOptions) => {
-          const fileHash = stringToMD5(options.filename);
-          const artifactId = `${this.bundleId}::${fileHash}`;
-          this.fileToHashMap.set(options.filename, fileHash);
-
-          return faroArtifactIdSnippet(artifactId, this.appName);
+          return faroBundleIdSnippet(this.bundleId, this.appName);
         },
       })
     );
@@ -71,9 +66,7 @@ export default class FaroSourcemapUploaderPlugin
             ) {
               const sourceFile = a.replace(/(.map)/, "");
               const sourcemap = JSON.parse(asset.source.source().toString());
-              const sourcemapEndpoint = `${this.endpoint}${
-                this.bundleId
-              }/${this.fileToHashMap.get(sourceFile)}`;
+              const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
 
               console.log(
                 "ASSET: ",
