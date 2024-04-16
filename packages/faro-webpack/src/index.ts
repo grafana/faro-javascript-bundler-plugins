@@ -1,4 +1,5 @@
 import * as webpack from "webpack";
+import fs from "fs";
 import fetch from "cross-fetch";
 
 import {
@@ -21,18 +22,19 @@ export default class FaroSourcemapUploaderPlugin
   private endpoint: string;
   private outputFiles: string[];
   private bundleId: string;
-  private fileToHashMap: Map<string, string> = new Map();
+  private keepSourcemaps?: boolean;
 
   constructor(options: FaroSourcemapUploaderPluginOptions) {
     this.appName = options.appName;
-    this.endpoint =
-      options.endpoint.split("collect/")[0] + `app/${options.appId}/sourcemap/`;
+    this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemap/`;
     this.outputFiles = options.outputFiles;
     this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
+    this.keepSourcemaps = options.keepSourcemaps;
   }
 
   apply(compiler: webpack.Compiler): void {
     const BannerPlugin = compiler.webpack.BannerPlugin;
+    const outputPath = compiler.options.output.path;
 
     compiler.options.plugins = compiler.options.plugins || [];
     compiler.options.plugins.push(
@@ -64,28 +66,30 @@ export default class FaroSourcemapUploaderPlugin
                 ? this.outputFiles.map((o) => o + ".map").includes(a)
                 : a.endsWith(".map")
             ) {
-              const sourceFile = a.replace(/(.map)/, "");
               const sourcemap = JSON.parse(asset.source.source().toString());
               const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
 
-              console.log(
-                "ASSET: ",
-                a,
-                this.fileToHashMap.get(sourceFile),
-                sourcemapEndpoint
-              );
-
-              const response = fetch(sourcemapEndpoint, {
+              fetch(sourcemapEndpoint, {
                 method: "POST",
                 body: sourcemap,
-              });
-              response
+              })
                 .then((res) => {
-                  // console.log("SOURCEMAP UPLOAD RESPONSE: ", res.status);
+                  if (res.ok) {
+                    console.info(`Uploaded ${a} to ${sourcemapEndpoint}`);
+                  } else {
+                    console.info(`Upload of ${a} failed with status: ${res.status}, ${res.body}`);
+                  }
+
+                  // delete source map
+                  const sourceMapToDelete = `${outputPath}/${a}`;
+                  if (
+                    !this.keepSourcemaps &&
+                    fs.existsSync(sourceMapToDelete)
+                  ) {
+                    fs.unlinkSync(sourceMapToDelete);
+                  }
                 })
-                .catch((err) => {
-                  // console.log("SOURCEMAP UPLOAD ERROR: ", err);
-                });
+                .catch((err) => console.error(err));
             }
           }
         }

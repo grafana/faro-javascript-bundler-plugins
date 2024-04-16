@@ -6,6 +6,7 @@ export interface FaroSourcemapUploaderPluginOptions {
   appId: string;
   outputFiles: string[];
   bundleId?: string;
+  keepSourcemaps?: boolean;
 }
 
 export const faroBundleIdSnippet = (bundleId: string, appName: string) => {

@@ -16,5 +16,7 @@
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.5"
   },
-  "dependencies": {}
+  "dependencies": {
+    "@grafana/faro-bundlers-shared": "file:.yalc/@grafana/faro-bundlers-shared"
+  }
 }
