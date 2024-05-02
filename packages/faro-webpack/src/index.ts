@@ -32,6 +32,10 @@ export default class FaroSourcemapUploaderPlugin
     this.keepSourcemaps = options.keepSourcemaps;
   }
 
+  /**
+   * Applies the plugin to the webpack compiler. Applies a BannerPlugin to the generated bundle containing the bundleId code snippet.
+   * @param compiler The webpack compiler.
+   */
   apply(compiler: webpack.Compiler): void {
     const BannerPlugin = compiler.webpack.BannerPlugin;
     const outputPath = compiler.options.output.path;

@@ -17,7 +17,6 @@ import {
 
 interface FaroSourcemapRollupPluginContext {
   endpoint: string;
-  hash: string;
   bundleId?: string;
 }
 
@@ -30,11 +29,17 @@ export default function faroUploader(
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
   const context: FaroSourcemapRollupPluginContext = {
     endpoint: `${endpoint}/app/${appId}/sourcemap/`,
-    hash: "",
+    bundleId,
   };
 
   return {
     name: ROLLUP_PLUGIN_NAME,
+    /**
+     * Renders a chunk of code and generates a source map with a bundleId code snippet injected at the end.
+     * @param code The original code of the chunk.
+     * @param chunk The chunk object containing information about the file.
+     * @returns An object with the rendered code and the generated source map, or null if the chunk's file extension does not match the patterns.
+     */
     renderChunk(code, chunk) {
       if (chunk.fileName.match(/\.(js|ts|jsx|tsx|mjs|cjs)$/)) {
         const newCode = new MagicString(code);
@@ -54,6 +59,11 @@ export default function faroUploader(
 
       return null;
     },
+    /**
+     * Writes the bundle to the specified output directory and uploads the sourcemaps to a remote endpoint.
+     * @param options - The output options for the bundle.
+     * @param bundle - The bundle containing the assets and chunks.
+     */
     writeBundle(options: OutputOptions, bundle: OutputBundle): void {
       const outputPath = options.dir;
 
