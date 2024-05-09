@@ -5,33 +5,31 @@ import {
   OutputAsset,
   OutputChunk,
 } from "rollup";
-import fs from "fs";
-import fetch from "cross-fetch";
 import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
   faroBundleIdSnippet,
   randomString,
+  consoleInfoOrange,
+  uploadSourceMap,
 } from "@grafana/faro-bundlers-shared";
-
-interface FaroSourcemapRollupPluginContext {
-  endpoint: string;
-  hash: string;
-  bundleId?: string;
-}
 
 export default function faroUploader(
   pluginOptions: FaroSourcemapUploaderPluginOptions
 ): Plugin {
-  const { endpoint, appId, appName, outputFiles, keepSourcemaps } =
-    pluginOptions;
+  const {
+    endpoint,
+    appId,
+    appName,
+    outputFiles,
+    keepSourcemaps,
+    gzipContents,
+    verbose,
+  } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
-  const context: FaroSourcemapRollupPluginContext = {
-    endpoint: `${endpoint}/app/${appId}/sourcemap/`,
-    hash: "",
-  };
+  const uploadEndpoint = `${endpoint}/app/${appId}/sourcemap/`;
 
   return {
     name: ROLLUP_PLUGIN_NAME,
@@ -54,49 +52,51 @@ export default function faroUploader(
 
       return null;
     },
-    writeBundle(options: OutputOptions, bundle: OutputBundle): void {
-      const outputPath = options.dir;
+    async writeBundle(options: OutputOptions, bundle: OutputBundle) {
+      const uploadedSourcemaps = [];
 
-      for (let a in bundle) {
-        const asset = bundle[a];
-        const source =
-          (asset as OutputAsset).source || (asset as OutputChunk).code;
+      try {
+        const outputPath = options.dir;
+        const sourcemapEndpoint = uploadEndpoint + bundleId;
 
-        if (!asset || !source) {
-          continue;
+        for (let filename in bundle) {
+          const asset = bundle[filename];
+          const source =
+            (asset as OutputAsset).source || (asset as OutputChunk).code;
+
+          if (!asset || !source) {
+            continue;
+          }
+
+          if (
+            outputFiles.length
+              ? outputFiles.map((o) => o + ".map").includes(filename)
+              : filename.endsWith(".map")
+          ) {
+            verbose && consoleInfoOrange(`Uploading sourcemap "${filename}"`);
+
+            const result = await uploadSourceMap({
+              sourcemapEndpoint,
+              filename,
+              outputPath: `${outputPath}/${filename}`,
+              keepSourcemaps: !!keepSourcemaps,
+              gzip: !!gzipContents,
+              verbose: verbose,
+            });
+
+            if (result) {
+              uploadedSourcemaps.push(filename);
+            }
+          }
         }
+      } catch (e) {
+        console.error(e);
+      }
 
-        if (
-          outputFiles.length
-            ? outputFiles
-                .map((o) => o + ".map")
-                .includes(a.split("/").pop() || "")
-            : a.endsWith(".map")
-        ) {
-          const sourcemap = JSON.parse(source.toString());
-          const sourcemapEndpoint = context.endpoint + bundleId;
-
-          fetch(sourcemapEndpoint, {
-            method: "POST",
-            body: sourcemap,
-          })
-            .then((res) => {
-              if (res.ok) {
-                console.info(`Uploaded ${a} to ${sourcemapEndpoint}`);
-              } else {
-                console.info(
-                  `Upload of ${a} failed with status: ${res.status}, ${res.body}`
-                );
-              }
-
-              // delete source map
-              const sourceMapToDelete = `${outputPath}/${a}`;
-              if (!keepSourcemaps && fs.existsSync(sourceMapToDelete)) {
-                fs.unlinkSync(sourceMapToDelete);
-              }
-            })
-            .catch((err) => console.error(err));
-        }
+      if (uploadedSourcemaps.length && verbose) {
+        consoleInfoOrange(
+          `Uploaded sourcemaps: ${uploadedSourcemaps.join(", ")}`
+        );
       }
     },
   };
