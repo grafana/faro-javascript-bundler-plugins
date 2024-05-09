@@ -17,6 +17,7 @@
     "@rollup/plugin-typescript": "^11.1.5"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "file:.yalc/@grafana/faro-bundlers-shared"
+    "ansis": "^3.2.0",
+    "zlib": "^1.0.5"
   }
 }

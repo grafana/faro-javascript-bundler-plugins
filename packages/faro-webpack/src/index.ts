@@ -1,12 +1,13 @@
 import * as webpack from "webpack";
 import fs from "fs";
-import fetch from "cross-fetch";
 
 import {
   WEBPACK_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
   faroBundleIdSnippet,
   randomString,
+  uploadSourceMap,
+  consoleInfoOrange,
 } from "@grafana/faro-bundlers-shared";
 
 interface BannerPluginOptions {
@@ -23,6 +24,8 @@ export default class FaroSourcemapUploaderPlugin
   private outputFiles: string[];
   private bundleId: string;
   private keepSourcemaps?: boolean;
+  private gzipContents?: boolean;
+  private verbose?: boolean;
 
   constructor(options: FaroSourcemapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -30,6 +33,8 @@ export default class FaroSourcemapUploaderPlugin
     this.outputFiles = options.outputFiles;
     this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
     this.keepSourcemaps = options.keepSourcemaps;
+    this.gzipContents = options.gzipContents;
+    this.verbose = options.verbose;
   }
 
   apply(compiler: webpack.Compiler): void {
@@ -47,53 +52,45 @@ export default class FaroSourcemapUploaderPlugin
       })
     );
 
-    compiler.hooks.make.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
+    compiler.hooks.afterEmit.tap(WEBPACK_PLUGIN_NAME, async () => {
       // upload the sourcemaps to the provided endpoint after the build is modified and done
-      compilation.hooks.afterProcessAssets.tap(
-        {
-          name: WEBPACK_PLUGIN_NAME,
-        },
-        (assets) => {
-          for (let a in assets) {
-            const asset = compilation.getAsset(a);
+      const uploadedSourcemaps = [];
+      try {
+        const filenames = fs.readdirSync(outputPath!);
+        const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
 
-            if (!asset) {
-              continue;
-            }
+        for (let filename of filenames) {
+          if (
+            this.outputFiles.length
+              ? this.outputFiles.map((o) => o + ".map").includes(filename)
+              : filename.endsWith(".map")
+          ) {
+            this.verbose &&
+              consoleInfoOrange(`Uploading sourcemap "${filename}"`);
 
-            if (
-              this.outputFiles.length
-                ? this.outputFiles.map((o) => o + ".map").includes(a)
-                : a.endsWith(".map")
-            ) {
-              const sourcemap = JSON.parse(asset.source.source().toString());
-              const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
+            const result = await uploadSourceMap({
+              sourcemapEndpoint,
+              filename,
+              outputPath: `${outputPath}/${filename}`,
+              keepSourcemaps: !!this.keepSourcemaps,
+              gzip: !!this.gzipContents,
+              verbose: this.verbose,
+            });
 
-              fetch(sourcemapEndpoint, {
-                method: "POST",
-                body: sourcemap,
-              })
-                .then((res) => {
-                  if (res.ok) {
-                    console.info(`Uploaded ${a} to ${sourcemapEndpoint}`);
-                  } else {
-                    console.info(`Upload of ${a} failed with status: ${res.status}, ${res.body}`);
-                  }
-
-                  // delete source map
-                  const sourceMapToDelete = `${outputPath}/${a}`;
-                  if (
-                    !this.keepSourcemaps &&
-                    fs.existsSync(sourceMapToDelete)
-                  ) {
-                    fs.unlinkSync(sourceMapToDelete);
-                  }
-                })
-                .catch((err) => console.error(err));
+            if (result) {
+              uploadedSourcemaps.push(filename);
             }
           }
         }
-      );
+      } catch (e) {
+        console.error(e);
+      }
+
+      if (uploadedSourcemaps.length && this.verbose) {
+        consoleInfoOrange(
+          `Uploaded sourcemaps: ${uploadedSourcemaps.join(", ")}`
+        );
+      }
     });
   }
 }
