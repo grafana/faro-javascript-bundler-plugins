@@ -21,6 +21,7 @@ export default function faroUploader(
   const {
     endpoint,
     appId,
+    orgId,
     appName,
     outputFiles,
     keepSourcemaps,
@@ -29,7 +30,7 @@ export default function faroUploader(
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
-  const uploadEndpoint = `${endpoint}/app/${appId}/sourcemap/`;
+  const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
 
   return {
     name: ROLLUP_PLUGIN_NAME,
@@ -77,6 +78,7 @@ export default function faroUploader(
 
             const result = await uploadSourceMap({
               sourcemapEndpoint,
+              orgId: orgId,
               filename,
               outputPath: `${outputPath}/${filename}`,
               keepSourcemaps: !!keepSourcemaps,

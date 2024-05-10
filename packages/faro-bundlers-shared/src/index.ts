@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import fs from "fs";
-import zlib from "zlib";
+import { create } from "tar";
+import { buffer } from 'node:stream/consumers';
+import { Readable } from "node:stream";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
 
@@ -8,6 +10,7 @@ export interface FaroSourcemapUploaderPluginOptions {
   endpoint: string;
   appName: string;
   appId: string;
+  orgId: string;
   outputFiles: string[];
   bundleId?: string;
   keepSourcemaps?: boolean;
@@ -17,6 +20,7 @@ export interface FaroSourcemapUploaderPluginOptions {
 
 interface UploadSourcemapOptions {
   sourcemapEndpoint: string;
+  orgId: string;
   outputPath: string;
   filename: string;
   keepSourcemaps: boolean;
@@ -28,21 +32,17 @@ export const uploadSourceMap = async (options: UploadSourcemapOptions): Promise<
   const {
     sourcemapEndpoint,
     outputPath,
+    orgId,
     keepSourcemaps,
     gzip,
     verbose,
     filename,
   } = options;
-  let buffer, success = false;
+  let sourcemapBuffer, success = false;
 
-  if (fs.existsSync(outputPath)) {
-    buffer = fs.readFileSync(outputPath);
-  }
-
-  if (gzip && buffer) {
-    verbose && consoleInfoOrange(`Gzipping ${filename}`);
-    const gzipBuffer = zlib.gzipSync(buffer);
-    buffer = gzipBuffer;
+  if (gzip && fs.existsSync(outputPath)) {
+    verbose && consoleInfoOrange(`Compressing ${filename}`);
+    sourcemapBuffer = await create({ gzip: true }, [outputPath]);
   }
 
   verbose && consoleInfoOrange(`Uploading ${filename} to ${sourcemapEndpoint}`);
@@ -50,9 +50,9 @@ export const uploadSourceMap = async (options: UploadSourcemapOptions): Promise<
     method: "POST",
     headers: {
       "Content-Type": gzip ? "application/gzip" : "application/json",
-      "Content-Encoding": gzip ? "gzip" : "utf-8",
+      "X-Scope-OrgID": orgId.toString(),
     },
-    body: buffer,
+    body: sourcemapBuffer ? await buffer(sourcemapBuffer! as Readable) : fs.readFileSync(outputPath),
   })
     .then((res) => {
       if (res.ok) {

@@ -20,6 +20,7 @@ export default class FaroSourcemapUploaderPlugin
   implements webpack.WebpackPluginInstance
 {
   private appName: string;
+  private orgId: string;
   private endpoint: string;
   private outputFiles: string[];
   private bundleId: string;
@@ -29,7 +30,8 @@ export default class FaroSourcemapUploaderPlugin
 
   constructor(options: FaroSourcemapUploaderPluginOptions) {
     this.appName = options.appName;
-    this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemap/`;
+    this.orgId = options.orgId;
+    this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemaps/`;
     this.outputFiles = options.outputFiles;
     this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
     this.keepSourcemaps = options.keepSourcemaps;
@@ -71,6 +73,7 @@ export default class FaroSourcemapUploaderPlugin
             const result = await uploadSourceMap({
               sourcemapEndpoint,
               filename,
+              orgId: this.orgId,
               outputPath: `${outputPath}/${filename}`,
               keepSourcemaps: !!this.keepSourcemaps,
               gzip: !!this.gzipContents,
