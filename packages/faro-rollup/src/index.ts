@@ -73,9 +73,11 @@ export default function faroUploader(
           // total size of all files uploaded at once must be less than 30mb (uncompressed)
           if (gzipContents) {
             const file = `${outputPath}/${filename}`;
+            filesToUpload.push(file);
             const { size } = fs.statSync(file);
 
             if (totalSize + size > 30 * 1024 * 1024) {
+              filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,
                 orgId: orgId,
@@ -116,7 +118,7 @@ export default function faroUploader(
 
       if (uploadedSourcemaps.length && verbose) {
         consoleInfoOrange(
-          `Uploaded sourcemaps: ${uploadedSourcemaps.join(", ")}`
+          `Uploaded sourcemaps: ${uploadedSourcemaps.map(map => map.split('/').pop()).join(", ")}`
         );
       }
     },

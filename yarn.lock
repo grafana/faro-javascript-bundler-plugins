@@ -982,13 +982,13 @@
   version "1.0.0"
   dependencies:
     ansis "^3.2.0"
-    zlib "^1.0.5"
+    node-tar "^1.0.0"
 
 "@grafana/faro-bundlers-shared@file:packages/faro-webpack/.yalc/@grafana/faro-bundlers-shared":
   version "1.0.0"
   dependencies:
     ansis "^3.2.0"
-    zlib "^1.0.5"
+    node-tar "^1.0.0"
 
 "@grafana/tsconfig@^1.3.0-rc1":
   version "1.3.0-rc1"
@@ -5865,8 +5865,3 @@ yargs@^16.2.0:
     string-width "^4.2.0"
     y18n "^5.0.5"
     yargs-parser "^20.2.2"
-
-zlib@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.npmjs.org/zlib/-/zlib-1.0.5.tgz#6e7c972fc371c645a6afb03ab14769def114fcc0"
-  integrity sha512-40fpE2II+Cd3k8HWTWONfeKE2jL+P42iWJ1zzps5W51qcTsOUKM5Q5m2PFb0CLxlmFAaUuUdJGc3OfZy947v0w==

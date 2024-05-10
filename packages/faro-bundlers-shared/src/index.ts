@@ -90,7 +90,11 @@ export const uploadCompressedSourceMaps = async (
   sourcemapBuffer = await create({ gzip: true }, files);
 
   verbose &&
-    consoleInfoOrange(`Uploading ${files.join(", ")} to ${sourcemapEndpoint}`);
+    consoleInfoOrange(
+      `Uploading ${files
+        .map((file) => file.split("/").pop())
+        .join(", ")} to ${sourcemapEndpoint}`
+    );
   await fetch(sourcemapEndpoint, {
     method: "POST",
     headers: {
@@ -103,12 +107,16 @@ export const uploadCompressedSourceMaps = async (
       if (res.ok) {
         verbose &&
           consoleInfoOrange(
-            `Uploaded ${files.join(", ")} to ${sourcemapEndpoint}`
+            `Uploaded ${files
+              .map((file) => file.split("/").pop())
+              .join(", ")} to ${sourcemapEndpoint}`
           );
       } else {
         success = false;
         consoleInfoOrange(
-          `Upload of ${files.join(", ")} failed with status: ${res.status}`
+          `Upload of ${files
+            .map((file) => file.split("/").pop())
+            .join(", ")} failed with status: ${res.status}`
         );
       }
 
@@ -117,7 +125,10 @@ export const uploadCompressedSourceMaps = async (
       }
 
       // delete source maps
-      verbose && consoleInfoOrange(`Deleting ${files.join(", ")}`);
+      verbose &&
+        consoleInfoOrange(
+          `Deleting ${files.map((file) => file.split("/").pop()).join(", ")}`
+        );
       for (let filePath of files) {
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath);
