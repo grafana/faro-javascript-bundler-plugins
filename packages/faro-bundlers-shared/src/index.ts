@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import fs from "fs";
 import { create } from "tar";
-import { buffer } from 'node:stream/consumers';
+import { buffer } from "node:stream/consumers";
 import { Readable } from "node:stream";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
@@ -21,54 +21,107 @@ export interface FaroSourcemapUploaderPluginOptions {
 interface UploadSourcemapOptions {
   sourcemapEndpoint: string;
   orgId: string;
-  outputPath: string;
+  filePath: string;
   filename: string;
   keepSourcemaps: boolean;
-  gzip?: boolean;
   verbose?: boolean;
 }
 
-export const uploadSourceMap = async (options: UploadSourcemapOptions): Promise<boolean> => {
+interface UploadCompressedSourcemapsOptions {
+  sourcemapEndpoint: string;
+  orgId: string;
+  files: string[];
+  keepSourcemaps: boolean;
+  verbose?: boolean;
+}
+
+export const uploadSourceMap = async (
+  options: UploadSourcemapOptions
+): Promise<boolean> => {
   const {
     sourcemapEndpoint,
-    outputPath,
+    filePath,
     orgId,
     keepSourcemaps,
-    gzip,
     verbose,
     filename,
   } = options;
-  let sourcemapBuffer, success = false;
-
-  if (gzip && fs.existsSync(outputPath)) {
-    verbose && consoleInfoOrange(`Compressing ${filename}`);
-    sourcemapBuffer = await create({ gzip: true }, [outputPath]);
-  }
+  let success = true;
 
   verbose && consoleInfoOrange(`Uploading ${filename} to ${sourcemapEndpoint}`);
   await fetch(sourcemapEndpoint, {
     method: "POST",
     headers: {
-      "Content-Type": gzip ? "application/gzip" : "application/json",
+      "Content-Type": "application/json",
       "X-Scope-OrgID": orgId.toString(),
     },
-    body: sourcemapBuffer ? await buffer(sourcemapBuffer! as Readable) : fs.readFileSync(outputPath),
+    body: fs.readFileSync(filePath),
   })
     .then((res) => {
       if (res.ok) {
         verbose &&
           consoleInfoOrange(`Uploaded ${filename} to ${sourcemapEndpoint}`);
-        success = true;
       } else {
+        success = false;
         consoleInfoOrange(
           `Upload of ${filename} failed with status: ${res.status}`
         );
       }
 
       // delete source map
-      if (!keepSourcemaps && fs.existsSync(outputPath)) {
+      if (!keepSourcemaps && fs.existsSync(filePath)) {
         verbose && consoleInfoOrange(`Deleting ${filename}`);
-        fs.unlinkSync(outputPath);
+        fs.unlinkSync(filePath);
+      }
+    })
+    .catch((err) => console.error(err));
+
+  return success;
+};
+
+export const uploadCompressedSourceMaps = async (
+  options: UploadCompressedSourcemapsOptions
+): Promise<boolean> => {
+  const { sourcemapEndpoint, orgId, files, keepSourcemaps, verbose } = options;
+
+  let sourcemapBuffer,
+    success = true;
+
+  sourcemapBuffer = await create({ gzip: true }, files);
+
+  verbose &&
+    consoleInfoOrange(`Uploading ${files.join(", ")} to ${sourcemapEndpoint}`);
+  await fetch(sourcemapEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/gzip",
+      "X-Scope-OrgID": orgId.toString(),
+    },
+    body: await buffer(sourcemapBuffer! as Readable),
+  })
+    .then((res) => {
+      if (res.ok) {
+        verbose &&
+          consoleInfoOrange(
+            `Uploaded ${files.join(", ")} to ${sourcemapEndpoint}`
+          );
+      } else {
+        success = false;
+        consoleInfoOrange(
+          `Upload of ${files.join(", ")} failed with status: ${res.status}`
+        );
+      }
+
+      if (keepSourcemaps) {
+        return;
+      }
+
+      // delete source maps
+      verbose && consoleInfoOrange(`Deleting ${files.join(", ")}`);
+      for (let filePath of files) {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
       }
     })
     .catch((err) => console.error(err));
@@ -89,5 +142,7 @@ export const consoleInfoOrange = (message: string) =>
 
 export const WEBPACK_PLUGIN_NAME = "FaroSourcemapUploaderPlugin";
 export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-sourcemap-uploader";
+
+export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
 
 crypto.randomUUID();

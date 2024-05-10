@@ -1,10 +1,4 @@
-import {
-  Plugin,
-  OutputOptions,
-  OutputBundle,
-  OutputAsset,
-  OutputChunk,
-} from "rollup";
+import { Plugin, OutputOptions, OutputBundle } from "rollup";
 import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
@@ -13,7 +7,10 @@ import {
   randomString,
   consoleInfoOrange,
   uploadSourceMap,
+  uploadCompressedSourceMaps,
 } from "@grafana/faro-bundlers-shared";
+
+import fs from "fs";
 
 export default function faroUploader(
   pluginOptions: FaroSourcemapUploaderPluginOptions
@@ -59,30 +56,52 @@ export default function faroUploader(
       try {
         const outputPath = options.dir;
         const sourcemapEndpoint = uploadEndpoint + bundleId;
+        const filesToUpload = [];
+        let totalSize = 0;
 
         for (let filename in bundle) {
-          const asset = bundle[filename];
-          const source =
-            (asset as OutputAsset).source || (asset as OutputChunk).code;
-
-          if (!asset || !source) {
+          // only upload sourcemaps or contents in the outputFiles list
+          if (
+            outputFiles.length
+              ? !outputFiles.map((o) => o + ".map").includes(filename)
+              : !filename.endsWith(".map")
+          ) {
             continue;
           }
 
-          if (
-            outputFiles.length
-              ? outputFiles.map((o) => o + ".map").includes(filename)
-              : filename.endsWith(".map")
-          ) {
-            verbose && consoleInfoOrange(`Uploading sourcemap "${filename}"`);
+          // if we are tar/gzipping contents, collect N files and upload them all at once
+          // total size of all files uploaded at once must be less than 30mb (uncompressed)
+          if (gzipContents) {
+            const file = `${outputPath}/${filename}`;
+            const { size } = fs.statSync(file);
 
+            if (totalSize + size > 30 * 1024 * 1024) {
+              const result = await uploadCompressedSourceMaps({
+                sourcemapEndpoint,
+                orgId: orgId,
+                files: filesToUpload,
+                keepSourcemaps: !!keepSourcemaps,
+                verbose: verbose,
+              });
+
+              if (result) {
+                uploadedSourcemaps.push(...filesToUpload);
+              }
+
+              filesToUpload.length = 0;
+              filesToUpload.push(file);
+              totalSize = size;
+            }
+          }
+
+          // if we are not compresing, upload each file individually
+          if (!gzipContents) {
             const result = await uploadSourceMap({
               sourcemapEndpoint,
-              orgId: orgId,
               filename,
-              outputPath: `${outputPath}/${filename}`,
+              orgId: orgId,
+              filePath: `${outputPath}/${filename}`,
               keepSourcemaps: !!keepSourcemaps,
-              gzip: !!gzipContents,
               verbose: verbose,
             });
 
