@@ -69,6 +69,8 @@ module.exports = {
       endpoint: "$your-faro-collector-url",
       apiKey: "$your-api-key",
       appId: "$your-app-id",
+      orgId: "$your-org-id",
+      gzipContents: true,
     }),
   ],
 };
@@ -92,10 +94,27 @@ export default defineConfig(({ mode }) => {
         endpoint: "$your-faro-collector-url",
         apiKey: "$your-api-key",
         appId: "$your-app-id",
+        orgId: "$your-org-id",
+        gzipContents: true,
       }),
     ],
   };
 ```
+
+### Configuration Options
+
+The following options are available for the Faro JavaScript Bundler Plugins:
+
+- `appName: string` (required): The name of your application. This should match the `appName` value you are using in your Faro Web SDK configuration.
+- `endpoint: string` (required): The URL of your Faro Collector endpoint. This value is generated in the Frontend Observability plugin under "Web SDK Configuration".
+- `apiKey: string` (required): The API key for your Faro Collector. This value is generated on grafana.com by creating a new scope (details provided in the plugin and in the "Obtaining API Key" section of this document).
+- `appId: string` (required): The ID of your application. This should match the `appId` value you are using in your Faro Web SDK configuration.
+- `orgId: string` (required): The ID of your organization. This value is provided in the Frontend Observability plugin under "Web SDK Configuration".
+- `outputFiles: string[]` (optional): An array of sourcemap files to upload. By default, all sourcemaps are uploaded.
+- `bundleId: string` (optional): The ID of the bundle/build. You can specify this value to filter by bundle ID in the Frontend Observability plugin. Otherwise an auto-generated ID will be used.
+- `keepSourcemaps: boolean` (optional): Whether to keep the sourcemaps in your generated bundle after uploading. Defaults to `false`.
+- `gzipContents: boolean` (optional): Whether to tarball and gzip the contents of the sourcemaps before uploading. Defaults to `true`.
+- `verbose: boolean` (optional): Whether to log verbose output during the upload process. Defaults to `false`.
 
 After initial configuration, the Faro JavaScript Bundler Plugins will automatically upload your source maps to Grafana Cloud when you build your application. You can verify that the source maps are being uploaded by "Sourcemaps" tab in the Frontend Observability plugin. From there you are able to see the source maps that have been uploaded.
 
