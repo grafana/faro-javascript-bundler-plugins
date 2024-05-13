@@ -8,6 +8,7 @@ import {
   consoleInfoOrange,
   uploadSourceMap,
   uploadCompressedSourceMaps,
+  THIRTY_MB_IN_BYTES,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
@@ -78,7 +79,7 @@ export default function faroUploader(
             filesToUpload.push(file);
             totalSize += size;
 
-            if (totalSize > 30 * 1024 * 1024) {
+            if (totalSize > THIRTY_MB_IN_BYTES) {
               filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,

@@ -9,6 +9,7 @@ import {
   uploadSourceMap,
   uploadCompressedSourceMaps,
   consoleInfoOrange,
+  THIRTY_MB_IN_BYTES,
 } from "@grafana/faro-bundlers-shared";
 
 interface BannerPluginOptions {
@@ -83,7 +84,7 @@ export default class FaroSourcemapUploaderPlugin
             filesToUpload.push(file);
             totalSize += size;
 
-            if (totalSize > 30 * 1024 * 1024) {
+            if (totalSize > THIRTY_MB_IN_BYTES) {
               filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,
