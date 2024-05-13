@@ -73,10 +73,12 @@ export default function faroUploader(
           // total size of all files uploaded at once must be less than 30mb (uncompressed)
           if (gzipContents) {
             const file = `${outputPath}/${filename}`;
-            filesToUpload.push(file);
             const { size } = fs.statSync(file);
 
-            if (totalSize + size > 30 * 1024 * 1024) {
+            filesToUpload.push(file);
+            totalSize += size;
+
+            if (totalSize > 30 * 1024 * 1024) {
               filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,
