@@ -10,6 +10,7 @@
     "directory": "packages/faro-rollup"
   },
   "license": "Apache-2.0",
+  "author": "Grafana Labs",
   "scripts": {
     "build": "rollup --config rollup.config.mjs"
   },
