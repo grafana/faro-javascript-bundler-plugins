@@ -1,36 +1,34 @@
-import {
-  Plugin,
-  OutputOptions,
-  OutputBundle,
-  OutputAsset,
-  OutputChunk,
-} from "rollup";
-import fs from "fs";
-import fetch from "cross-fetch";
+import { Plugin, OutputOptions, OutputBundle } from "rollup";
 import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
   FaroSourcemapUploaderPluginOptions,
   faroBundleIdSnippet,
   randomString,
+  consoleInfoOrange,
+  uploadSourceMap,
+  uploadCompressedSourceMaps,
+  THIRTY_MB_IN_BYTES,
 } from "@grafana/faro-bundlers-shared";
 
-interface FaroSourcemapRollupPluginContext {
-  endpoint: string;
-  bundleId?: string;
-}
+import fs from "fs";
 
 export default function faroUploader(
   pluginOptions: FaroSourcemapUploaderPluginOptions
 ): Plugin {
-  const { endpoint, appId, appName, outputFiles, keepSourcemaps } =
-    pluginOptions;
+  const {
+    endpoint,
+    appId,
+    orgId,
+    appName,
+    outputFiles,
+    keepSourcemaps,
+    gzipContents,
+    verbose,
+  } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
-  const context: FaroSourcemapRollupPluginContext = {
-    endpoint: `${endpoint}/app/${appId}/sourcemap/`,
-    bundleId,
-  };
+  const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
 
   return {
     name: ROLLUP_PLUGIN_NAME,
@@ -59,54 +57,78 @@ export default function faroUploader(
 
       return null;
     },
-    /**
-     * Writes the bundle to the specified output directory and uploads the sourcemaps to a remote endpoint.
-     * @param options - The output options for the bundle.
-     * @param bundle - The bundle containing the assets and chunks.
-     */
-    writeBundle(options: OutputOptions, bundle: OutputBundle): void {
-      const outputPath = options.dir;
+    async writeBundle(options: OutputOptions, bundle: OutputBundle) {
+      const uploadedSourcemaps = [];
 
-      for (let a in bundle) {
-        const asset = bundle[a];
-        const source =
-          (asset as OutputAsset).source || (asset as OutputChunk).code;
+      try {
+        const outputPath = options.dir;
+        const sourcemapEndpoint = uploadEndpoint + bundleId;
+        const filesToUpload = [];
+        let totalSize = 0;
 
-        if (!asset || !source) {
-          continue;
-        }
+        for (let filename in bundle) {
+          // only upload sourcemaps or contents in the outputFiles list
+          if (
+            outputFiles.length
+              ? !outputFiles.map((o) => o + ".map").includes(filename)
+              : !filename.endsWith(".map")
+          ) {
+            continue;
+          }
 
-        if (
-          outputFiles.length
-            ? outputFiles
-                .map((o) => o + ".map")
-                .includes(a.split("/").pop() || "")
-            : a.endsWith(".map")
-        ) {
-          const sourcemap = JSON.parse(source.toString());
-          const sourcemapEndpoint = context.endpoint + bundleId;
+          // if we are tar/gzipping contents, collect N files and upload them all at once
+          // total size of all files uploaded at once must be less than 30mb (uncompressed)
+          if (gzipContents) {
+            const file = `${outputPath}/${filename}`;
+            const { size } = fs.statSync(file);
 
-          fetch(sourcemapEndpoint, {
-            method: "POST",
-            body: sourcemap,
-          })
-            .then((res) => {
-              if (res.ok) {
-                console.info(`Uploaded ${a} to ${sourcemapEndpoint}`);
-              } else {
-                console.info(
-                  `Upload of ${a} failed with status: ${res.status}, ${res.body}`
-                );
+            filesToUpload.push(file);
+            totalSize += size;
+
+            if (totalSize > THIRTY_MB_IN_BYTES) {
+              filesToUpload.pop();
+              const result = await uploadCompressedSourceMaps({
+                sourcemapEndpoint,
+                orgId: orgId,
+                files: filesToUpload,
+                keepSourcemaps: !!keepSourcemaps,
+                verbose: verbose,
+              });
+
+              if (result) {
+                uploadedSourcemaps.push(...filesToUpload);
               }
 
-              // delete source map
-              const sourceMapToDelete = `${outputPath}/${a}`;
-              if (!keepSourcemaps && fs.existsSync(sourceMapToDelete)) {
-                fs.unlinkSync(sourceMapToDelete);
-              }
-            })
-            .catch((err) => console.error(err));
+              filesToUpload.length = 0;
+              filesToUpload.push(file);
+              totalSize = size;
+            }
+          }
+
+          // if we are not compresing, upload each file individually
+          if (!gzipContents) {
+            const result = await uploadSourceMap({
+              sourcemapEndpoint,
+              filename,
+              orgId: orgId,
+              filePath: `${outputPath}/${filename}`,
+              keepSourcemaps: !!keepSourcemaps,
+              verbose: verbose,
+            });
+
+            if (result) {
+              uploadedSourcemaps.push(filename);
+            }
+          }
         }
+      } catch (e) {
+        console.error(e);
+      }
+
+      if (uploadedSourcemaps.length && verbose) {
+        consoleInfoOrange(
+          `Uploaded sourcemaps: ${uploadedSourcemaps.map(map => map.split('/').pop()).join(", ")}`
+        );
       }
     },
   };
