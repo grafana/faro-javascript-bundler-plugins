@@ -1,0 +1,53 @@
+name: publish-npm
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  publish:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: main
+
+      # limit releases to version changes - https://github.com/EndBug/version-check
+      - name: Check version changes
+        uses: EndBug/version-check@v1
+        id: version_check
+        with:
+          # diff the commits rather than commit message for version changes
+          diff-search: true
+
+      - name: Version update detected
+        if: steps.version_check.outputs.changed == 'true'
+        run: 'echo "Version change found! New version: ${{ steps.version_check.outputs.version }} (${{ steps.version_check.outputs.type }})"'
+
+      - name: Setup .npmrc file for NPM registry
+        if: steps.version_check.outputs.changed == 'true'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install
+
+      - name: Build production bundle
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: build
+
+      - name: Publish package to NPM
+        if: steps.version_check.outputs.changed == 'true'
+        run: |
+          git fetch --tags
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+          yarn run publish from-git --yes --no-verify-access
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
