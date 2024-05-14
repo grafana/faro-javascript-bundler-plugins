@@ -24,5 +24,8 @@
   "devDependencies": {
     "@types/node": "^20.10.5",
     "tslib": "^2.6.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
