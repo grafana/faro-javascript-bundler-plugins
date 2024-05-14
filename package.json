@@ -5,9 +5,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "lerna run build"
+    "build": "lerna run build",
+    "publish": "lerna publish"
   },
-  "author": "Elliot Kirk <elliot.kirk@grafana.com>",
+  "author": "Grafana Labs",
   "license": "Apache-2.0",
   "dependencies": {},
   "devDependencies": {
