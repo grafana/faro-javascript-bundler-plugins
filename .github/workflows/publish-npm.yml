@@ -17,7 +17,7 @@ jobs:
       - name: Setup .npmrc file for NPM registry
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: 19.x
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
