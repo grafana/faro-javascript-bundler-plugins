@@ -15,8 +15,11 @@
     "build": "rollup --config rollup.config.mjs"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "file:.yalc/@grafana/faro-bundlers-shared",
+    "@grafana/faro-bundlers-shared": "^0.0.0",
     "cross-fetch": "^4.0.0",
     "magic-string": "^0.30.5"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
