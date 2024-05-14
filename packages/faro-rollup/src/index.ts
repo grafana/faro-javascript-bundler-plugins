@@ -32,6 +32,12 @@ export default function faroUploader(
 
   return {
     name: ROLLUP_PLUGIN_NAME,
+    /**
+     * Renders a chunk of code and generates a source map with a bundleId code snippet injected at the end.
+     * @param code The original code of the chunk.
+     * @param chunk The chunk object containing information about the file.
+     * @returns An object with the rendered code and the generated source map, or null if the chunk's file extension does not match the patterns.
+     */
     renderChunk(code, chunk) {
       if (chunk.fileName.match(/\.(js|ts|jsx|tsx|mjs|cjs)$/)) {
         const newCode = new MagicString(code);
