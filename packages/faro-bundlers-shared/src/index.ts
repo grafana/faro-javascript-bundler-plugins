@@ -11,7 +11,7 @@ export interface FaroSourcemapUploaderPluginOptions {
   appName: string;
   appId: string;
   orgId: string;
-  outputFiles: string[];
+  outputFiles?: string[];
   bundleId?: string;
   keepSourcemaps?: boolean;
   gzipContents?: boolean;
