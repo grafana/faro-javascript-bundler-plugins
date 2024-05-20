@@ -9,13 +9,13 @@ To install the Faro JavaScript Bundler Plugins for Rollup/Vite, use the package 
 To install the Rollup/Vite plugin with `npm`, run:
 
 ```bash
-npm install @grafana/faro-bundler-plugin-rollup
+npm install --save-dev @grafana/faro-bundler-plugin-rollup
 ```
 
 To install the Rollup/Vite plugin with `yarn`, run:
 
 ```bash
-yarn add @grafana/faro-bundler-plugin-rollup
+yarn add --dev @grafana/faro-bundler-plugin-rollup
 ```
 
 ## Usage
