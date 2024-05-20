@@ -69,7 +69,7 @@ export default function faroUploader(
         for (let filename in bundle) {
           // only upload sourcemaps or contents in the outputFiles list
           if (
-            outputFiles.length
+            outputFiles?.length
               ? !outputFiles.map((o) => o + ".map").includes(filename)
               : !filename.endsWith(".map")
           ) {

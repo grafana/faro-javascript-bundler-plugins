@@ -72,7 +72,7 @@ export default class FaroSourcemapUploaderPlugin
         for (let filename of filenames) {
           // only upload sourcemaps or contents in the outputFiles list
           if (
-            this.outputFiles.length
+            this.outputFiles?.length
               ? !this.outputFiles.map((o) => o + ".map").includes(filename)
               : !filename.endsWith(".map")
           ) {
