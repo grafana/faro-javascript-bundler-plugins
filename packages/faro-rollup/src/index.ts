@@ -121,6 +121,21 @@ export default function faroUploader(
             }
           }
         }
+
+        // upload any remaining files
+        if (filesToUpload.length) {
+          const result = await uploadCompressedSourceMaps({
+            sourcemapEndpoint,
+            orgId: orgId,
+            files: filesToUpload,
+            keepSourcemaps: !!keepSourcemaps,
+            verbose: verbose,
+          });
+
+          if (result) {
+            uploadedSourcemaps.push(...filesToUpload);
+          }
+        }
       } catch (e) {
         console.error(e);
       }
