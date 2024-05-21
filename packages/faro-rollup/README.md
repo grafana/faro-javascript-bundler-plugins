@@ -1,6 +1,6 @@
-# Faro Sourcemap Upload Plugin - Rollup/Vite
+# Faro Source Map Upload Plugin - Rollup/Vite
 
-This plugin uploads sourcemaps to the Faro collector to enable deobfuscation of stack traces in the Grafana Cloud Frontend Observability UI.
+This plugin uploads source maps to the Faro collector to enable de-obfuscation of stack traces in the Grafana Cloud Frontend Observability UI.
 
 ## Installation
 

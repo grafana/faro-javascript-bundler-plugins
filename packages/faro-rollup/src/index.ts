@@ -2,7 +2,7 @@ import { Plugin, OutputOptions, OutputBundle } from "rollup";
 import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
-  FaroSourcemapUploaderPluginOptions,
+  FaroSourceMapUploaderPluginOptions,
   faroBundleIdSnippet,
   randomString,
   consoleInfoOrange,
@@ -14,7 +14,7 @@ import {
 import fs from "fs";
 
 export default function faroUploader(
-  pluginOptions: FaroSourcemapUploaderPluginOptions
+  pluginOptions: FaroSourceMapUploaderPluginOptions
 ): Plugin {
   const {
     endpoint,

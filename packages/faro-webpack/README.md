@@ -1,6 +1,6 @@
-# Faro Sourcemap Upload Plugin - Webpack
+# Faro Source Map Upload Plugin - Webpack
 
-This plugin uploads sourcemaps to the Faro collector to enable deobfuscation of stack traces in the Grafana Cloud Frontend Observability UI.
+This plugin uploads source maps to the Faro collector to enable de-obfuscation of stack traces in the Grafana Cloud Frontend Observability UI.
 
 ## Installation
 
@@ -26,13 +26,13 @@ To use the Webpack plugin, add the following to your `webpack.config.js`:
 
 ```javascript
 // other imports
-import FaroSourcemapUploaderPlugin from "@grafana/faro-webpack-plugin";
+import FaroSourceMapUploaderPlugin from "@grafana/faro-webpack-plugin";
 
 module.exports = {
   // other configs
   plugins: [
     // other plugins
-    new FaroSourcemapUploaderPlugin({
+    new FaroSourceMapUploaderPlugin({
       appName: "$your-app-name",
       endpoint: "$your-faro-collector-url",
       apiKey: "$your-api-key",

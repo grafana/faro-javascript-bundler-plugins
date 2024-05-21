@@ -6,7 +6,7 @@ import { Readable } from "node:stream";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
 
-export interface FaroSourcemapUploaderPluginOptions {
+export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
   appName: string;
   appId: string;
@@ -18,7 +18,7 @@ export interface FaroSourcemapUploaderPluginOptions {
   verbose?: boolean;
 }
 
-interface UploadSourcemapOptions {
+interface UploadSourceMapOptions {
   sourcemapEndpoint: string;
   orgId: string;
   filePath: string;
@@ -27,7 +27,7 @@ interface UploadSourcemapOptions {
   verbose?: boolean;
 }
 
-interface UploadCompressedSourcemapsOptions {
+interface UploadCompressedSourceMapsOptions {
   sourcemapEndpoint: string;
   orgId: string;
   files: string[];
@@ -36,7 +36,7 @@ interface UploadCompressedSourcemapsOptions {
 }
 
 export const uploadSourceMap = async (
-  options: UploadSourcemapOptions
+  options: UploadSourceMapOptions
 ): Promise<boolean> => {
   const {
     sourcemapEndpoint,
@@ -80,7 +80,7 @@ export const uploadSourceMap = async (
 };
 
 export const uploadCompressedSourceMaps = async (
-  options: UploadCompressedSourcemapsOptions
+  options: UploadCompressedSourceMapsOptions
 ): Promise<boolean> => {
   const { sourcemapEndpoint, orgId, files, keepSourcemaps, verbose } = options;
 
@@ -151,8 +151,8 @@ export function randomString(length?: number): string {
 export const consoleInfoOrange = (message: string) =>
   console.info(ansi256(214)`[Faro] ${message}`);
 
-export const WEBPACK_PLUGIN_NAME = "FaroSourcemapUploaderPlugin";
-export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-sourcemap-uploader";
+export const WEBPACK_PLUGIN_NAME = "FaroSourceMapUploaderPlugin";
+export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-source-map-uploader";
 
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
 

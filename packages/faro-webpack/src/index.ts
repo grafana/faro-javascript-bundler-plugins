@@ -3,7 +3,7 @@ import fs from "fs";
 
 import {
   WEBPACK_PLUGIN_NAME,
-  FaroSourcemapUploaderPluginOptions,
+  FaroSourceMapUploaderPluginOptions,
   faroBundleIdSnippet,
   randomString,
   uploadSourceMap,
@@ -18,7 +18,7 @@ interface BannerPluginOptions {
   filename: string;
 }
 
-export default class FaroSourcemapUploaderPlugin
+export default class FaroSourceMapUploaderPlugin
   implements webpack.WebpackPluginInstance
 {
   private appName: string;
@@ -30,7 +30,7 @@ export default class FaroSourcemapUploaderPlugin
   private gzipContents?: boolean;
   private verbose?: boolean;
 
-  constructor(options: FaroSourcemapUploaderPluginOptions) {
+  constructor(options: FaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
     this.orgId = options.orgId;
     this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemaps/`;
@@ -152,4 +152,4 @@ export default class FaroSourcemapUploaderPlugin
   }
 }
 
-module.exports = FaroSourcemapUploaderPlugin;
+module.exports = FaroSourceMapUploaderPlugin;

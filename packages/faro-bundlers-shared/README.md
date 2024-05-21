@@ -1,3 +1,3 @@
-# Faro Sourcemap Upload Plugin Shared Utils
+# Faro Source Map Upload Plugin Shared Utils
 
-This package contains shared utilities for the Faro sourcemap upload plugins for Webpack, Rollup, and Vite.
+This package contains shared utilities for the Faro source map upload plugins for Webpack, Rollup, and Vite.
