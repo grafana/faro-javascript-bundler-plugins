@@ -17,13 +17,13 @@ To install the Faro JavaScript bundler plugins, use the package manager of your 
 To install the Webpack plugin with `npm`, run:
 
 ```bash
-npm install @grafana/faro-bundler-plugin-webpack
+npm install --save-dev @grafana/faro-bundler-plugin-webpack
 ```
 
 To install the Webpack plugin with `yarn`, run:
 
 ```bash
-yarn add @grafana/faro-bundler-plugin-webpack
+yarn add --dev @grafana/faro-bundler-plugin-webpack
 ```
 
 ### Rollup/Vite
@@ -33,13 +33,13 @@ Rollup and Vite are both supported by the same plugin.
 To install the Rollup/Vite plugin with `npm`, run:
 
 ```bash
-npm install @grafana/faro-bundler-plugin-rollup
+npm install --save-dev @grafana/faro-bundler-plugin-rollup
 ```
 
 To install the Rollup/Vite plugin with `yarn`, run:
 
 ```bash
-yarn add @grafana/faro-bundler-plugin-rollup
+yarn add --dev @grafana/faro-bundler-plugin-rollup
 ```
 
 ## Obtaining API key
@@ -48,7 +48,7 @@ yarn add @grafana/faro-bundler-plugin-rollup
 
 ## Usage
 
-Details of how to use the plugins with your bundler reside in the Frontend Observability plugin under the "Settings" -> "Web SDK Config" tab after clicking into your instrumented app.
+Details of how to use the plugins with your bundler reside in the Frontend Observability plugin under the "Settings" -> "Source Maps" tab after clicking into your instrumented app.
 
 That tab includes the necessary configuration for the Faro JavaScript bundler plugins, including the `appName`, `appId`, and `endpoint` values that you need for the plugins to work with your app. The details provided below are general instructions for how to use the plugins with your bundler.
 
@@ -106,10 +106,10 @@ export default defineConfig(({ mode }) => {
 The following options are available for the Faro JavaScript bundler plugins:
 
 - `appName: string` *required*: The name of your application. This should match the `appName` value you are using in your Faro Web SDK configuration.
-- `endpoint: string` *required*: The URL of your Faro Collector endpoint. This value is in the Frontend Observability plugin under "Settings" -> "Web SDK Config".
+- `endpoint: string` *required*: The URL of your Faro Collector endpoint. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps".
 - `apiKey: string` *required*: The API key for your Faro Collector. This value gets generated on grafana.com by creating a new scope (details provided in the plugin and in the "Obtaining API key" section of this document).
 - `appId: string` *required*: The ID of your application. This should match the `appId` value you are using in your Faro Web SDK configuration.
-- `orgId: string` *required*: The ID of your organization. This value is in the Frontend Observability plugin under "Settings" -> "Web SDK Config".
+- `orgId: string` *required*: The ID of your organization. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps".
 - `outputFiles: string[]` *optional*: An array of source map files to upload. By default, all source maps get uploaded.
 - `bundleId: string` *optional*: The ID of the bundle/build. You can specify this value to filter by bundle ID in the Frontend Observability plugin. Otherwise the bundler uses an auto-generated ID.
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading. Defaults to `false`.
