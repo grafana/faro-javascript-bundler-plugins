@@ -4233,7 +4233,7 @@ node-releases@^2.0.14:
   resolved "https://registry.npmjs.org/node-releases/-/node-releases-2.0.14.tgz#2ffb053bceb8b2be8495ece1ab6ce600c4461b0b"
   integrity sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==
 
-node-tar@^1.0.0:
+node-tar@^7.1.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/node-tar/-/node-tar-1.0.0.tgz#aafa99d3cecb720cbe592b333ef0cb9561fbb213"
   integrity sha512-cowng5lugLQ3Bb5wWYfWM3067/S9xHDwCw3RWbqn0swqmgApDwklyg31XRci97cT7gNbVHmxoXQSkr2zDi5n+g==
