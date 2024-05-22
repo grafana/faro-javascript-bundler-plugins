@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-webpack-plugin",
-  "version": "0.0.10",
+  "version": "0.0.9",
   "description": "Upload a source map to the Faro source map API from a Webpack build pipeline ",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.mjs",
