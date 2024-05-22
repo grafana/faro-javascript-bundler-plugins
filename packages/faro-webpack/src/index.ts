@@ -24,8 +24,8 @@ export default class FaroSourceMapUploaderPlugin
   private appName: string;
   private orgId: string;
   private endpoint: string;
-  private outputFiles: string[];
   private bundleId: string;
+  private outputFiles?: string[];
   private keepSourcemaps?: boolean;
   private gzipContents?: boolean;
   private verbose?: boolean;
