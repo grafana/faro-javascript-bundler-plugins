@@ -42,7 +42,7 @@ export default function faroUploader(
       if (chunk.fileName.match(/\.(js|ts|jsx|tsx|mjs|cjs)$/)) {
         const newCode = new MagicString(code);
 
-        newCode.append(faroBundleIdSnippet(bundleId, appName));
+        newCode.prepend(faroBundleIdSnippet(bundleId, appName));
 
         const map = newCode.generateMap({
           source: chunk.fileName,
