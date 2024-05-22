@@ -20,7 +20,7 @@
   "dependencies": {
     "ansis": "^3.2.0",
     "node-tar": "^1.0.0",
-    "tar": "^1.0.0"
+    "tar": "^7.1.0"
   },
   "publishConfig": {
     "access": "public"

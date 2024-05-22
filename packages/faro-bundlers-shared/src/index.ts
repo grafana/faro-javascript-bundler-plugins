@@ -1,8 +1,6 @@
 import crypto from "crypto";
 import fs from "fs";
 import { create } from "tar";
-import { buffer } from "node:stream/consumers";
-import { Readable } from "node:stream";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
 
@@ -101,7 +99,7 @@ export const uploadCompressedSourceMaps = async (
       "Content-Type": "application/gzip",
       "X-Scope-OrgID": orgId.toString(),
     },
-    body: await buffer(sourcemapBuffer! as Readable),
+    body: sourcemapBuffer.read(),
   })
     .then((res) => {
       if (res.ok) {
