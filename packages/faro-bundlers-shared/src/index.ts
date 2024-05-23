@@ -8,7 +8,9 @@ export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
   appName: string;
   appId: string;
+  apiKey: string;
   orgId: string;
+  stackId: string;
   outputFiles?: string[];
   bundleId?: string;
   keepSourcemaps?: boolean;
@@ -19,6 +21,8 @@ export interface FaroSourceMapUploaderPluginOptions {
 interface UploadSourceMapOptions {
   sourcemapEndpoint: string;
   orgId: string;
+  apiKey: string;
+  stackId: string;
   filePath: string;
   filename: string;
   keepSourcemaps: boolean;
@@ -28,6 +32,8 @@ interface UploadSourceMapOptions {
 interface UploadCompressedSourceMapsOptions {
   sourcemapEndpoint: string;
   orgId: string;
+  apiKey: string;
+  stackId: string;
   files: string[];
   keepSourcemaps: boolean;
   verbose?: boolean;
@@ -40,6 +46,8 @@ export const uploadSourceMap = async (
     sourcemapEndpoint,
     filePath,
     orgId,
+    apiKey,
+    stackId,
     keepSourcemaps,
     verbose,
     filename,
@@ -51,6 +59,7 @@ export const uploadSourceMap = async (
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${stackId}:${apiKey}`,
       "X-Scope-OrgID": orgId.toString(),
     },
     body: fs.readFileSync(filePath),
@@ -80,7 +89,7 @@ export const uploadSourceMap = async (
 export const uploadCompressedSourceMaps = async (
   options: UploadCompressedSourceMapsOptions
 ): Promise<boolean> => {
-  const { sourcemapEndpoint, orgId, files, keepSourcemaps, verbose } = options;
+  const { sourcemapEndpoint, orgId, stackId, files, keepSourcemaps, apiKey, verbose } = options;
 
   let sourcemapBuffer,
     success = true;
@@ -97,6 +106,7 @@ export const uploadCompressedSourceMaps = async (
     method: "POST",
     headers: {
       "Content-Type": "application/gzip",
+      "Authorization": `Bearer ${stackId}:${apiKey}`,
       "X-Scope-OrgID": orgId.toString(),
     },
     body: sourcemapBuffer.read(),

@@ -2,11 +2,14 @@
 
 A collection of plugins for various JavaScript bundlers. Used in conjunction with the [Faro Web SDK](https://github.com/grafana/faro-web-sdk) to unlock additional features in [Grafana Cloud Frontend Observability](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/).
 
-## Getting started
+## Get started
 
 The Faro JavaScript bundler plugins work with the [Faro Web SDK](https://github.com/grafana/faro-web-sdk) and [Grafana Cloud Frontend Observability](https://grafana.com/products/cloud/frontend-observability-for-real-user-monitoring/). To use these bundler plugins, you must first have instrumented your JavaScript application with Faro and be sending your telemetry data to a Faro Collector endpoint in Grafana Cloud. Follow the Frontend Observability [quickstart guide](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/quickstart/javascript/) to get started.
 
 After you have an instrumented JavaScript application sending data to Grafana Cloud, you are ready to get started.
+
+> [!NOTE]
+> The Faro JavaScript bundler plugins work with client-side rendered applications. Server-side rendering isn't yet supported.
 
 ## Installation
 
@@ -70,6 +73,7 @@ module.exports = {
       apiKey: "$your-api-key",
       appId: "$your-app-id",
       orgId: "$your-org-id",
+      stackId: "$your-stack-id",
       gzipContents: true,
     }),
   ],
@@ -95,6 +99,7 @@ export default defineConfig(({ mode }) => {
         apiKey: "$your-api-key",
         appId: "$your-app-id",
         orgId: "$your-org-id",
+        stackId: "$your-stack-id",
         gzipContents: true,
       }),
     ],
@@ -105,16 +110,17 @@ export default defineConfig(({ mode }) => {
 
 The following options are available for the Faro JavaScript bundler plugins:
 
-- `appName: string` *required*: The name of your application. This should match the `appName` value you are using in your Faro Web SDK configuration.
-- `endpoint: string` *required*: The URL of your Faro Collector endpoint. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps".
-- `apiKey: string` *required*: The API key for your Faro Collector. This value gets generated on grafana.com by creating a new scope (details provided in the plugin and in the "Obtaining API key" section of this document).
-- `appId: string` *required*: The ID of your application. This should match the `appId` value you are using in your Faro Web SDK configuration.
-- `orgId: string` *required*: The ID of your organization. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps".
-- `outputFiles: string[]` *optional*: An array of source map files to upload. By default, all source maps get uploaded.
-- `bundleId: string` *optional*: The ID of the bundle/build. You can specify this value to filter by bundle ID in the Frontend Observability plugin. Otherwise the bundler uses an auto-generated ID.
-- `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading. Defaults to `false`.
-- `gzipContents: boolean` *optional*: Whether to tarball and Gzip the contents of the source maps before uploading. Defaults to `true`.
-- `verbose: boolean` *optional*: Whether to log verbose output during the upload process. Defaults to `false`.
+- `appName: string` *required*: The name of your application, it should match the `appName` value used in your Faro Web SDK configuration
+- `endpoint: string` *required*: The URL of your Faro Collector endpoint, found in Frontend Observability under **Settings** and **Web SDK Config**
+- `apiKey: string` *required*: The API key for your Faro Collector, you can generate a new scope on [grafana.com], refer to the [Obtaining API key](#obtaining-api-key) section
+- `appId: string` *required*: The ID of your application, it should match the `appId` value used in your Faro Web SDK configuration
+- `orgId: string` *required*: The ID of your organization, found in Frontend Observability under **Settings** and **Web SDK Config**
+- `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** and **Web SDK Config**
+- `outputFiles: string[]` *optional*: An array of source map files to upload, by default Faro uploads all source maps
+- `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
+- `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
+- `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`
+- `verbose: boolean` *optional*: Whether to log verbose output during the upload process, default `false`
 
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
 

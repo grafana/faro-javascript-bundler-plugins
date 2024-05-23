@@ -70,6 +70,8 @@ export default class FaroSourceMapUploaderPlugin
         let totalSize = 0;
 
         for (let filename of filenames) {
+          const file = `${outputPath}/${filename}`;
+
           // only upload sourcemaps or contents in the outputFiles list
           if (
             this.outputFiles?.length
@@ -81,8 +83,7 @@ export default class FaroSourceMapUploaderPlugin
 
           // if we are tar/gzipping contents, collect N files and upload them all at once
           // total size of all files uploaded at once must be less than 30mb (uncompressed)
-          if (this.gzipContents) {
-            const file = `${outputPath}/${filename}`;
+          if (this.gzipContents && fs.existsSync(file)) {
             const { size } = fs.statSync(file);
 
             filesToUpload.push(file);

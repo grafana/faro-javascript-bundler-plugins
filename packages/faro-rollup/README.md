@@ -2,6 +2,9 @@
 
 This plugin uploads source maps to the Faro collector to enable de-obfuscation of stack traces in the Grafana Cloud Frontend Observability UI.
 
+> [!NOTE]
+> The Faro JavaScript bundler plugins work with client-side rendered applications. Server-side rendering isn't yet supported.
+
 ## Installation
 
 To install the Faro JavaScript Bundler Plugins for Rollup/Vite, use the package manager of your choice.
@@ -43,6 +46,7 @@ export default defineConfig(({ mode }) => {
         apiKey: "$your-api-key",
         appId: "$your-app-id",
         orgId: "$your-org-id",
+        stackId: "$your-stack-id",
         gzipContents: true,
       }),
     ],
