@@ -63,8 +63,13 @@ export default class FaroSourceMapUploaderPlugin
     compiler.hooks.afterEmit.tap(WEBPACK_PLUGIN_NAME, async () => {
       // upload the sourcemaps to the provided endpoint after the build is modified and done
       const uploadedSourcemaps = [];
+
+      if (!outputPath) {
+        return;
+      }
+
       try {
-        const filenames = fs.readdirSync(outputPath!);
+        const filenames = fs.readdirSync(outputPath);
         const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
         const filesToUpload = [];
         let totalSize = 0;

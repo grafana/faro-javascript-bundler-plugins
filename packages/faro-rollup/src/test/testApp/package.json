@@ -1,0 +1,15 @@
+{
+  "name": "webpack-test-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup --config rollup.config.cjs"
+  },
+  "dependencies": {
+    "@grafana/faro-rollup-plugin": "^0.0.12"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "webpack-cli": "^5.1.4"
+  }
+}
