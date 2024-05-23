@@ -1,0 +1,1 @@
+(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_rollup-test-app"]="1716506933654000a28770e"}catch(l){}})();document.write('<h1>Hello World</h1>');

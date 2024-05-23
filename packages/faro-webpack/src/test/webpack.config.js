@@ -15,6 +15,7 @@ const config = {
       appId: '1',
       orgId: '1',
       gzipContents: true,
+      bundleId: 'test'
     }),
   ]
 };
