@@ -17,12 +17,12 @@ jobs:
         with:
           cmd: install --frozen-lockfile
 
-      - name: Build production bundle
-        uses: borales/actions-yarn@v4
-        with:
-          cmd: build
-
       - name: Run tests
         uses: borales/actions-yarn@v4
         with:
           cmd: test
+
+      - name: Build production bundle
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: build
