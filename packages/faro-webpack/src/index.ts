@@ -22,7 +22,9 @@ export default class FaroSourceMapUploaderPlugin
   implements webpack.WebpackPluginInstance
 {
   private appName: string;
+  private apiKey: string;
   private orgId: string;
+  private stackId: string;
   private endpoint: string;
   private bundleId: string;
   private outputFiles?: string[];
@@ -32,7 +34,9 @@ export default class FaroSourceMapUploaderPlugin
 
   constructor(options: FaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
+    this.apiKey = options.apiKey;
     this.orgId = options.orgId;
+    this.stackId = options.stackId;
     this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemaps/`;
     this.outputFiles = options.outputFiles;
     this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
@@ -98,6 +102,8 @@ export default class FaroSourceMapUploaderPlugin
               filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,
+                apiKey: this.apiKey,
+                stackId: this.stackId,
                 orgId: this.orgId,
                 files: filesToUpload,
                 keepSourcemaps: !!this.keepSourcemaps,
@@ -118,6 +124,8 @@ export default class FaroSourceMapUploaderPlugin
           if (!this.gzipContents) {
             const result = await uploadSourceMap({
               sourcemapEndpoint,
+              apiKey: this.apiKey,
+              stackId: this.stackId,
               filename,
               orgId: this.orgId,
               filePath: `${outputPath}/${filename}`,
@@ -135,6 +143,8 @@ export default class FaroSourceMapUploaderPlugin
         if (filesToUpload.length) {
           const result = await uploadCompressedSourceMaps({
             sourcemapEndpoint,
+            apiKey: this.apiKey,
+            stackId: this.stackId,
             orgId: this.orgId,
             files: filesToUpload,
             keepSourcemaps: !!this.keepSourcemaps,

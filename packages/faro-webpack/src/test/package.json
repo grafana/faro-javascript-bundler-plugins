@@ -1,6 +1,7 @@
 {
   "name": "webpack-test-app",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "build": "webpack"
