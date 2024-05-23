@@ -30,6 +30,11 @@ jobs:
         with:
           cmd: build
 
+      - name: Run tests
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: test
+
       - name: Publish package to NPM
         run: |
           git fetch --tags
