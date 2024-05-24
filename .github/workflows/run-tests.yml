@@ -17,13 +17,13 @@ jobs:
         run: |
           echo $(pwd)
           echo $(ls)
-          cd packages/faro-webpack
+          cd packages/faro-webpack/src/test
           yarn install
-          echo $(pwd)
-          echo $(ls)
-          npx ava src/index.test.js
-          cd ../faro-rollup
+          cd ../..
+          yarn test
+          cd faro-rollup/src/test
           yarn install
+          cd ../..
           yarn test
 
       - name: Install dependencies
