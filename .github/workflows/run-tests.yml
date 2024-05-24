@@ -18,11 +18,13 @@ jobs:
         with:
           cmd: install --frozen-lockfile
 
-      - name: Run tests manually?
+      - name: Setup NPM
         uses: actions/setup-node@v3
         with:
           node-version: 20.x
           registry-url: "https://registry.npmjs.org"
+
+      - name: Run test manually
         run: |
           echo $(pwd)
           echo $(ls)
