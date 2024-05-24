@@ -6,3 +6,4 @@ src/index.d.ts
 yalc.lock
 .yalc
 .npmrc
+lerna-debug.log
