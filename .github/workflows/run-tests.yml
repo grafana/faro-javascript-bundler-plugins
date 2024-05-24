@@ -26,6 +26,7 @@ jobs:
           yarn install
           cd ../..
           yarn install
+          yarn build
           yarn test
 
       - name: Install dependencies
