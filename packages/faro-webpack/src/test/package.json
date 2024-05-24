@@ -1,0 +1,16 @@
+{
+  "name": "webpack-test-app",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack"
+  },
+  "dependencies": {
+    "@grafana/faro-webpack-plugin": "^0.0.12"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "webpack-cli": "^5.1.4"
+  }
+}

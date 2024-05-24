@@ -6,7 +6,8 @@
   ],
   "scripts": {
     "build": "lerna run build",
-    "publish": "lerna publish"
+    "publish": "lerna publish",
+    "test": "lerna run test"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",

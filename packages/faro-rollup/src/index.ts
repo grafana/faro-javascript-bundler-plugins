@@ -19,7 +19,9 @@ export default function faroUploader(
   const {
     endpoint,
     appId,
+    apiKey,
     orgId,
+    stackId,
     appName,
     outputFiles,
     keepSourcemaps,
@@ -89,6 +91,8 @@ export default function faroUploader(
               filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,
+                apiKey,
+                stackId,
                 orgId: orgId,
                 files: filesToUpload,
                 keepSourcemaps: !!keepSourcemaps,
@@ -109,6 +113,8 @@ export default function faroUploader(
           if (!gzipContents) {
             const result = await uploadSourceMap({
               sourcemapEndpoint,
+              apiKey,
+              stackId,
               filename,
               orgId: orgId,
               filePath: `${outputPath}/${filename}`,
@@ -126,6 +132,8 @@ export default function faroUploader(
         if (filesToUpload.length) {
           const result = await uploadCompressedSourceMaps({
             sourcemapEndpoint,
+            apiKey,
+            stackId,
             orgId: orgId,
             files: filesToUpload,
             keepSourcemaps: !!keepSourcemaps,

@@ -1,0 +1,42 @@
+name: run-tests
+on:
+  pull_request:
+
+jobs:
+  run-tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Install dependencies
+        uses: borales/actions-yarn@v5
+        with:
+          cmd: install --frozen-lockfile
+
+      - name: Setup NPM
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Run test manually
+        run: |
+          cd packages/faro-rollup/src/test
+          yarn install
+          cd ../..
+          yarn install
+          cd ../faro-webpack/src/test
+          yarn install
+          yarn build
+          cd ../../..
+          yarn test
+
+      - name: Build production bundle
+        uses: borales/actions-yarn@v5
+        with:
+          cmd: build

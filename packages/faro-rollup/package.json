@@ -2,6 +2,7 @@
   "name": "@grafana/faro-rollup-plugin",
   "version": "0.0.12",
   "description": "Upload a source map to the Faro source map API from a Rollup build pipeline",
+  "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.mjs",
   "repository": {
@@ -12,12 +13,17 @@
   "license": "Apache-2.0",
   "author": "Grafana Labs",
   "scripts": {
-    "build": "rollup --config rollup.config.mjs"
+    "build": "rollup --config rollup.config.mjs",
+    "test": "ava src/index.test.js"
+  },
+  "devDependencies": {
+    "ava": "^3.8.1"
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.0.12",
     "cross-fetch": "^4.0.0",
-    "magic-string": "^0.30.5"
+    "magic-string": "^0.30.5",
+    "rollup": "^4.1.1"
   },
   "publishConfig": {
     "access": "public"
