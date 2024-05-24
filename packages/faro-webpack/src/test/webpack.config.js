@@ -1,11 +1,13 @@
 import FaroSourcemapUploaderPlugin from '@grafana/faro-webpack-plugin';
+import path from 'path';
 
 const config = {
   entry: {
     module: './main.cjs'
   },
   output: {
-    filename: 'bundle.cjs'
+    filename: 'bundle.js',
+    path: path.resolve(process.cwd(), 'dist'),
   },
   mode: 'production',
   plugins: [

@@ -13,22 +13,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Run test manually
-        run: |
-          echo $(pwd)
-          echo $(ls)
-          cd packages/faro-rollup/src/test
-          yarn install
-          cd ../..
-          yarn install
-          yarn test
-          cd ../faro-webpack/src/test
-          yarn install
-          cd ../..
-          yarn install
-          yarn build
-          yarn test
-
       - name: Install dependencies
         uses: borales/actions-yarn@v5
         with:
@@ -40,10 +24,17 @@ jobs:
           node-version: 18.x
           registry-url: "https://registry.npmjs.org"
 
-      - name: Run tests
-        uses: borales/actions-yarn@v5
-        with:
-          cmd: test
+      - name: Run test manually
+        run: |
+          cd packages/faro-rollup/src/test
+          yarn install
+          cd ../..
+          yarn install
+          cd ../faro-webpack/src/test
+          yarn install
+          yarn build
+          cd ../../..
+          yarn test
 
       - name: Build production bundle
         uses: borales/actions-yarn@v5
