@@ -18,6 +18,19 @@ jobs:
         with:
           cmd: install --frozen-lockfile
 
+      - name: Run tests manually?
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          registry-url: "https://registry.npmjs.org"
+        run: |
+          echo $(pwd)
+          echo $(ls)
+          cd packages/faro-webpack
+          yarn test
+          cd ../faro-rollup
+          yarn test
+
       - name: Run tests
         uses: borales/actions-yarn@v5
         with:
