@@ -17,12 +17,12 @@ jobs:
         run: |
           echo $(pwd)
           echo $(ls)
-          cd packages/faro-webpack/src/test
+          cd packages/faro-rollup/src/test
           yarn install
           cd ../..
           yarn install
           yarn test
-          cd faro-rollup/src/test
+          cd faro-webpack/src/test
           yarn install
           cd ../..
           yarn install
