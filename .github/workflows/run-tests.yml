@@ -20,10 +20,12 @@ jobs:
           cd packages/faro-webpack/src/test
           yarn install
           cd ../..
+          yarn install
           yarn test
           cd faro-rollup/src/test
           yarn install
           cd ../..
+          yarn install
           yarn test
 
       - name: Install dependencies
