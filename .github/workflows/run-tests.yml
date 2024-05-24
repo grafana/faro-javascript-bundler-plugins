@@ -29,8 +29,10 @@ jobs:
           echo $(pwd)
           echo $(ls)
           cd packages/faro-webpack
+          yarn install
           yarn test
           cd ../faro-rollup
+          yarn install
           yarn test
 
       - name: Run tests
