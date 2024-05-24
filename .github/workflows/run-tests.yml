@@ -22,7 +22,7 @@ jobs:
           cd ../..
           yarn install
           yarn test
-          cd faro-webpack/src/test
+          cd ../faro-webpack/src/test
           yarn install
           cd ../..
           yarn install
