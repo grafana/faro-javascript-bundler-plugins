@@ -20,13 +20,13 @@ To install the Faro JavaScript bundler plugins, use the package manager of your 
 To install the Webpack plugin with `npm`, run:
 
 ```bash
-npm install --save-dev @grafana/faro-bundler-plugin-webpack
+npm install --save-dev @grafana/faro-webpack-plugin
 ```
 
 To install the Webpack plugin with `yarn`, run:
 
 ```bash
-yarn add --dev @grafana/faro-bundler-plugin-webpack
+yarn add --dev @grafana/faro-webpack-plugin
 ```
 
 ### Rollup/Vite
@@ -36,13 +36,13 @@ Rollup and Vite are both supported by the same plugin.
 To install the Rollup/Vite plugin with `npm`, run:
 
 ```bash
-npm install --save-dev @grafana/faro-bundler-plugin-rollup
+npm install --save-dev @grafana/faro-rollup-plugin
 ```
 
 To install the Rollup/Vite plugin with `yarn`, run:
 
 ```bash
-yarn add --dev @grafana/faro-bundler-plugin-rollup
+yarn add --dev @grafana/faro-rollup-plugin
 ```
 
 ## Obtaining API key
@@ -86,7 +86,7 @@ To use the Rollup/Vite plugin, add the following to your `rollup.config.js` or `
 
 ```javascript
 // other imports
-import faroUploader from '@grafana/faro-bundler-plugin-rollup';
+import faroUploader from '@grafana/faro-rollup-plugin';
 
 export default defineConfig(({ mode }) => {
   return {

@@ -10,13 +10,13 @@ This plugin uploads source maps to the Faro collector to enable de-obfuscation o
 To install the Faro JavaScript bundler plugins for Webpack, use the package manager of your choice.
 
 ```bash
-npm install --save-dev @grafana/faro-bundler-plugin-webpack
+npm install --save-dev @grafana/faro-webpack-plugin
 ```
 
 To install the Webpack plugin with `yarn`, run:
 
 ```bash
-yarn add --dev @grafana/faro-bundler-plugin-webpack
+yarn add --dev @grafana/faro-webpack-plugin
 ```
 
 ## Usage
