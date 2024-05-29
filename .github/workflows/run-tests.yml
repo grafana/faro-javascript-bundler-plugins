@@ -26,14 +26,14 @@ jobs:
 
       - name: Run test manually
         run: |
-          yarn install
+          yarn install --frozen-lockfile
           yarn build
           cd packages/faro-rollup/src/test
-          yarn install
+          yarn install --pure-lockfile
           cd ../..
-          yarn install
+          yarn install --pure-lockfile
           cd ../faro-webpack/src/test
-          yarn install
+          yarn install --pure-lockfile
           yarn build
           cd ../../..
           yarn test
