@@ -3,7 +3,6 @@
   "extends": "@grafana/tsconfig",
   "include": ["./**/*", "../package.json"],
   "compilerOptions": {
-    "module": "commonjs",
     "sourceMap": true,
     "esModuleInterop": true
   }
