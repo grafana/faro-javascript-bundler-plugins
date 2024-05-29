@@ -5,6 +5,8 @@
   "rootDir": "./src",
   "declaration": true,
   "compilerOptions": {
+    "module": "commonjs",
+    "sourceMap": true,
     "esModuleInterop": true
   }
 }

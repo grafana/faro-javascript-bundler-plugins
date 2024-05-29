@@ -1,7 +1,7 @@
 import FaroSourcemapUploaderPlugin from '@grafana/faro-webpack-plugin';
 import path from 'path';
 
-const config = {
+export const config = {
   entry: {
     module: './main.cjs'
   },
@@ -21,5 +21,3 @@ const config = {
     }),
   ]
 };
-
-export default config;
