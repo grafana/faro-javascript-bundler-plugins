@@ -3,6 +3,7 @@
   "version": "0.0.14",
   "description": "Upload a source map to the Faro source map API from a Webpack build pipeline ",
   "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
   "module": "dist/esm/index.mjs",
   "repository": {
     "type": "git",
