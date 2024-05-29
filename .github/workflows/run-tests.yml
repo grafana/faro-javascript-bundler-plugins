@@ -13,27 +13,25 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
+      - name: Setup NPM
+        uses: actions/setup-node@v3
+        with:
+          node-version: 19.x
+          registry-url: "https://registry.npmjs.org"
+
       - name: Install dependencies
         uses: borales/actions-yarn@v5
         with:
           cmd: install --frozen-lockfile
 
-      - name: Setup NPM
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-          registry-url: "https://registry.npmjs.org"
-
       - name: Run test manually
         run: |
-          yarn install --frozen-lockfile
-          yarn build
           cd packages/faro-rollup/src/test
-          yarn install --pure-lockfile
+          yarn install
           cd ../..
-          yarn install --pure-lockfile
+          yarn install
           cd ../faro-webpack/src/test
-          yarn install --pure-lockfile
+          yarn install
           yarn build
           cd ../../..
           yarn test
