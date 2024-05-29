@@ -23,7 +23,6 @@ export default class FaroSourceMapUploaderPlugin
 {
   private appName: string;
   private apiKey: string;
-  private orgId: string;
   private stackId: string;
   private endpoint: string;
   private bundleId: string;
@@ -35,7 +34,6 @@ export default class FaroSourceMapUploaderPlugin
   constructor(options: FaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
     this.apiKey = options.apiKey;
-    this.orgId = options.orgId;
     this.stackId = options.stackId;
     this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemaps/`;
     this.outputFiles = options.outputFiles;
@@ -104,7 +102,6 @@ export default class FaroSourceMapUploaderPlugin
                 sourcemapEndpoint,
                 apiKey: this.apiKey,
                 stackId: this.stackId,
-                orgId: this.orgId,
                 files: filesToUpload,
                 keepSourcemaps: !!this.keepSourcemaps,
                 verbose: this.verbose,
@@ -127,7 +124,6 @@ export default class FaroSourceMapUploaderPlugin
               apiKey: this.apiKey,
               stackId: this.stackId,
               filename,
-              orgId: this.orgId,
               filePath: `${outputPath}/${filename}`,
               keepSourcemaps: !!this.keepSourcemaps,
               verbose: this.verbose,
@@ -145,7 +141,6 @@ export default class FaroSourceMapUploaderPlugin
             sourcemapEndpoint,
             apiKey: this.apiKey,
             stackId: this.stackId,
-            orgId: this.orgId,
             files: filesToUpload,
             keepSourcemaps: !!this.keepSourcemaps,
             verbose: this.verbose,

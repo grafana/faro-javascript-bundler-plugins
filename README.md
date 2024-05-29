@@ -72,7 +72,6 @@ module.exports = {
       endpoint: "$your-faro-collector-url",
       apiKey: "$your-api-key",
       appId: "$your-app-id",
-      orgId: "$your-org-id",
       stackId: "$your-stack-id",
       gzipContents: true,
     }),
@@ -98,7 +97,6 @@ export default defineConfig(({ mode }) => {
         endpoint: "$your-faro-collector-url",
         apiKey: "$your-api-key",
         appId: "$your-app-id",
-        orgId: "$your-org-id",
         stackId: "$your-stack-id",
         gzipContents: true,
       }),
@@ -114,7 +112,6 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `endpoint: string` *required*: The URL of your Faro Collector endpoint, found in Frontend Observability under **Settings** and **Web SDK Config**
 - `apiKey: string` *required*: The API key for your Faro Collector, you can generate a new scope on [grafana.com], refer to the [Obtaining API key](#obtaining-api-key) section
 - `appId: string` *required*: The ID of your application, it should match the `appId` value used in your Faro Web SDK configuration
-- `orgId: string` *required*: The ID of your organization, found in Frontend Observability under **Settings** and **Web SDK Config**
 - `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** and **Web SDK Config**
 - `outputFiles: string[]` *optional*: An array of source map files to upload, by default Faro uploads all source maps
 - `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
