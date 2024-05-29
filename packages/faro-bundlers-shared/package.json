@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-bundlers-shared",
-  "version": "0.0.13",
+  "version": "0.0.12",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
   "module": "dist/esm/index.mjs",
