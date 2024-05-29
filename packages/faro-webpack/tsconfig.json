@@ -5,6 +5,7 @@
   "rootDir": "./src",
   "declaration": true,
   "compilerOptions": {
+    "sourceMap": true,
     "esModuleInterop": true
   }
 }

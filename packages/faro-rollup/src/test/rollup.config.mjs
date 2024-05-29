@@ -1,6 +1,6 @@
-const faroUploader = require('@grafana/faro-rollup-plugin');
+import faroUploader from '@grafana/faro-rollup-plugin';
 
-module.exports =
+export const config =
 {
   input: "./src/test/main.js",
   output: {
@@ -17,3 +17,5 @@ module.exports =
     })
   ]
 };
+
+export default config;

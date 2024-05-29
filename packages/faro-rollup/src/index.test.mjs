@@ -1,6 +1,6 @@
 import test from 'ava';
 import { rollup } from 'rollup';
-import config from './test/rollup.config.cjs';
+import { config } from './test/rollup.config.mjs';
 
 test('rollup', async t => {
   const bundle = await rollup(config);

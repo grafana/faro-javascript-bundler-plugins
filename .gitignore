@@ -7,3 +7,4 @@ yalc.lock
 .yalc
 .npmrc
 lerna-debug.log
+.DS_Store

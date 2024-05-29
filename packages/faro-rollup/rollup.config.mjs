@@ -35,7 +35,7 @@ export default {
       extensions,
       babelHelpers: "bundled",
       include: ["src/**/*"],
-      exclude: [/node_modules/, /test/, "*.test.ts"]
+      exclude: [/node_modules/, /test/]
     }),
     json(),
     resolve({
@@ -45,7 +45,6 @@ export default {
     }),
     commonjs({
       include: /node_modules/,
-      exclude: "*.test.ts"
     }),
   ],
 };
