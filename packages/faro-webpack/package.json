@@ -17,7 +17,7 @@
     "test": "ava src/index.test.js"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "~0.0",
+    "@grafana/faro-bundlers-shared": "^0.0.13",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "cross-fetch": "^4.0.0",
