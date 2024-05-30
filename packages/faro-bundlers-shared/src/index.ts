@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import fs from "fs";
-import { create } from "tar";
+import { Readable } from "stream";
+import { Pack, create } from "tar";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
 
@@ -86,16 +87,16 @@ export const uploadCompressedSourceMaps = async (
 ): Promise<boolean> => {
   const { sourcemapEndpoint, stackId, files, keepSourcemaps, apiKey, verbose } = options;
 
-  let sourcemapBuffer,
+  let sourcemapBuffer: Readable,
     success = true;
 
-  sourcemapBuffer = await create({ gzip: true }, files);
+  sourcemapBuffer = Readable.from(create({ z: true }, files));
 
   verbose &&
     consoleInfoOrange(
       `Uploading ${files
         .map((file) => file.split("/").pop())
-        .join(", ")} to ${sourcemapEndpoint}`
+        .join(", ")} to ${sourcemapEndpoint} - total size ${sourcemapBuffer.readableLength} bytes`
     );
   await fetch(sourcemapEndpoint, {
     method: "POST",
