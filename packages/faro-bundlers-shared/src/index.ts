@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import fs from "fs";
-import { Readable } from "stream";
-import { Pack, create } from "tar";
+import { create } from "tar";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
 
@@ -32,6 +31,7 @@ interface UploadCompressedSourceMapsOptions {
   sourcemapEndpoint: string;
   apiKey: string;
   stackId: string;
+  outputPath: string;
   files: string[];
   keepSourcemaps: boolean;
   verbose?: boolean;
@@ -85,18 +85,18 @@ export const uploadSourceMap = async (
 export const uploadCompressedSourceMaps = async (
   options: UploadCompressedSourceMapsOptions
 ): Promise<boolean> => {
-  const { sourcemapEndpoint, stackId, files, keepSourcemaps, apiKey, verbose } = options;
+  const { sourcemapEndpoint, stackId, files, keepSourcemaps, outputPath, apiKey, verbose } = options;
 
-  let sourcemapBuffer: Readable,
-    success = true;
+  let success = true;
 
-  sourcemapBuffer = Readable.from(create({ z: true }, files));
+  const tarball = `${outputPath}/${randomString()}.tar.gz`;
+  await create({ z: true, file: tarball }, files);
 
   verbose &&
     consoleInfoOrange(
       `Uploading ${files
         .map((file) => file.split("/").pop())
-        .join(", ")} to ${sourcemapEndpoint} - total size ${sourcemapBuffer.readableLength} bytes`
+        .join(", ")} to ${sourcemapEndpoint} - total size ${JSON.stringify(fs.statSync(tarball))} stats`
     );
   await fetch(sourcemapEndpoint, {
     method: "POST",
@@ -104,7 +104,7 @@ export const uploadCompressedSourceMaps = async (
       "Content-Type": "application/gzip",
       "Authorization": `Bearer ${stackId}:${apiKey}`,
     },
-    body: sourcemapBuffer.read(),
+    body: fs.readFileSync(tarball),
   })
     .then((res) => {
       if (res.ok) {
