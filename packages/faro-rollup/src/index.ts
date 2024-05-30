@@ -62,7 +62,7 @@ export default function faroUploader(
       const uploadedSourcemaps = [];
 
       try {
-        const outputPath = options.dir;
+        const outputPath = options.dir!;
         const sourcemapEndpoint = uploadEndpoint + bundleId;
         const filesToUpload = [];
         let totalSize = 0;
