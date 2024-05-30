@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-webpack-plugin",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Upload a source map to the Faro source map API from a Webpack build pipeline ",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -17,7 +17,7 @@
     "test": "ava src/index.test.mjs"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "^0.0.16",
+    "@grafana/faro-bundlers-shared": "^0.0.17",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "cross-fetch": "^4.0.0",
