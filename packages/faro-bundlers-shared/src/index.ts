@@ -96,7 +96,7 @@ export const uploadCompressedSourceMaps = async (
     consoleInfoOrange(
       `Uploading ${files
         .map((file) => file.split("/").pop())
-        .join(", ")} to ${sourcemapEndpoint} - total size ${JSON.stringify(fs.statSync(tarball))} stats`
+        .join(", ")} to ${sourcemapEndpoint}`
     );
   await fetch(sourcemapEndpoint, {
     method: "POST",
@@ -121,6 +121,11 @@ export const uploadCompressedSourceMaps = async (
             .map((file) => file.split("/").pop())
             .join(", ")} failed with status: ${res.status}`
         );
+      }
+
+      // delete tarball
+      if (fs.existsSync(tarball)) {
+        fs.unlinkSync(tarball);
       }
 
       if (keepSourcemaps) {
