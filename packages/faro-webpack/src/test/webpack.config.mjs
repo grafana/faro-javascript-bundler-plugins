@@ -1,4 +1,4 @@
-import FaroSourcemapUploaderPlugin from '@grafana/faro-webpack-plugin';
+import FaroSourceMapUploaderPlugin from '@grafana/faro-webpack-plugin';
 import path from 'path';
 
 export const config = {
@@ -11,7 +11,7 @@ export const config = {
   },
   mode: 'production',
   plugins: [
-    new FaroSourcemapUploaderPlugin({
+    new FaroSourceMapUploaderPlugin({
       appName: 'webpack-test-app',
       endpoint: 'http://localhost:8000/faro/api/v1',
       appId: '1',

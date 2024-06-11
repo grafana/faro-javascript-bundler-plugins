@@ -33,21 +33,21 @@
   resolved "https://registry.npmjs.org/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
 
-"@grafana/faro-bundlers-shared@^0.0.12":
-  version "0.0.12"
-  resolved "https://registry.npmjs.org/@grafana/faro-bundlers-shared/-/faro-bundlers-shared-0.0.12.tgz#c2a340d3674af7e2e7c6cea249f8eff5c850393f"
-  integrity sha512-tmOTLe8UOges3bhd+IiUGtj/vV9G7Sd/ObXgCo4RV4MmzOvfeMOXPsjAZ1b/nqu35CL8XXspr7GOBv18Sr513w==
+"@grafana/faro-bundlers-shared@^0.0.19":
+  version "0.0.19"
+  resolved "https://registry.npmjs.org/@grafana/faro-bundlers-shared/-/faro-bundlers-shared-0.0.19.tgz#b091e0ab9f1e0751ccba5765bc1874b861b4fb1a"
+  integrity sha512-/i3nb3O+S84J4PKZE9tQxo4KQdLTSri6+8Ca1hyv+gwn98vZ7TtPhjdOEvZNAxSW8uHNdBV/yDvmwwKRN9iHUg==
   dependencies:
     ansis "^3.2.0"
     node-tar "^1.0.0"
     tar "^7.1.0"
 
-"@grafana/faro-webpack-plugin@^0.0.12":
-  version "0.0.12"
-  resolved "https://registry.npmjs.org/@grafana/faro-webpack-plugin/-/faro-webpack-plugin-0.0.12.tgz#890e6939246732f2936cb608f443133794cceeb9"
-  integrity sha512-GaUp5vlUh59GfoWTbFYLsmYaZLDzCBxYYAE9KJeBCIylKrkgh2TcdkwLj1INcA0Fef3/8GkLlKNAkXZuhi72kA==
+"@grafana/faro-webpack-plugin@^0.0.19":
+  version "0.0.19"
+  resolved "https://registry.npmjs.org/@grafana/faro-webpack-plugin/-/faro-webpack-plugin-0.0.19.tgz#e778318d521f72fd517d74a43c5bf390f4d25bad"
+  integrity sha512-Nfqj5dldti0j7NjdZU9++IbMmWJTpgtJDSENzteBbQqDXYESJazYh7Mt/i+4iPJLvHSlEMnKUEtD+b+q0uKJMg==
   dependencies:
-    "@grafana/faro-bundlers-shared" "^0.0.12"
+    "@grafana/faro-bundlers-shared" "^0.0.19"
     "@rollup/plugin-babel" "^6.0.4"
     "@rollup/plugin-node-resolve" "^15.2.3"
     cross-fetch "^4.0.0"

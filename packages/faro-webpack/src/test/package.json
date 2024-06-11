@@ -6,7 +6,7 @@
     "build": "webpack"
   },
   "dependencies": {
-    "@grafana/faro-webpack-plugin": "^0.0.12"
+    "@grafana/faro-webpack-plugin": "^0.0.19"
   },
   "license": "MIT",
   "devDependencies": {
