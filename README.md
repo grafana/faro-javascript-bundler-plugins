@@ -47,7 +47,18 @@ yarn add --dev @grafana/faro-rollup-plugin
 
 ## Obtaining API key
 
-!! TODO - Add instructions on how to obtain API key !!
+In order to use the Faro JavaScript bundler plugins, you need to generate an API key with the necessary permissions to upload source maps to Grafana Cloud. To generate an API key, follow these steps:
+
+1. Navigate to the [Grafana website](https://grafana.com/).
+1. Sign in to your account and then click the **My Account** button in the top right corner.
+1. In the sidebar under **Security**, click **Access Policies** and then click the **Create access policy** button.
+1. After creating your access policy, click the **Add token** button in the card for your newly created policy.
+1. Select the `sourcemaps:read`, `sourcemaps:delete`, and `sourcemaps:write` scopes from the drop-down list.
+1. **Create** the token and be sure to copy the token value, as you aren't be able to see it again.
+
+After you have generated an API key, you can use it in the Faro JavaScript bundler plugins to upload your source maps to Grafana Cloud. Use the generated API key as the `apiKey` value in the configuration options for the bundler plugins.
+
+For best practices, store your API key in a secure location and don't expose it in your source code. Consider using environment variables or a secrets manager to securely store and access your API key.
 
 ## Usage
 
