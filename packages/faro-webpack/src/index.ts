@@ -26,6 +26,7 @@ export default class FaroSourceMapUploaderPlugin
   private stackId: string;
   private endpoint: string;
   private bundleId: string;
+  private outputPathOverride?: string;
   private outputFiles?: string[];
   private keepSourcemaps?: boolean;
   private gzipContents?: boolean;
@@ -36,6 +37,7 @@ export default class FaroSourceMapUploaderPlugin
     this.apiKey = options.apiKey;
     this.stackId = options.stackId;
     this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemaps/`;
+    this.outputPathOverride = options.outputPath;
     this.outputFiles = options.outputFiles;
     this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
     this.keepSourcemaps = options.keepSourcemaps;
@@ -49,7 +51,7 @@ export default class FaroSourceMapUploaderPlugin
    */
   apply(compiler: webpack.Compiler): void {
     const BannerPlugin = compiler.webpack.BannerPlugin;
-    const outputPath = compiler.options.output.path;
+    const outputPath = this.outputPathOverride ?? compiler.options.output.path;
 
     compiler.options.plugins = compiler.options.plugins || [];
     compiler.options.plugins.push(
