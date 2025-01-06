@@ -11,14 +11,3 @@ updates:
       interval: 'daily'
     target-branch: 'main'
     open-pull-requests-limit: 10
-
-  - package-ecosystem: 'npm'
-    directory: '/' 
-    schedule:
-      interval: 'daily' 
-    target-branch: 'main'
-    open-pull-requests-limit: 10
-    allow:
-      - dependency-type: "direct"
-        update-types: ["security"]
-
