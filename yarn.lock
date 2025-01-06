@@ -1989,9 +1989,9 @@ ansi-styles@^6.1.0:
   integrity sha512-bN798gFfQX+viw3R7yrGWRqnrN2oRkEkUjjl4JNn4E8GxxbjtG3FbrEIIY3l8/hrwUwIeCZvi4QuOTP4MErVug==
 
 ansis@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.npmjs.org/ansis/-/ansis-3.2.0.tgz#0e050c5be94784f32ffdac4b84fccba064aeae4b"
-  integrity sha512-Yk3BkHH9U7oPyCN3gL5Tc7CpahG/+UFv/6UG03C311Vy9lzRmA5uoxDTpU9CO3rGHL6KzJz/pdDeXZCZ5Mu/Sg==
+  version "3.6.0"
+  resolved "https://registry.yarnpkg.com/ansis/-/ansis-3.6.0.tgz#f4d8437fb27659bf5a6adca90135801919dee764"
+  integrity sha512-8KluYVZM+vx19f5rInhdEBdIAjvBp7ASzyF/DoStcDpMJ3JOM55ybvUcs9nMRVP8XN2K3ABBdO7zCXezvrT0pg==
 
 anymatch@~3.1.2:
   version "3.1.3"
