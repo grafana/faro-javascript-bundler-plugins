@@ -17,7 +17,7 @@
     "test": "ava src/index.test.mjs"
   },
   "devDependencies": {
-    "ava": "^3.8.1"
+    "ava": "^6.2.0"
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.1.1",
