@@ -13,7 +13,7 @@ import {
 } from "@grafana/faro-bundlers-shared";
 
 interface BannerPluginOptions {
-  hash: string;
+  hash?: string;
   chunk: webpack.Chunk;
   filename: string;
 }
