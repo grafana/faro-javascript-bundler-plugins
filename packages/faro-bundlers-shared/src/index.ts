@@ -16,6 +16,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   keepSourcemaps?: boolean;
   gzipContents?: boolean;
   verbose?: boolean;
+  skipUpload?: boolean;
 }
 
 interface UploadSourceMapOptions {
@@ -164,5 +165,20 @@ export const WEBPACK_PLUGIN_NAME = "FaroSourceMapUploaderPlugin";
 export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-source-map-uploader";
 
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
+
+/**
+ * Exports the bundleId to an environment variable for use in the CLI
+ * @param bundleId The bundleId to export
+ * @param appName The name of the app
+ * @param verbose Whether to log the export
+ */
+export const exportBundleIdToEnv = (bundleId: string, appName: string, verbose?: boolean): void => {
+  const envVarName = `FARO_BUNDLE_ID_${appName.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+  process.env[envVarName] = bundleId;
+
+  if (verbose) {
+    consoleInfoOrange(`Exported bundleId ${bundleId} to environment variable ${envVarName}`);
+  }
+};
 
 crypto.randomUUID();
