@@ -138,9 +138,9 @@ After you have completed all the required steps, you have finished - the Faro Co
 
 ## CLI for Sourcemap Uploads
 
-In addition to the bundler plugins, this repository also provides a CLI tool for uploading sourcemaps to the Faro source map API. This is useful if you want to separate the build process from the sourcemap upload process, or if you want to upload sourcemaps from a CI/CD pipeline.
+In addition to the bundler plugins, this repository also provides a CLI tool for uploading source maps to the Faro source map API. This is useful if you want to separate the build process from the source map upload process, or if you want to upload source maps from a CI/CD pipeline.
 
-The CLI uses cURL under the hood to make HTTP requests, which means cURL must be installed on your system. It also provides options for gzipping the payload to reduce upload sizes, which is especially useful for large sourcemap files. The CLI automatically handles the 30MB uncompressed file size limit of the Faro API by processing files in a streaming fashion, accumulating files until reaching the 30MB limit before uploading each batch - the same approach used by the bundler plugins. It also provides clear warnings for oversized files and skips files that exceed the limit.
+The CLI uses cURL under the hood to make HTTP requests, which means cURL must be installed on your system. It also provides options for gzipping the payload to reduce upload sizes, which is especially useful for large source map files.
 
 ### Installation
 

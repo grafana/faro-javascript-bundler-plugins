@@ -3,6 +3,7 @@ import fs from "fs";
 import { create } from "tar";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
+import path from "path";
 
 export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
@@ -179,6 +180,30 @@ export const exportBundleIdToEnv = (bundleId: string, appName: string, verbose?:
   if (verbose) {
     consoleInfoOrange(`Exported bundleId ${bundleId} to environment variable ${envVarName}`);
   }
+};
+
+/**
+ * Recursively finds all .map files in a directory
+ * @param dir The directory to search
+ * @returns An array of paths to all .map files in the directory and its subdirectories
+ */
+export const findMapFiles = (dir: string) => {
+  const sourcemapFiles: string[] = [];
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      // Recursively search subdirectories
+      findMapFiles(filePath);
+    } else if (stat.isFile() && file.endsWith('.map')) {
+      sourcemapFiles.push(filePath);
+    }
+  }
+
+  return sourcemapFiles;
 };
 
 crypto.randomUUID();

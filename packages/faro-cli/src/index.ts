@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
 import { execSync } from 'child_process';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES, findMapFiles } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
@@ -498,28 +498,8 @@ export const uploadSourceMaps = async (
   } = options;
 
   try {
-    // Find all sourcemap files in the output path
-    const sourcemapFiles: string[] = [];
-
-    // Function to recursively find all .map files in a directory
-    const findMapFiles = (dir: string) => {
-      const files = fs.readdirSync(dir);
-
-      for (const file of files) {
-        const filePath = path.join(dir, file);
-        const stat = fs.statSync(filePath);
-
-        if (stat.isDirectory()) {
-          // Recursively search subdirectories
-          findMapFiles(filePath);
-        } else if (stat.isFile() && file.endsWith('.map')) {
-          sourcemapFiles.push(filePath);
-        }
-      }
-    };
-
     // Find all .map files in the output path
-    findMapFiles(outputPath);
+    const sourcemapFiles = findMapFiles(outputPath);
 
     if (sourcemapFiles.length === 0) {
       consoleInfoOrange('No sourcemap files found');
