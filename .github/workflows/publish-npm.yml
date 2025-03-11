@@ -17,7 +17,7 @@ jobs:
       - name: Setup .npmrc file for NPM registry
         uses: actions/setup-node@v3
         with:
-          node-version: 19.x
+          node-version: 20.x
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
@@ -35,6 +35,7 @@ jobs:
           yarn install
           yarn build
           cd ../../..
+          yarn install && yarn build
           yarn test
 
       - name: Build production bundle
