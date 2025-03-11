@@ -113,6 +113,7 @@ export default defineConfig(({ mode }) => {
       }),
     ],
   };
+});
 ```
 
 ### Configuration Options
@@ -134,3 +135,93 @@ The following options are available for the Faro JavaScript bundler plugins:
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
 
 After you have completed all the required steps, you have finished - the Faro Collector begins processing your source maps and associating them with your telemetry data. The portions of your stack traces with source maps uploaded to the Faro Collector are automatically de-obfuscated and displayed in the Frontend Observability plugin when viewing your error data.
+
+## CLI for Sourcemap Uploads
+
+In addition to the bundler plugins, this repository also provides a CLI tool for uploading source maps to the Faro source map API. This is useful if you want to separate the build process from the source map upload process, or if you want to upload source maps from a CI/CD pipeline.
+
+The CLI uses cURL under the hood to make HTTP requests, which means cURL must be installed on your system. It also provides options for gzipping the payload to reduce upload sizes, which is especially useful for large source map files.
+
+### Installation
+
+To install the CLI with `npm`, run:
+
+```bash
+npm install --save-dev @grafana/faro-cli
+```
+
+To install the CLI with `yarn`, run:
+
+```bash
+yarn add --dev @grafana/faro-cli
+```
+
+### Usage with Bundler Plugins
+
+When using with the Faro bundler plugins, you can set the `skipUpload` option to `true` in the plugin configuration to skip uploading source maps during the build process and instead use the CLI to upload them later.
+
+#### Webpack Example
+
+```javascript
+// webpack.config.js
+const FaroSourceMapUploaderPlugin = require('@grafana/faro-webpack-plugin');
+
+module.exports = {
+  // other configs
+  plugins: [
+    // other plugins
+    new FaroSourceMapUploaderPlugin({
+      appName: "$your-app-name",
+      endpoint: "$your-faro-collector-url",
+      apiKey: "$your-api-key",
+      appId: "$your-app-id",
+      stackId: "$your-stack-id",
+      skipUpload: true, // Skip uploading during build
+      verbose: true,
+    }),
+  ],
+};
+```
+
+#### Rollup/Vite Example
+
+```javascript
+// rollup.config.js or vite.config.js
+import faroUploader from '@grafana/faro-rollup-plugin';
+
+export default defineConfig(({ mode }) => {
+  return {
+    // other configs
+    plugins: [
+      // other plugins
+      faroUploader({
+        appName: "$your-app-name",
+        endpoint: "$your-faro-collector-url",
+        apiKey: "$your-api-key",
+        appId: "$your-app-id",
+        stackId: "$your-stack-id",
+        skipUpload: true, // Skip uploading during build
+        verbose: true,
+      }),
+    ],
+  };
+});
+```
+
+Then, after the build, you can upload the source maps using the CLI:
+
+```bash
+npx faro-cli upload \
+  --endpoint "$your-faro-collector-url" \
+  --app-id "$your-app-id" \
+  --api-key "$your-api-key" \
+  --stack-id "$your-stack-id" \
+  --bundle-id env \
+  --app-name "$your-app-name" \
+  --output-path "./dist" \
+  --verbose
+```
+
+Note the use of `--bundle-id env` and `--app-name "$your-app-name"` to read the bundle ID from the environment variable set by the bundler plugin.
+
+For more information about the CLI, see the [CLI README](packages/faro-cli/README.md).

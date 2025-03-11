@@ -1,0 +1,16 @@
+{
+  "extends": "@grafana/tsconfig",
+  "compilerOptions": {
+    "outDir": "dist",
+    "module": "esnext",
+    "target": "es2020",
+    "declaration": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

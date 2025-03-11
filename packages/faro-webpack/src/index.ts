@@ -10,6 +10,7 @@ import {
   uploadCompressedSourceMaps,
   consoleInfoOrange,
   THIRTY_MB_IN_BYTES,
+  exportBundleIdToEnv,
 } from "@grafana/faro-bundlers-shared";
 
 interface BannerPluginOptions {
@@ -31,6 +32,7 @@ export default class FaroSourceMapUploaderPlugin
   private keepSourcemaps?: boolean;
   private gzipContents?: boolean;
   private verbose?: boolean;
+  private skipUpload?: boolean;
 
   constructor(options: FaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -43,6 +45,12 @@ export default class FaroSourceMapUploaderPlugin
     this.keepSourcemaps = options.keepSourcemaps;
     this.gzipContents = options.gzipContents;
     this.verbose = options.verbose;
+    this.skipUpload = options.skipUpload;
+
+    // Export bundleId to environment variable if skipUpload is true
+    if (this.skipUpload) {
+      exportBundleIdToEnv(this.bundleId, this.appName, this.verbose);
+    }
   }
 
   /**
@@ -63,6 +71,12 @@ export default class FaroSourceMapUploaderPlugin
         },
       })
     );
+
+    // Skip uploading if skipUpload is true
+    if (this.skipUpload) {
+      this.verbose && consoleInfoOrange(`Skipping sourcemap upload as skipUpload is set to true`);
+      return;
+    }
 
     compiler.hooks.afterEmit.tap(WEBPACK_PLUGIN_NAME, async () => {
       // upload the sourcemaps to the provided endpoint after the build is modified and done

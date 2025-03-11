@@ -9,6 +9,7 @@ import {
   uploadSourceMap,
   uploadCompressedSourceMaps,
   THIRTY_MB_IN_BYTES,
+  exportBundleIdToEnv,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
@@ -26,10 +27,16 @@ export default function faroUploader(
     keepSourcemaps,
     gzipContents,
     verbose,
+    skipUpload,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
   const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
+
+  // Export bundleId to environment variable if skipUpload is true
+  if (skipUpload) {
+    exportBundleIdToEnv(bundleId, appName, verbose);
+  }
 
   return {
     name: ROLLUP_PLUGIN_NAME,
@@ -59,6 +66,12 @@ export default function faroUploader(
       return null;
     },
     async writeBundle(options: OutputOptions, bundle: OutputBundle) {
+      // Skip uploading if skipUpload is true
+      if (skipUpload) {
+        verbose && consoleInfoOrange(`Skipping sourcemap upload as skipUpload is set to true`);
+        return;
+      }
+
       const uploadedSourcemaps = [];
 
       try {
@@ -108,7 +121,7 @@ export default function faroUploader(
             }
           }
 
-          // if we are not compresing, upload each file individually
+          // if we are not compressing, upload each file individually
           if (!gzipContents) {
             const result = await uploadSourceMap({
               sourcemapEndpoint,

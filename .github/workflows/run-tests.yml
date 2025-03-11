@@ -4,8 +4,12 @@ on:
 
 jobs:
   run-tests:
-    name: Run tests
+    name: Testing with Node version (${{ matrix.node }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [18.x, 20.x, 22.x, 23.x]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -16,7 +20,7 @@ jobs:
       - name: Setup NPM
         uses: actions/setup-node@v3
         with:
-          node-version: 19.x
+          node-version: ${{ matrix.node }}
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
@@ -34,6 +38,7 @@ jobs:
           yarn install
           yarn build
           cd ../../..
+          yarn install && yarn build
           yarn test
 
       - name: Build production bundle

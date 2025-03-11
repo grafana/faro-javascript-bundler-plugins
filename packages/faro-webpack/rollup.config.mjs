@@ -1,9 +1,17 @@
-import resolve from "@rollup/plugin-node-resolve";
 import babel from "@rollup/plugin-babel";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
+import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import packageJson from "./package.json" assert { type: "json" };
+import fs from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const configPath = join(
+  dirname(fileURLToPath(import.meta.url)),
+  './package.json'
+);
+const packageJson = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 const extensions = [".ts"];
 
