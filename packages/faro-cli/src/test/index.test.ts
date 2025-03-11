@@ -14,7 +14,7 @@ import {
   generateCurlCommand,
   UploadSourceMapOptions,
   UploadCompressedSourceMapsOptions,
-  findMapFiles
+  // findMapFiles
 } from '../index';
 
 // Mock dependencies
