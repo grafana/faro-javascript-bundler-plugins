@@ -186,8 +186,8 @@ export const uploadSourceMap = async (
 };
 
 /**
- * Uploads multiple sourcemap files compressed as a tarball to the Faro API using cURL
- * @param options Options for uploading the sourcemaps
+* Uploads multiple sourcemap files a gzipped tarball to the Faro API using cURL
+* @param options Options for uploading the sourcemaps
  * @returns Promise<boolean> indicating success or failure
  */
 export const uploadCompressedSourceMaps = async (

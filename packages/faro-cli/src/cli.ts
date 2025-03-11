@@ -154,7 +154,7 @@ program
         options.gzipPayload
       );
 
-      console.log(curlCommand);
+      console.log(`cURL command: ${options.gzipPayload ? 'gzip -c ' : ''}${curlCommand}`);
     } catch (err) {
       console.error('Error:', err);
       process.exit(1);
