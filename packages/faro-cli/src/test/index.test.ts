@@ -15,7 +15,7 @@ import {
   UploadSourceMapOptions,
   UploadCompressedSourceMapsOptions,
   findMapFiles
-} from '../src/index';
+} from '../index';
 
 // Mock dependencies
 jest.mock('fs');

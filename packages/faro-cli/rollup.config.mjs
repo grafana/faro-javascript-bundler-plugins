@@ -1,7 +1,11 @@
+import resolve from "@rollup/plugin-node-resolve";
+import babel from "@rollup/plugin-babel";
+import commonjs from "@rollup/plugin-commonjs";
 import typescript from '@rollup/plugin-typescript';
 import { readFileSync } from 'fs';
 
 const pkg = JSON.parse(readFileSync('./package.json', 'utf8'));
+const extensions = [".ts"];
 
 export default [
   {
@@ -18,7 +22,27 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [typescript()],
+    plugins: [
+      typescript({
+        outDir: "dist",
+        exclude: ["**/*.test.ts"],
+      }),
+      babel({
+        extensions,
+        babelHelpers: "bundled",
+        include: ["src/**/*"],
+        exclude: [/node_modules/, /test/, "*.test.ts"]
+      }),
+      resolve({
+        extensions,
+        rootDir: "./src",
+        preferBuiltins: true,
+      }),
+      commonjs({
+        include: /node_modules/,
+        exclude: "*.test.ts"
+      }),
+    ],
     external: [
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {}),
@@ -36,7 +60,27 @@ export default [
       sourcemap: true,
       banner: '#!/usr/bin/env node',
     },
-    plugins: [typescript()],
+    plugins: [
+      typescript({
+        outDir: "dist",
+        exclude: ["**/*.test.ts"],
+      }),
+      babel({
+        extensions,
+        babelHelpers: "bundled",
+        include: ["src/**/*"],
+        exclude: [/node_modules/, /test/, "*.test.ts"]
+      }),
+      resolve({
+        extensions,
+        rootDir: "./src",
+        preferBuiltins: true,
+      }),
+      commonjs({
+        include: /node_modules/,
+        exclude: "*.test.ts"
+      }),
+    ],
     external: [
       ...Object.keys(pkg.dependencies || {}),
       ...Object.keys(pkg.peerDependencies || {}),

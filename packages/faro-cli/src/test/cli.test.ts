@@ -2,13 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import { jest } from '@jest/globals';
 import { consoleInfoOrange } from '@grafana/faro-bundlers-shared';
-import { uploadSourceMaps, generateCurlCommand } from '../src/index';
+import { uploadSourceMaps, generateCurlCommand } from '../index';
 
 // Mock dependencies
 jest.mock('fs');
 jest.mock('path');
 jest.mock('@grafana/faro-bundlers-shared');
-jest.mock('../src/index');
+jest.mock('../index');
 
 // Mock console methods
 const originalConsoleLog = console.log;
