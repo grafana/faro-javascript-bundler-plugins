@@ -471,7 +471,7 @@ cat ${filePath} | gzip -c | curl -X POST "${sourcemapEndpoint}" \\
  * @param dir The directory to search
  * @returns An array of paths to all .map files in the directory and its subdirectories
  */
-export const findMapFiles = (dir: string) => {
+export const findMapFiles = (dir: string): string[] => {
   const sourcemapFiles: string[] = [];
   const files = fs.readdirSync(dir);
 
