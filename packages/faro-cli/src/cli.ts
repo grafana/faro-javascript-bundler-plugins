@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { Command } from 'commander';
 import { uploadSourceMaps, generateCurlCommand } from './index';
 import { consoleInfoOrange } from '@grafana/faro-bundlers-shared';
@@ -49,7 +47,7 @@ program
   .requiredOption('-b, --bundle-id <id>', 'Bundle ID (can be set via environment variable from bundler plugin)')
   .requiredOption('-o, --output-path <path>', 'Path to the directory containing sourcemaps')
   .option('-n, --app-name <n>', 'Application name (used to find bundleId in environment variables)')
-  .option('-k, --keep-sourcemaps', 'Keep sourcemaps after uploading', false)
+  .option('-m, --keep-sourcemaps', 'Keep sourcemaps after uploading', false)
   .option('-g, --gzip-contents', 'Compress sourcemaps as a tarball before uploading', false)
   .option('-z, --gzip-payload', 'Gzip the HTTP payload for smaller uploads', false)
   .option('-v, --verbose', 'Enable verbose logging', false)

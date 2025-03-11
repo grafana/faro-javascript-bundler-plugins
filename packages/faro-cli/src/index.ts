@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
 import { execSync } from 'child_process';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES, findMapFiles } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
@@ -463,6 +463,31 @@ cat ${filePath} | gzip -c | curl -X POST "${sourcemapEndpoint}" \\
   -H "Authorization: Bearer ${stackId}:${apiKey}" \\
   --data-binary @${filePath}`;
   }
+};
+
+
+/**
+ * Recursively finds all .map files in a directory
+ * @param dir The directory to search
+ * @returns An array of paths to all .map files in the directory and its subdirectories
+ */
+export const findMapFiles = (dir: string) => {
+  const sourcemapFiles: string[] = [];
+  const files = fs.readdirSync(dir);
+
+  for (const file of files) {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      // Recursively search subdirectories
+      findMapFiles(filePath);
+    } else if (stat.isFile() && file.endsWith('.map')) {
+      sourcemapFiles.push(filePath);
+    }
+  }
+
+  return sourcemapFiles;
 };
 
 /**

@@ -4,7 +4,7 @@ import * as tar from 'tar';
 import { execSync } from 'child_process';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES, findMapFiles } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES } from '@grafana/faro-bundlers-shared';
 import { jest } from '@jest/globals';
 
 import {
@@ -13,7 +13,8 @@ import {
   uploadSourceMaps,
   generateCurlCommand,
   UploadSourceMapOptions,
-  UploadCompressedSourceMapsOptions
+  UploadCompressedSourceMapsOptions,
+  findMapFiles
 } from '../src/index';
 
 // Mock dependencies
