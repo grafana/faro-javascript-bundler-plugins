@@ -18,6 +18,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   gzipContents?: boolean;
   verbose?: boolean;
   skipUpload?: boolean;
+  maxUploadSize?: number; // Maximum upload size in bytes
 }
 
 interface UploadSourceMapOptions {
@@ -166,6 +167,15 @@ export const WEBPACK_PLUGIN_NAME = "FaroSourceMapUploaderPlugin";
 export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-source-map-uploader";
 
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
+
+/**
+ * Gets the maximum upload size in bytes, defaulting to 30MB if not specified
+ * @param maxUploadSize Optional custom max upload size in bytes
+ * @returns The maximum upload size in bytes
+ */
+export const getMaxUploadSize = (maxUploadSize?: number): number => {
+  return maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
+};
 
 /**
  * Exports the bundleId to an environment variable for use in the CLI
