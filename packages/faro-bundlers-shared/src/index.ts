@@ -18,6 +18,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   gzipContents?: boolean;
   verbose?: boolean;
   skipUpload?: boolean;
+  maxUploadSize?: number; // Maximum upload size in bytes
 }
 
 interface UploadSourceMapOptions {

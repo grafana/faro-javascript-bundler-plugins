@@ -6,6 +6,7 @@ Update the version number in the following files:
 - `packages/faro-rollup/CHANGELOG.md`
 - `packages/faro-webpack/CHANGELOG.md`
 - `packages/faro-bundlers-shared/CHANGELOG.md`
+- `packages/faro-cli/CHANGELOG.md`
 
 ## 2. Use lerna to release
 

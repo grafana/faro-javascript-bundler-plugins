@@ -32,6 +32,9 @@ export default function faroUploader(
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
   const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
+  const maxSize = pluginOptions.maxUploadSize && pluginOptions.maxUploadSize > 0
+    ? pluginOptions.maxUploadSize
+    : THIRTY_MB_IN_BYTES;
 
   // Export bundleId to environment variable if skipUpload is true
   if (skipUpload) {
@@ -91,7 +94,7 @@ export default function faroUploader(
           }
 
           // if we are tar/gzipping contents, collect N files and upload them all at once
-          // total size of all files uploaded at once must be less than 30mb (uncompressed)
+          // total size of all files uploaded at once must be less than the configured max size (uncompressed)
           if (gzipContents) {
             const file = `${outputPath}/${filename}`;
             const { size } = fs.statSync(file);
@@ -99,7 +102,7 @@ export default function faroUploader(
             filesToUpload.push(file);
             totalSize += size;
 
-            if (totalSize > THIRTY_MB_IN_BYTES) {
+            if (totalSize > maxSize) {
               filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,

@@ -33,6 +33,7 @@ export default class FaroSourceMapUploaderPlugin
   private gzipContents?: boolean;
   private verbose?: boolean;
   private skipUpload?: boolean;
+  private maxUploadSize: number;
 
   constructor(options: FaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -46,6 +47,9 @@ export default class FaroSourceMapUploaderPlugin
     this.gzipContents = options.gzipContents;
     this.verbose = options.verbose;
     this.skipUpload = options.skipUpload;
+    this.maxUploadSize = options.maxUploadSize && options.maxUploadSize > 0
+      ? options.maxUploadSize
+      : THIRTY_MB_IN_BYTES;
 
     // Export bundleId to environment variable if skipUpload is true
     if (this.skipUpload) {
@@ -105,14 +109,14 @@ export default class FaroSourceMapUploaderPlugin
           }
 
           // if we are tar/gzipping contents, collect N files and upload them all at once
-          // total size of all files uploaded at once must be less than 30mb (uncompressed)
+          // total size of all files uploaded at once must be less than the configured max size (uncompressed)
           if (this.gzipContents && fs.existsSync(file)) {
             const { size } = fs.statSync(file);
 
             filesToUpload.push(file);
             totalSize += size;
 
-            if (totalSize > THIRTY_MB_IN_BYTES) {
+            if (totalSize > this.maxUploadSize) {
               filesToUpload.pop();
               const result = await uploadCompressedSourceMaps({
                 sourcemapEndpoint,
