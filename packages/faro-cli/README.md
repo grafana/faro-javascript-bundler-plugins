@@ -196,12 +196,12 @@ This will output a curl command that you can copy and run manually.
 - `-s, --stack-id <id>`: Faro stack ID (required)
 - `-b, --bundle-id <id>`: Bundle ID (required, can be set to "env" to read from environment variable)
 - `-o, --output-path <path>`: Path to the directory containing source maps (required)
-- `-n, --app-name <n>`: Application name (used to find bundleId in environment variables)
+- `-n, --app-name <name>`: Application name (used to find bundleId in environment variables)
 - `-k, --keep-sourcemaps`: Keep source maps after uploading (default: false)
 - `-g, --gzip-contents`: Compress source maps as a tarball before uploading; files are processed in a streaming fashion, accumulating until the size limit (default: false)
 - `-z, --gzip-payload`: Gzip the HTTP payload for smaller uploads (default: false)
 - `-v, --verbose`: Enable verbose logging (default: false)
-- `-x, --max-upload-size <size>`: Maximum upload size in bytes (default: 30MB or 31457280 bytes)
+- `-x, --max-upload-size <size>`: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
 
 ### Curl Command
 

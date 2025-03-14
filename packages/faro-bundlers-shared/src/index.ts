@@ -169,15 +169,6 @@ export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-source-map-uploader";
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
 
 /**
- * Gets the maximum upload size in bytes, defaulting to 30MB if not specified
- * @param maxUploadSize Optional custom max upload size in bytes
- * @returns The maximum upload size in bytes
- */
-export const getMaxUploadSize = (maxUploadSize?: number): number => {
-  return maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
-};
-
-/**
  * Exports the bundleId to an environment variable for use in the CLI
  * @param bundleId The bundleId to export
  * @param appName The name of the app

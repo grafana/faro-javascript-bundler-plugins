@@ -131,7 +131,7 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
 - `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`
 - `verbose: boolean` *optional*: Whether to log verbose output during the upload process, default `false`
-- `maxUploadSize: number` *optional*: Maximum upload size in bytes, default is 30MB (31457280 bytes)
+- `maxUploadSize: number` *optional*: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
 
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
 

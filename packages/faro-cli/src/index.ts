@@ -457,13 +457,14 @@ export const generateCurlCommand = (
   stackId: string,
   bundleId: string,
   filePath: string,
+  maxUploadSize: number = THIRTY_MB_IN_BYTES,
   gzipPayload: boolean = false
 ): string => {
   const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
 
   // Check file size and warn if it exceeds the limit
-  if (exceedsMaxSize(filePath)) {
-    console.warn(`Warning: File ${path.basename(filePath)} exceeds the maximum allowed size of 30MB for upload.`);
+  if (exceedsMaxSize(filePath, maxUploadSize)) {
+    console.warn(`Warning: File ${path.basename(filePath)} exceeds the maximum allowed size of ${maxUploadSize} bytes for upload.`);
   }
 
   if (gzipPayload) {
