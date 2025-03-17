@@ -17,6 +17,7 @@ export interface UploadSourceMapOptions {
   keepSourcemaps: boolean;
   gzipPayload?: boolean;
   verbose?: boolean;
+  maxUploadSize?: number;
 }
 
 export interface UploadCompressedSourceMapsOptions {
@@ -30,6 +31,7 @@ export interface UploadCompressedSourceMapsOptions {
   keepSourcemaps: boolean;
   gzipPayload?: boolean;
   verbose?: boolean;
+  maxUploadSize?: number;
 }
 
 /**
@@ -48,13 +50,15 @@ const createGzippedFile = (filePath: string): string => {
 /**
  * Checks if a file exceeds the maximum allowed size
  * @param filePath Path to the file to check
+ * @param maxSize Optional custom max size in bytes (defaults to 30MB)
  * @returns boolean indicating if the file exceeds the size limit
  */
-const exceedsMaxSize = (filePath: string): boolean => {
+const exceedsMaxSize = (filePath: string, maxSize?: number): boolean => {
   const { size } = fs.statSync(filePath);
+  const maxAllowedSize = maxSize && maxSize > 0 ? maxSize : THIRTY_MB_IN_BYTES;
 
-  // The unzipped size must not exceed 30MB, regardless of whether we're using gzip compression
-  return size > THIRTY_MB_IN_BYTES;
+  // The unzipped size must not exceed the max size, regardless of whether we're using gzip compression
+  return size > maxAllowedSize;
 };
 
 /**
@@ -64,6 +68,7 @@ const exceedsMaxSize = (filePath: string): boolean => {
  * @param headers Headers to include in the request
  * @param contentType Content type of the request
  * @param gzipPayload Whether to gzip the payload
+ * @param maxUploadSize Optional custom max upload size in bytes
  * @returns Promise<boolean> indicating success or failure
  */
 const executeCurl = (
@@ -71,7 +76,8 @@ const executeCurl = (
   filePath: string,
   headers: Record<string, string>,
   contentType: string,
-  gzipPayload: boolean = false
+  gzipPayload: boolean = false,
+  maxUploadSize?: number
 ): boolean => {
   try {
     let fileToUpload = filePath;
@@ -79,8 +85,8 @@ const executeCurl = (
     let tempFile: string | null = null;
 
     // Check file size before uploading
-    if (exceedsMaxSize(filePath)) {
-      console.error(`Error: File ${path.basename(filePath)} exceeds the maximum allowed size of 30MB for upload.`);
+    if (exceedsMaxSize(filePath, maxUploadSize)) {
+      console.error(`Error: File ${path.basename(filePath)} exceeds the maximum allowed size for upload.`);
       return false;
     }
 
@@ -143,14 +149,15 @@ export const uploadSourceMap = async (
     gzipPayload,
     verbose,
     filename,
+    maxUploadSize,
   } = options;
 
   const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
   let success = true;
 
   // Check file size before attempting to upload
-  if (exceedsMaxSize(filePath)) {
-    console.error(`Error: File ${filename} exceeds the maximum allowed size of 30MB for upload.`);
+  if (exceedsMaxSize(filePath, maxUploadSize)) {
+    console.error(`Error: File ${filename} exceeds the maximum allowed size for upload.`);
     return false;
   }
 
@@ -163,7 +170,8 @@ export const uploadSourceMap = async (
       filePath,
       { "Authorization": `Bearer ${stackId}:${apiKey}` },
       "application/json",
-      gzipPayload
+      gzipPayload,
+      maxUploadSize
     );
 
     if (success) {
@@ -203,7 +211,8 @@ export const uploadCompressedSourceMaps = async (
     files,
     keepSourcemaps,
     gzipPayload,
-    verbose
+    verbose,
+    maxUploadSize,
   } = options;
 
   const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
@@ -215,8 +224,8 @@ export const uploadCompressedSourceMaps = async (
     await create({ z: true, file: tarball }, files);
 
     // Check tarball size
-    if (exceedsMaxSize(outputPath)) {
-      verbose && consoleInfoOrange(`Tarball exceeds 30MB limit. Splitting into smaller chunks.`);
+    if (exceedsMaxSize(outputPath, maxUploadSize)) {
+      verbose && consoleInfoOrange(`Tarball exceeds the maximum allowed size for upload. Splitting into smaller chunks.`);
 
       // Delete the oversized tarball
       fs.unlinkSync(tarball);
@@ -232,7 +241,9 @@ export const uploadCompressedSourceMaps = async (
         files,
         keepSourcemaps,
         gzipPayload ?? false,
-        verbose ?? false
+        verbose ?? false,
+        false,
+        maxUploadSize
       );
     }
 
@@ -250,7 +261,8 @@ export const uploadCompressedSourceMaps = async (
       tarball,
       { "Authorization": `Bearer ${stackId}:${apiKey}` },
       "application/gzip",
-      false // Don't gzip again as tarball is already compressed
+      false, // Don't gzip again as tarball is already compressed
+      maxUploadSize
     );
 
     if (success) {
@@ -306,6 +318,7 @@ export const uploadCompressedSourceMaps = async (
  * @param gzipContents Whether to compress sourcemaps as a tarball before uploading
  * @param gzipPayload Whether to gzip the payload
  * @param verbose Whether to log verbose output
+ * @param maxUploadSize Optional custom max upload size in bytes
  * @returns Promise<boolean> indicating success or failure
  */
 const uploadFilesInChunks = async (
@@ -319,49 +332,50 @@ const uploadFilesInChunks = async (
   keepSourcemaps: boolean,
   gzipPayload: boolean,
   verbose: boolean,
-  gzipContents: boolean = false
+  gzipContents: boolean = false,
+  maxUploadSize?: number
 ): Promise<boolean> => {
   // Split files into chunks based on size
-  const chunks: string[][] = [[]];
-  let currentChunk = 0;
+  const chunks: string[][] = [];
+  let currentChunk: string[] = [];
   let currentSize = 0;
 
-  // Sort files by size (largest first) to optimize chunking
+  // Get file sizes
   const filesWithSize = files.map(file => ({
     path: file,
     size: fs.statSync(file).size
   })).sort((a, b) => b.size - a.size);
 
-  // Check if any individual file exceeds the limit
-  const oversizedFiles = filesWithSize.filter(file => file.size > THIRTY_MB_IN_BYTES);
-  if (oversizedFiles.length > 0) {
-    console.error(`Error: The following files exceed the 30MB limit and cannot be uploaded:`);
+  const maxSize = maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
+
+  // Filter out files that are too large
+  const oversizedFiles = filesWithSize.filter(file => file.size > maxSize);
+  if (oversizedFiles.length) {
     oversizedFiles.forEach(file => {
-      console.error(`- ${path.basename(file.path)} (${(file.size / (1024 * 1024)).toFixed(2)}MB)`);
+      console.error(`Error: File ${path.basename(file.path)} exceeds the maximum allowed size of ${maxSize} bytes for upload.`);
     });
-
-    // Filter out oversized files
-    const validFiles = filesWithSize.filter(file => file.size <= THIRTY_MB_IN_BYTES);
-    if (validFiles.length === 0) {
-      return false;
-    }
-
-    // Continue with valid files
-    filesWithSize.length = 0;
-    filesWithSize.push(...validFiles);
   }
 
-  // Create chunks of files that fit within the 30MB limit
-  for (const file of filesWithSize) {
+  const validFiles = filesWithSize.filter(file => file.size <= maxSize);
+  if (validFiles.length === 0) {
+    return false;
+  }
+
+  // Create chunks of files that fit within the size limit
+  for (const file of validFiles) {
     // If adding this file would exceed the limit, start a new chunk
-    if (currentSize + file.size > THIRTY_MB_IN_BYTES) {
-      currentChunk++;
-      chunks[currentChunk] = [];
+    if (currentSize + file.size > maxSize) {
+      currentChunk = [];
+      chunks.push(currentChunk);
       currentSize = 0;
     }
 
-    chunks[currentChunk].push(file.path);
+    currentChunk.push(file.path);
     currentSize += file.size;
+
+    if (chunks.length === 0) {
+      chunks.push(currentChunk);
+    }
   }
 
   verbose && consoleInfoOrange(`Split ${files.length} files into ${chunks.length} chunks for upload`);
@@ -389,6 +403,7 @@ const uploadFilesInChunks = async (
         keepSourcemaps: i < chunks.length - 1 ? true : keepSourcemaps, // Only delete files after the last chunk is uploaded
         gzipPayload,
         verbose,
+        maxUploadSize,
       });
     } else {
       // Upload files individually
@@ -405,6 +420,7 @@ const uploadFilesInChunks = async (
           keepSourcemaps: i < chunks.length - 1 ? true : keepSourcemaps, // Only delete files after the last chunk is uploaded
           gzipPayload,
           verbose,
+          maxUploadSize,
         });
 
         if (!fileResult) {
@@ -441,13 +457,14 @@ export const generateCurlCommand = (
   stackId: string,
   bundleId: string,
   filePath: string,
+  maxUploadSize: number = THIRTY_MB_IN_BYTES,
   gzipPayload: boolean = false
 ): string => {
   const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
 
   // Check file size and warn if it exceeds the limit
-  if (exceedsMaxSize(filePath)) {
-    console.warn(`Warning: File ${path.basename(filePath)} exceeds the maximum allowed size of 30MB for upload.`);
+  if (exceedsMaxSize(filePath, maxUploadSize)) {
+    console.warn(`Warning: File ${path.basename(filePath)} exceeds the maximum allowed size of ${maxUploadSize} bytes for upload.`);
   }
 
   if (gzipPayload) {
@@ -513,137 +530,153 @@ export const uploadSourceMaps = async (
     gzipContents?: boolean;
     gzipPayload?: boolean;
     verbose?: boolean;
+    maxUploadSize?: number;
   } = {}
 ): Promise<boolean> => {
   const {
     keepSourcemaps = false,
     gzipContents = false,
     gzipPayload = false,
-    verbose = false
+    verbose = false,
+    maxUploadSize,
   } = options;
 
-  try {
-    // Find all .map files in the output path
-    const sourcemapFiles = findMapFiles(outputPath);
+  const maxSize = maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
 
+  try {
+    // Find all .map files in the output directory
+    const sourcemapFiles = findMapFiles(outputPath);
     if (sourcemapFiles.length === 0) {
-      consoleInfoOrange('No sourcemap files found');
+      console.error(`Error: No sourcemap files found in ${outputPath}`);
       return false;
     }
 
-    verbose && consoleInfoOrange(`Found ${sourcemapFiles.length} sourcemap files`);
-
-    // Process files in a streaming fashion, similar to bundler plugins
-    const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
-    const filesToUpload: string[] = [];
-    let totalSize = 0;
-    let allSucceeded = true;
-    const uploadedSourcemaps: string[] = [];
-    const oversizedFiles: string[] = [];
+    verbose && consoleInfoOrange(`Found ${sourcemapFiles.length} sourcemap files in ${outputPath}`);
 
     // Check for oversized files first
+    const oversizedFiles: string[] = [];
     for (const file of sourcemapFiles) {
-      if (exceedsMaxSize(file)) {
+      if (exceedsMaxSize(file, maxUploadSize)) {
         const size = fs.statSync(file).size;
         oversizedFiles.push(file);
-        console.error(`- ${path.basename(file)} (${(size / (1024 * 1024)).toFixed(2)}MB)`);
+        console.error(`Error: File ${path.basename(file)} exceeds the maximum allowed size of ${maxSize} bytes (${(size / (1024 * 1024)).toFixed(2)}MB)`);
       }
     }
 
-    if (oversizedFiles.length > 0) {
-      console.error(`Error: The following files exceed the 30MB limit and cannot be uploaded:`);
-      oversizedFiles.forEach(file => {
-        const size = fs.statSync(file).size;
-        console.error(`- ${path.basename(file)} (${(size / (1024 * 1024)).toFixed(2)}MB)`);
-      });
-    }
-
     // Filter out oversized files
-    const validFiles = sourcemapFiles.filter(file => !exceedsMaxSize(file));
+    const validFiles = sourcemapFiles.filter(file => !exceedsMaxSize(file, maxUploadSize));
     if (validFiles.length === 0) {
       return false;
     }
 
-    // Process valid files
-    for (const file of validFiles) {
-      if (fs.existsSync(file)) {
-        const { size } = fs.statSync(file);
+    // If we're gzipping the contents, upload all files at once
+    if (gzipContents) {
+      verbose && consoleInfoOrange(`Compressing ${validFiles.length} sourcemap files as a tarball`);
 
-        filesToUpload.push(file);
-        totalSize += size;
+      // Create a temporary directory for the tarball
+      const tempDir = fs.mkdtempSync(path.join(tmpdir(), 'faro-'));
+      const tarball = path.join(tempDir, `${bundleId}.tar.gz`);
 
-        // If we've accumulated enough files or this is the last file, upload the batch
-        if (totalSize > THIRTY_MB_IN_BYTES || file === validFiles[validFiles.length - 1]) {
-          // If we've exceeded the limit, remove the last file for the next batch
-          // (unless this is the last file, in which case we need to upload it anyway)
-          if (totalSize > THIRTY_MB_IN_BYTES && file !== validFiles[validFiles.length - 1]) {
-            filesToUpload.pop();
-            totalSize -= size;
-          }
+      // Create the tarball
+      await create({ z: true, file: tarball }, validFiles);
 
-          let result: boolean;
-          if (gzipContents) {
-            // Upload as compressed tarball
-            result = await uploadCompressedSourceMaps({
-              endpoint: sourcemapEndpoint,
-              appId,
-              apiKey,
-              stackId,
-              bundleId,
-              outputPath,
-              files: filesToUpload,
-              keepSourcemaps: file !== validFiles[validFiles.length - 1] ? true : keepSourcemaps, // Only delete files after the last batch
-              gzipPayload,
-              verbose,
-            });
-          } else {
-            // Upload files individually
-            let batchSuccess = true;
-            for (const batchFile of filesToUpload) {
-              const fileResult = await uploadSourceMap({
-                endpoint: sourcemapEndpoint,
-                appId,
-                apiKey,
-                stackId,
-                bundleId,
-                filePath: batchFile,
-                filename: path.basename(batchFile),
-                keepSourcemaps: file !== validFiles[validFiles.length - 1] ? true : keepSourcemaps, // Only delete files after the last batch
-                gzipPayload,
-                verbose,
-              });
+      // Check tarball size
+      if (exceedsMaxSize(tarball, maxUploadSize)) {
+        verbose && consoleInfoOrange(`Tarball exceeds ${maxSize} byte limit. Splitting into smaller chunks.`);
 
-              if (!fileResult) {
-                batchSuccess = false;
-              }
-            }
-            result = batchSuccess;
-          }
+        // Delete the tarball
+        fs.unlinkSync(tarball);
 
-          if (result) {
-            uploadedSourcemaps.push(...filesToUpload);
-          } else {
-            allSucceeded = false;
-          }
+        // Upload files in chunks
+        return uploadFilesInChunks(
+          endpoint,
+          appId,
+          apiKey,
+          stackId,
+          bundleId,
+          outputPath,
+          validFiles,
+          keepSourcemaps,
+          gzipPayload,
+          verbose,
+          false,
+          maxUploadSize
+        );
+      }
 
-          // Reset for next batch
-          filesToUpload.length = 0;
+      // Upload the tarball
+      const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
+      const result = executeCurl(
+        sourcemapEndpoint,
+        tarball,
+        { "Authorization": `Bearer ${stackId}:${apiKey}` },
+        "application/gzip",
+        false, // Don't gzip again as tarball is already compressed
+        maxUploadSize
+      );
 
-          // If this was the last file and we removed it earlier, add it back for the next batch
-          if (totalSize > THIRTY_MB_IN_BYTES && file !== validFiles[validFiles.length - 1]) {
-            filesToUpload.push(file);
-            totalSize = size;
-          } else {
-            totalSize = 0;
-          }
+      // Delete the tarball
+      fs.unlinkSync(tarball);
+      fs.rmdirSync(tempDir);
+
+      // Delete the sourcemaps if requested
+      if (!keepSourcemaps && result) {
+        verbose && consoleInfoOrange(`Deleting ${validFiles.length} sourcemap files`);
+        for (const file of validFiles) {
+          fs.unlinkSync(file);
         }
+      }
+
+      return result;
+    }
+
+    // If we're not gzipping the contents, upload files individually or in chunks
+    if (validFiles.length > 10) {
+      verbose && consoleInfoOrange(`Uploading ${validFiles.length} sourcemap files in chunks`);
+      return uploadFilesInChunks(
+        endpoint,
+        appId,
+        apiKey,
+        stackId,
+        bundleId,
+        outputPath,
+        validFiles,
+        keepSourcemaps,
+        gzipPayload,
+        verbose,
+        false,
+        maxUploadSize
+      );
+    }
+
+    // Upload files individually
+    verbose && consoleInfoOrange(`Uploading ${validFiles.length} sourcemap files individually`);
+    let success = true;
+
+    // If we have fewer than 10 files, upload them individually
+    for (const file of validFiles) {
+      const result = await uploadSourceMap({
+        endpoint,
+        appId,
+        apiKey,
+        stackId,
+        bundleId,
+        filePath: file,
+        filename: path.basename(file),
+        keepSourcemaps,
+        gzipPayload,
+        verbose,
+        maxUploadSize,
+      });
+
+      if (!result) {
+        success = false;
       }
     }
 
-    verbose && consoleInfoOrange(`Successfully uploaded ${uploadedSourcemaps.length} sourcemap files`);
-    return allSucceeded;
+    return success;
   } catch (err) {
-    console.error(err);
+    console.error('Error:', err);
     return false;
   }
 };

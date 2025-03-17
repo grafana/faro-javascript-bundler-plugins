@@ -39,16 +39,18 @@ The CLI will automatically find and upload all `.map` files in the specified out
 
 #### File Size Limits
 
-The Faro API has a 30MB limit for individual file uploads. This limit applies to the uncompressed size of the files, regardless of whether compression is used during transmission. The CLI automatically handles this by:
+The Faro API has a 30MB limit for individual file uploads by default. This limit applies to the uncompressed size of the files, regardless of whether compression is used during transmission. The CLI automatically handles this by:
 
 1. Checking file sizes before uploading
 2. Warning about files that exceed the limit
 3. Skipping files that are too large
-4. Processing files in a streaming fashion, accumulating files until reaching the 30MB limit before uploading each batch
+4. Processing files in a streaming fashion, accumulating files until reaching the size limit before uploading each batch
 
 This streaming approach is the same method used by the bundler plugins, ensuring consistent behavior across all upload methods. The CLI intelligently processes files one by one, uploading batches as they reach the size limit, which optimizes the upload process while staying within the API's size limits.
 
-While the `--gzip-payload` option can significantly reduce the network transfer size, the original uncompressed file size must still be under 30MB to be accepted by the API.
+While the `--gzip-payload` option can significantly reduce the network transfer size, the original uncompressed file size must still be under the configured size limit to be accepted by the API.
+
+You can customize the maximum upload size using the `--max-upload-size` option, which allows you to specify a different size limit in bytes.
 
 #### Gzipping Options
 
@@ -196,9 +198,10 @@ This will output a curl command that you can copy and run manually.
 - `-o, --output-path <path>`: Path to the directory containing source maps (required)
 - `-n, --app-name <name>`: Application name (used to find bundleId in environment variables)
 - `-k, --keep-sourcemaps`: Keep source maps after uploading (default: false)
-- `-g, --gzip-contents`: Compress source maps as a tarball before uploading; files are processed in a streaming fashion, accumulating until the 30MB limit (default: false)
+- `-g, --gzip-contents`: Compress source maps as a tarball before uploading; files are processed in a streaming fashion, accumulating until the size limit (default: false)
 - `-z, --gzip-payload`: Gzip the HTTP payload for smaller uploads (default: false)
 - `-v, --verbose`: Enable verbose logging (default: false)
+- `-x, --max-upload-size <size>`: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
 
 ### Curl Command
 
