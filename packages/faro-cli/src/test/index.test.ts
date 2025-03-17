@@ -309,28 +309,12 @@ describe('faro-cli', () => {
         mockStackId,
         mockBundleId,
         mockFilePath,
+        THIRTY_MB_IN_BYTES, // maxUploadSize
         true // gzipPayload
       );
 
       expect(command).toContain('gzip -c');
       expect(command).toContain('Content-Encoding: gzip');
-    });
-
-    it('should include a warning for oversized files', () => {
-      (fs.statSync as jest.Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
-
-      generateCurlCommand(
-        mockEndpoint,
-        mockAppId,
-        mockApiKey,
-        mockStackId,
-        mockBundleId,
-        mockFilePath
-      );
-
-      expect(console.warn).toHaveBeenCalledWith(
-        expect.stringContaining('exceeds the maximum allowed size')
-      );
     });
 
     it('should include a warning for oversized files', () => {

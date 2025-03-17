@@ -651,7 +651,6 @@ export const uploadSourceMaps = async (
 
     // Upload files individually
     verbose && consoleInfoOrange(`Uploading ${validFiles.length} sourcemap files individually`);
-    const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
     let success = true;
 
     // If we have fewer than 10 files, upload them individually
