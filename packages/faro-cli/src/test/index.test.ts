@@ -345,6 +345,7 @@ describe('faro-cli', () => {
         mockBundleId,
         mockFilePath,
         THIRTY_MB_IN_BYTES + 10,
+        true
       );
 
       expect(command).toContain('gzip -c');
