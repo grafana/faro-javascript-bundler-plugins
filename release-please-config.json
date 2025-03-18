@@ -1,0 +1,30 @@
+{
+  "packages": {
+    "faro-bundlers-shared": {
+      "path": "packages/faro-bundlers-shared",
+      "changelog-path": "packages/faro-bundlers-shared/CHANGELOG.md",
+      "include-component-in-tag": false,
+      "release-type": "node"
+    },
+    "faro-cli": {
+      "path": "packages/faro-cli",
+      "changelog-path": "packages/faro-cli/CHANGELOG.md",
+      "include-component-in-tag": false,
+      "release-type": "node"
+    },
+    "faro-rollup": {
+      "path": "packages/faro-rollup",
+      "changelog-path": "packages/faro-rollup/CHANGELOG.md",
+      "include-component-in-tag": false,
+      "release-type": "node"
+    },
+    "faro-webpack": {
+      "path": "packages/faro-webpack",
+      "changelog-path": "packages/faro-webpack/CHANGELOG.md",
+      "include-component-in-tag": false,
+      "release-type": "node"
+    }
+  },
+  "include-v-in-tag": false,
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
+}
