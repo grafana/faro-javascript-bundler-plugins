@@ -1,0 +1,90 @@
+name: release-please
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+
+    steps:
+      - uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
+        name: get github app token
+        id: get-github-app-token
+        with:
+          app-id: ${{ secrets.FARO_SMU_CI_APP_ID }}
+          private-key: ${{ secrets.FARO_SMU_CI_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            faro-javascript-bundler-plugins
+      - uses: googleapis/release-please-action@v4.2
+        id: release
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+          release-type: node
+          config-file: release-please-config.json
+          manifest-file: release-please-manifest.json
+      - name: log context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+          NEEDS_CONTEXT: ${{ toJson(needs) }}
+          STEPS_CONTEXT: ${{ toJson(steps) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+          echo "$NEEDS_CONTEXT"
+          echo "$STEPS_CONTEXT"
+
+  publish:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: main
+
+      - name: Setup .npmrc file for NPM registry
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20.x
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: install --frozen-lockfile
+
+      - name: Run tests
+        run: |
+          cd packages/faro-rollup/src/test
+          yarn install
+          cd ../..
+          yarn install
+          cd ../faro-webpack/src/test
+          yarn install
+          yarn build
+          cd ../../..
+          yarn install && yarn build
+          yarn test
+
+      - name: Build production bundle
+        uses: borales/actions-yarn@v4
+        with:
+          cmd: build
+
+      - name: Publish package to NPM
+        run: |
+          git fetch --tags
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
+          yarn run publish from-git --yes --no-verify-access
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
