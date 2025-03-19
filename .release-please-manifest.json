@@ -2,5 +2,6 @@
   "faro-bundlers-shared": "0.2.2",
   "faro-cli": "0.2.2",
   "faro-rollup": "0.2.2",
-  "faro-webpack": "0.2.2"
+  "faro-webpack": "0.2.2",
+  ".": "0.3.0"
 }
