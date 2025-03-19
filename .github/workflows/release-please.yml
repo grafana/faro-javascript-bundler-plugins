@@ -28,7 +28,6 @@ jobs:
         id: release
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-          release-type: node
           config-file: release-please-config.json
           manifest-file: release-please-manifest.json
       - name: log context

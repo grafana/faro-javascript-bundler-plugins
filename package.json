@@ -1,5 +1,6 @@
 {
   "name": "faro-javascript-bundler-plugins",
+  "version": "0.0.0",
   "private": true,
   "workspaces": [
     "packages/*"
