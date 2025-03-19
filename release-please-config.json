@@ -1,31 +1,19 @@
 {
   "packages": {
-    "faro-bundlers-shared": {
-      "component": "faro-bundlers-shared",
-      "path": "packages/faro-bundlers-shared",
+    "packages/faro-bundlers-shared": {
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": false,
       "release-type": "node"
     },
-    "faro-cli": {
-      "component": "faro-cli",
-      "path": "packages/faro-cli",
+    "packages/faro-cli": {
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": false,
       "release-type": "node"
     },
-    "faro-rollup": {
-      "component": "faro-rollup",
-      "path": "packages/faro-rollup",
+    "packages/faro-rollup": {
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": false,
       "release-type": "node"
     },
-    "faro-webpack": {
-      "component": "faro-webpack",
-      "path": "packages/faro-webpack",
+    "packages/faro-webpack": {
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": false,
       "release-type": "node"
     }
   },
