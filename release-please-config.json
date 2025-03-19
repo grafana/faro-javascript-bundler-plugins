@@ -1,4 +1,10 @@
 {
+  "plugins": [
+    {
+      "type": "node-workspace",
+      "updatePeerDependencies": true
+    }
+  ],
   "packages": {
     "packages/faro-bundlers-shared": {
       "changelog-path": "CHANGELOG.md",

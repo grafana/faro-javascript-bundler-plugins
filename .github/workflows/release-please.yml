@@ -24,11 +24,10 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: |
             faro-javascript-bundler-plugins
-      - uses: googleapis/release-please-action@v4.2
+      - uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-          release-type: node
           config-file: release-please-config.json
           manifest-file: release-please-manifest.json
       - name: log context
