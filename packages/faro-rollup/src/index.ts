@@ -162,11 +162,9 @@ export default function faroUploader(
         console.error(e);
       }
 
-      if (verbose) {
+      if (uploadedSourcemaps.length && verbose) {
         consoleInfoOrange(
-          uploadedSourcemaps.length
-            ? `Uploaded sourcemaps: ${uploadedSourcemaps.map(map => map.split('/').pop()).join(", ")}`
-            : "No sourcemaps uploaded"
+          `Uploaded sourcemaps: ${uploadedSourcemaps.map(map => map.split('/').pop()).join(", ")}`
         );
       }
     },

@@ -176,11 +176,9 @@ export default class FaroSourceMapUploaderPlugin
         console.error(e);
       }
 
-      if (this.verbose) {
+      if (uploadedSourcemaps.length && this.verbose) {
         consoleInfoOrange(
-          uploadedSourcemaps.length
-            ? `Uploaded sourcemaps: ${uploadedSourcemaps.map(map => map.split('/').pop()).join(", ")}`
-            : "No sourcemaps uploaded"
+          `Uploaded sourcemaps: ${uploadedSourcemaps.map(map => map.split('/').pop()).join(", ")}`
         );
       }
     });
