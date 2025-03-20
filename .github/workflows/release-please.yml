@@ -82,8 +82,7 @@ jobs:
 
       - name: Publish package to NPM
         run: |
-          git fetch --tags
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
-          yarn run publish from-git --yes --no-verify-access
+          yarn run publish from-package --yes --no-verify-access
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
