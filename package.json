@@ -6,9 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "lerna run build",
+    "build": "lerna run build && yarn typecheck",
     "publish": "lerna publish",
-    "test": "lerna run test"
+    "test": "lerna run test",
+    "typecheck": "lerna exec -- tsc --noEmit"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",

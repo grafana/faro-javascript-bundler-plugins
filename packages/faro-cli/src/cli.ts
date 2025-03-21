@@ -29,6 +29,7 @@ interface CurlOptions {
   appName?: string;
   contentType?: string;
   gzipPayload: boolean;
+  maxUploadSize?: number;
 }
 
 const program = new Command();
@@ -154,6 +155,7 @@ program
         options.stackId,
         bundleId,
         filePath,
+        options.maxUploadSize,
         options.gzipPayload
       );
 
