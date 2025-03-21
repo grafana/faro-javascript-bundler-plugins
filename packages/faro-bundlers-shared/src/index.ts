@@ -3,7 +3,6 @@ import fs from "fs";
 import { create } from "tar";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
-import path from "path";
 
 export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
@@ -167,6 +166,8 @@ export const WEBPACK_PLUGIN_NAME = "FaroSourceMapUploaderPlugin";
 export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-source-map-uploader";
 
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
+
+export const JS_SOURCEMAP_PATTERN = /\.(js|ts|jsx|tsx|mjs|cjs)\.map$/;
 
 /**
  * Exports the bundleId to an environment variable for use in the CLI
