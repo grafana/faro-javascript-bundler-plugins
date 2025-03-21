@@ -92,6 +92,18 @@ describe('faro-cli', () => {
     console.warn = originalConsoleWarn;
   });
 
+  afterAll(() => {
+    jest.resetAllMocks();
+
+    jest.unmock('fs');
+    jest.unmock('path');
+    jest.unmock('tar');
+    jest.unmock('child_process');
+    jest.unmock('zlib');
+    jest.unmock('os');
+    jest.unmock('@grafana/faro-bundlers-shared');
+  });
+
   describe('uploadSourceMap', () => {
     const mockOptions: UploadSourceMapOptions = {
       endpoint: mockEndpoint,

@@ -1,8 +1,9 @@
 import { Command } from 'commander';
-import { uploadSourceMaps, generateCurlCommand } from './index';
-import { consoleInfoOrange } from '@grafana/faro-bundlers-shared';
+import { uploadSourceMaps, generateCurlCommand, injectBundleId } from './index';
+import { consoleInfoOrange, exportBundleIdToEnv, JS_SOURCEMAP_PATTERN, randomString } from '@grafana/faro-bundlers-shared';
 import path from 'path';
 import fs from 'fs';
+import { glob } from 'glob';
 
 interface UploadOptions {
   endpoint: string;
@@ -160,6 +161,79 @@ program
       );
 
       console.log(`cURL command: ${options.gzipPayload ? 'gzip -c ' : ''}${curlCommand}`);
+    } catch (err) {
+      console.error('Error:', err);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('inject-bundle-id')
+  .description('Inject a bundle ID snippet into JavaScript bundle files')
+  .requiredOption('-n, --app-name <name>', 'Application name used in the bundle ID snippet')
+  .option('-f, --files <patterns...>', 'File patterns to match (glob patterns are supported)', JS_SOURCEMAP_PATTERN.toString())
+  .option('-b, --bundle-id <id>', 'Bundle ID to inject (generates a random ID if not provided)', undefined)
+  .option('-v, --verbose', 'Enable verbose logging', false)
+  .option('-d, --dry-run', 'Only print which files would be modified without making changes', false)
+  .addHelpText('after', `
+Example:
+  # Inject a specific bundle ID into all JS files in the dist folder
+  $ faro-cli inject-bundle-id -b 12345-abcdef -n myapp -f 'dist/**/*.js'
+
+  # Generate a random bundle ID and inject it with verbose logging
+  $ faro-cli inject-bundle-id -n myapp -f 'dist/main.js' 'dist/chunk-*.js' -v
+
+  # Dry run to see which files would be modified
+  $ faro-cli inject-bundle-id -n myapp -f 'dist/**/*.js' -d -v`)
+  .action(async (options: {
+    bundleId: string;
+    appName: string;
+    files: string[];
+    verbose: boolean;
+    dryRun: boolean;
+  }) => {
+    try {
+      // Generate a random bundle ID if requested
+      let { bundleId } = options;
+      if (!bundleId) {
+        bundleId = `${Date.now()}-${randomString(5)}`;
+        options.verbose && consoleInfoOrange(`Generated bundle ID: ${bundleId}`);
+      }
+
+      // Resolve file patterns to actual files
+      const matchedFiles: string[] = [];
+
+      for (const pattern of options.files) {
+        const files = await glob(pattern);
+        if (files.length === 0 && options.verbose) {
+          consoleInfoOrange(`Warning: No files matched pattern '${pattern}'`);
+        }
+        matchedFiles.push(...files);
+      }
+
+      if (matchedFiles.length === 0) {
+        console.error('Error: No files matched the provided patterns');
+        process.exit(1);
+      }
+
+      options.verbose && consoleInfoOrange(`Found ${matchedFiles.length} files to process`);
+
+      // Inject bundle ID into each file
+      const results = await injectBundleId(bundleId, options.appName, matchedFiles, {
+        verbose: options.verbose,
+        dryRun: options.dryRun,
+      });
+
+      const modifiedCount = results.filter((r: { modified: boolean }) => r.modified).length;
+
+      if (options.dryRun) {
+        consoleInfoOrange(`Would modify ${modifiedCount} of ${matchedFiles.length} files`);
+      } else {
+        consoleInfoOrange(`Modified ${modifiedCount} of ${matchedFiles.length} files`);
+
+        // Export bundleId to environment variable for potential later use
+        exportBundleIdToEnv(bundleId, options.appName, options.verbose);
+      }
     } catch (err) {
       console.error('Error:', err);
       process.exit(1);
