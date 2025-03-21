@@ -91,6 +91,55 @@ npx faro-cli upload \
   --verbose
 ```
 
+### Injecting Bundle ID into JavaScript Files
+
+For applications that don't use Webpack or Rollup, or in cases where you need to add the bundle ID to already built JavaScript files, you can use the `inject-bundle-id` command:
+
+```bash
+npx faro-cli inject-bundle-id \
+  --bundle-id "your-bundle-id" \
+  --app-name "your-app-name" \
+  --files "dist/**/*.js" \
+  --verbose
+```
+
+This command will:
+1. Locate all JavaScript files matching the specified glob patterns
+2. Check if each file already has a bundle ID snippet
+3. Prepend the bundle ID snippet to files that don't have it
+4. Export the bundle ID to an environment variable for potential later use with other commands
+
+#### Options
+
+- `--bundle-id, -b`: The bundle ID to inject (leave blank to generate a random ID)
+- `--app-name, -n`: Application name used in the bundle ID snippet
+- `--files, -f`: File patterns to match (multiple patterns can be specified)
+- `--verbose, -v`: Enable verbose logging
+- `--dry-run, -d`: Only print which files would be modified without making changes
+
+#### Examples
+
+Generate a random bundle ID and inject it into all JS files:
+
+```bash
+npx faro-cli inject-bundle-id \
+  --bundle-id generate \
+  --app-name "my-app" \
+  --files "dist/**/*.js" \
+  --verbose
+```
+
+Do a dry run first to see which files would be modified:
+
+```bash
+npx faro-cli inject-bundle-id \
+  --bundle-id "your-bundle-id" \
+  --app-name "my-app" \
+  --files "dist/**/*.js" \
+  --dry-run \
+  --verbose
+```
+
 ### Using with Bundler Plugins
 
 When using with the Faro bundler plugins, you can set the `skipUpload` option to `true` in the plugin configuration to skip uploading source maps during the build process and instead use the CLI to upload them later.
