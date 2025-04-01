@@ -11,7 +11,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   apiKey: string;
   stackId: string;
   outputPath?: string;
-  outputFiles?: string[];
+  outputFiles?: string[] | RegExp;
   bundleId?: string;
   keepSourcemaps?: boolean;
   gzipContents?: boolean;

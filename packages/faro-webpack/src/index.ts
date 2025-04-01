@@ -100,8 +100,8 @@ export default class FaroSourceMapUploaderPlugin
         for (let filename of filenames) {
           const file = `${outputPath}/${filename}`;
 
-          // Only include JavaScript-related source maps
-          if (!JS_SOURCEMAP_PATTERN.test(filename)) {
+          // Only include JavaScript-related source maps or match the outputFiles regex
+          if (!JS_SOURCEMAP_PATTERN.test(filename) || this.outputFiles instanceof RegExp && !this.outputFiles.test(filename)) {
             continue;
           }
 
