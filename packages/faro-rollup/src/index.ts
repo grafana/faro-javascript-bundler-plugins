@@ -88,12 +88,12 @@ export default function faroUploader(
 
         for (let filename in bundle) {
           // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!JS_SOURCEMAP_PATTERN.test(filename) || outputFiles instanceof RegExp && !outputFiles.test(filename)) {
+          if (!JS_SOURCEMAP_PATTERN.test(filename) || (outputFiles instanceof RegExp && !outputFiles.test(filename))) {
             continue;
           }
 
           // Check if file is in outputFiles list if provided
-          if (outputFiles?.length && !outputFiles.map((o) => o + ".map").includes(filename)) {
+          if (Array.isArray(outputFiles) && outputFiles?.length && !outputFiles.map((o: string) => o + ".map").includes(filename)) {
             continue;
           }
 

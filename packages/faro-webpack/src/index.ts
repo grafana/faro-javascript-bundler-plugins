@@ -29,7 +29,7 @@ export default class FaroSourceMapUploaderPlugin
   private endpoint: string;
   private bundleId: string;
   private outputPathOverride?: string;
-  private outputFiles?: string[];
+  private outputFiles?: string[] | RegExp;
   private keepSourcemaps?: boolean;
   private gzipContents?: boolean;
   private verbose?: boolean;
@@ -106,7 +106,7 @@ export default class FaroSourceMapUploaderPlugin
           }
 
           // Check if file is in outputFiles list if provided
-          if (this.outputFiles?.length && !this.outputFiles.map((o) => o + ".map").includes(filename)) {
+          if (Array.isArray(this.outputFiles) && this.outputFiles?.length && !this.outputFiles.map((o: string) => o + ".map").includes(filename)) {
             continue;
           }
 
