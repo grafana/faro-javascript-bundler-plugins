@@ -11,7 +11,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   apiKey: string;
   stackId: string;
   outputPath?: string;
-  outputFiles?: string[];
+  outputFiles?: string[] | RegExp;
   bundleId?: string;
   keepSourcemaps?: boolean;
   gzipContents?: boolean;
@@ -150,6 +150,38 @@ export const uploadCompressedSourceMaps = async (
 
   return success;
 };
+
+export const shouldProcessFile = (filename: string, outputFiles: string[] | RegExp | undefined) => {
+  // Must be a JavaScript sourcemap
+  if (!JS_SOURCEMAP_PATTERN.test(filename)) {
+    return false;
+  }
+
+  // If regex filter exists, filename must match it
+  if (outputFiles instanceof RegExp && !outputFiles.test(filename)) {
+    return false;
+  }
+
+  // If array filter exists, filename must be in it
+  if (Array.isArray(outputFiles) && outputFiles?.length) {
+    return includedInOutputFiles(filename, outputFiles);
+  }
+
+  return true;
+}
+
+const includedInOutputFiles = (filename: string, outputFiles: string[] | undefined) => {
+  // If no filter exists, return true
+  if (!outputFiles) {
+    return true;
+  }
+
+  if (Array.isArray(outputFiles) && outputFiles?.length) {
+    return outputFiles.map((o: string) => o + ".map").includes(filename);
+  }
+
+  return false;
+}
 
 export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
   return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;

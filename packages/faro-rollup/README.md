@@ -60,7 +60,7 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `endpoint: string` *required*: The URL of your Faro Collector endpoint. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps".
 - `apiKey: string` *required*: The API key for your Faro Collector. This value gets generated on grafana.com by creating a new scope (details provided in the plugin and in the "Obtaining API key" section of this document).
 - `appId: string` *required*: The ID of your application. This should match the `appId` value you are using in your Faro Web SDK configuration.
-- `outputFiles: string[]` *optional*: An array of source map files to upload. By default, all source maps get uploaded.
+- `outputFiles: string[] | RegExp` *optional*: Either an array of source map files to upload, or a regex to match the source map files to upload. By default, all source maps get uploaded.
 - `bundleId: string` *optional*: The ID of the bundle/build. You can specify this value to filter by bundle ID in the Frontend Observability plugin. Otherwise the bundler uses an auto-generated ID.
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading. Defaults to `false`.
 - `gzipContents: boolean` *optional*: Whether to tarball and Gzip the contents of the source maps before uploading. Defaults to `true`.
