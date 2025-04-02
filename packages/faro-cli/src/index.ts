@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
 import { execSync } from 'child_process';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
@@ -32,6 +32,28 @@ export interface UploadCompressedSourceMapsOptions {
   gzipPayload?: boolean;
   verbose?: boolean;
   maxUploadSize?: number;
+}
+
+/**
+ * Options for injecting bundle ID into files
+ */
+export interface InjectBundleIdOptions {
+  /** Enable verbose logging */
+  verbose?: boolean;
+  /** Only simulate the operation without making changes */
+  dryRun?: boolean;
+}
+
+/**
+ * Result of injecting bundle ID into a file
+ */
+export interface InjectBundleIdResult {
+  /** Path to the file */
+  file: string;
+  /** Whether the file was modified */
+  modified: boolean;
+  /** Optional error message if the operation failed */
+  error?: string;
 }
 
 /**
@@ -679,4 +701,75 @@ export const uploadSourceMaps = async (
     console.error('Error:', err);
     return false;
   }
+};
+
+/**
+ * Injects bundle ID snippet into JavaScript files
+ * @param bundleId Bundle ID to inject
+ * @param appName Application name used in the bundle ID snippet
+ * @param files Array of file paths to modify
+ * @param options Additional options
+ * @returns Array of results for each file
+ */
+export const injectBundleId = async (
+  bundleId: string,
+  appName: string,
+  files: string[],
+  options: InjectBundleIdOptions = {}
+): Promise<InjectBundleIdResult[]> => {
+  const { verbose = false, dryRun = false } = options;
+  const results: InjectBundleIdResult[] = [];
+  const snippet = faroBundleIdSnippet(bundleId, appName);
+
+  for (const file of files) {
+    try {
+      // Check if file exists and is a regular file
+      const stat = await fs.promises.stat(file);
+      if (!stat.isFile()) {
+        results.push({
+          file,
+          modified: false,
+          error: 'Not a regular file'
+        });
+        continue;
+      }
+
+      // Read file content
+      let content = await fs.promises.readFile(file, 'utf8');
+
+      // Check if bundle ID snippet is already present
+      if (content.includes(`__faroBundleId_${appName}`)) {
+        verbose && consoleInfoOrange(`Skipping ${file} - bundle ID snippet already present`);
+        results.push({
+          file,
+          modified: false
+        });
+        continue;
+      }
+
+      // Inject bundle ID snippet at the beginning of the file
+      const modifiedContent = snippet + content;
+
+      // Write modified content back to file
+      if (!dryRun) {
+        await fs.promises.writeFile(file, modifiedContent);
+      }
+
+      verbose && consoleInfoOrange(`${dryRun ? 'Would modify' : 'Modified'}: ${file}`);
+      results.push({
+        file,
+        modified: true
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      verbose && console.error(`Error processing ${file}: ${errorMessage}`);
+      results.push({
+        file,
+        modified: false,
+        error: errorMessage
+      });
+    }
+  }
+
+  return results;
 };
