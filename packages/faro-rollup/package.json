@@ -14,7 +14,7 @@
   "author": "Grafana Labs",
   "scripts": {
     "build": "rollup --config rollup.config.mjs",
-    "test": "ava src/index.test.mjs"
+    "test": "ava src/*.test.mjs"
   },
   "devDependencies": {
     "ava": "^3.8.1"
