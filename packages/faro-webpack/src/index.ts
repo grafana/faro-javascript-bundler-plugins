@@ -11,7 +11,7 @@ import {
   consoleInfoOrange,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToEnv,
-  JS_SOURCEMAP_PATTERN,
+  shouldProcessFile,
 } from "@grafana/faro-bundlers-shared";
 
 interface BannerPluginOptions {
@@ -101,12 +101,7 @@ export default class FaroSourceMapUploaderPlugin
           const file = `${outputPath}/${filename}`;
 
           // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!JS_SOURCEMAP_PATTERN.test(filename) || this.outputFiles instanceof RegExp && !this.outputFiles.test(filename)) {
-            continue;
-          }
-
-          // Check if file is in outputFiles list if provided
-          if (Array.isArray(this.outputFiles) && this.outputFiles?.length && !this.outputFiles.map((o: string) => o + ".map").includes(filename)) {
+          if (!shouldProcessFile(filename, this.outputFiles)) {
             continue;
           }
 

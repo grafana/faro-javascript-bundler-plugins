@@ -10,12 +10,10 @@ import {
   uploadCompressedSourceMaps,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToEnv,
+  shouldProcessFile,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
-
-// Pattern to match JavaScript-related source maps (not CSS maps)
-const JS_SOURCEMAP_PATTERN = /\.(js|ts|jsx|tsx|mjs|cjs)\.map$/;
 
 export default function faroUploader(
   pluginOptions: FaroSourceMapUploaderPluginOptions
@@ -88,12 +86,7 @@ export default function faroUploader(
 
         for (let filename in bundle) {
           // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!JS_SOURCEMAP_PATTERN.test(filename) || (outputFiles instanceof RegExp && !outputFiles.test(filename))) {
-            continue;
-          }
-
-          // Check if file is in outputFiles list if provided
-          if (Array.isArray(outputFiles) && outputFiles?.length && !outputFiles.map((o: string) => o + ".map").includes(filename)) {
+          if (!shouldProcessFile(filename, outputFiles)) {
             continue;
           }
 
