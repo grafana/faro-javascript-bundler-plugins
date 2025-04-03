@@ -2,5 +2,6 @@
   "packages/faro-bundlers-shared": "0.3.0",
   "packages/faro-cli": "0.3.0",
   "packages/faro-rollup": "0.4.0",
-  "packages/faro-webpack": "0.4.0"
+  "packages/faro-webpack": "0.4.0",
+  "pull-request-title-pattern": "chore(release): release all packages on main"
 }
