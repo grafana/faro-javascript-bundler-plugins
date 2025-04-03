@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.4.0...faro-webpack-plugin-v0.5.0) (2025-04-03)
+
+
+### Features
+
+* add an option to provide a regular expression as the outputFiles parameter ([#144](https://github.com/grafana/faro-javascript-bundler-plugins/issues/144)) ([6e1be26](https://github.com/grafana/faro-javascript-bundler-plugins/commit/6e1be26bdefa7bb5dfcb8a7a2acd45c0856f2a1f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.3.0 to ^0.4.0
+
 ## [0.4.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.3.0...faro-webpack-plugin-v0.4.0) (2025-03-21)
 
 
