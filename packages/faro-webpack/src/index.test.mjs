@@ -47,8 +47,8 @@ test('basic bundleId injection test', async t => {
 
 // Test that a bundleId is generated if not provided
 test('bundleId is generated if not provided', async t => {
-  await runWebpack({});
-  const content = fs.readFileSync(`${process.cwd()}/src/test/dist/bundle.js`, 'utf8');
+  await runWebpack({}, 'generatedBundleId.js');
+  const content = fs.readFileSync(`${process.cwd()}/src/test/dist/generatedBundleId.js`, 'utf8');
 
   // Extract the generated bundleId with a regex
   const bundleIdMatch = content.match(/__faroBundleId_webpack-test-app"\]="([^"]+)"/);
