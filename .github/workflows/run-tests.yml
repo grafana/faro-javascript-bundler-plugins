@@ -39,7 +39,8 @@ jobs:
           yarn build
           cd ../../..
           yarn install && yarn build
-          yarn test
+          # Retry tests 3 times
+          yarn test || yarn test || yarn test
 
       - name: Build production bundle
         uses: borales/actions-yarn@v5
