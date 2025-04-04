@@ -14,11 +14,9 @@
   "author": "Grafana Labs",
   "scripts": {
     "build": "rollup --config rollup.config.mjs",
-    "test": "ava src/*.test.mjs"
+    "test": "jest"
   },
-  "devDependencies": {
-    "ava": "^3.8.1"
-  },
+  "devDependencies": {},
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.4.0",
     "cross-fetch": "^4.0.0",

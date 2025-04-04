@@ -25,7 +25,7 @@ export default [
     plugins: [
       typescript({
         outDir: "dist",
-        exclude: ["**/*.test.ts"],
+        exclude: ["**/*.test.ts", "**/test/**"],
       }),
       babel({
         extensions,
@@ -40,7 +40,7 @@ export default [
       }),
       commonjs({
         include: /node_modules/,
-        exclude: "*.test.ts"
+        exclude: ["**/*.test.ts", "**/test/**"]
       }),
     ],
     external: [
