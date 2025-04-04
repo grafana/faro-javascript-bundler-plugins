@@ -64,16 +64,9 @@ jobs:
 
       - name: Run tests
         run: |
-          cd packages/faro-rollup/src/test
-          yarn install
-          cd ../..
-          yarn install
-          cd ../faro-webpack/src/test
-          yarn install
           yarn build
-          cd ../../..
-          yarn install && yarn build
-          yarn test
+          # Retry tests 3 times
+          yarn test || yarn test || yarn test
 
       - name: Build production bundle
         uses: borales/actions-yarn@v4

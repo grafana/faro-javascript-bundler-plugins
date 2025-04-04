@@ -37,11 +37,12 @@ export default {
   plugins: [
     typescript({
       outDir: "dist",
+      exclude: ["**/*.test.ts", "**/test/**"]
     }),
     babel({
       extensions,
       babelHelpers: "bundled",
-      include: ["src/**/*"],
+      include: ["src/**/*", "**/*.test.ts", "**/test/**"],
       exclude: /node_modules/
     }),
     json(),
@@ -51,7 +52,8 @@ export default {
       preferBuiltins: true,
     }),
     commonjs({
-      include: /node_modules/
+      include: /node_modules/,
+      exclude: ["**/*.test.ts", "**/test/**"]
     }),
   ],
 };
