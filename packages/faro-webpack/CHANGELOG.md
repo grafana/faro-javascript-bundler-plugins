@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.5.0...faro-webpack-plugin-v0.5.1) (2025-04-09)
+
+
+### Bug Fixes
+
+* export the bundle ID to a .env file rather than directly to environment variables ([#161](https://github.com/grafana/faro-javascript-bundler-plugins/issues/161)) ([8564ecb](https://github.com/grafana/faro-javascript-bundler-plugins/commit/8564ecbb892f8bf763da293da4869bbd27722d54))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.4.0 to ^0.4.1
+
 ## [0.5.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.4.0...faro-webpack-plugin-v0.5.0) (2025-04-03)
 
 
