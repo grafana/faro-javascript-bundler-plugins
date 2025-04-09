@@ -123,7 +123,6 @@ Generate a random bundle ID and inject it into all JS files:
 
 ```bash
 npx faro-cli inject-bundle-id \
-  --bundle-id generate \
   --app-name "my-app" \
   --files "dist/**/*.js" \
   --verbose
