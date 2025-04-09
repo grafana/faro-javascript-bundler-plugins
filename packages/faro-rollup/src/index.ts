@@ -9,7 +9,7 @@ import {
   uploadSourceMap,
   uploadCompressedSourceMaps,
   THIRTY_MB_IN_BYTES,
-  exportBundleIdToEnv,
+  exportBundleIdToFile,
   shouldProcessFile,
 } from "@grafana/faro-bundlers-shared";
 
@@ -39,7 +39,7 @@ export default function faroUploader(
 
   // Export bundleId to environment variable if skipUpload is true
   if (skipUpload) {
-    exportBundleIdToEnv(bundleId, appName, verbose);
+    exportBundleIdToFile(bundleId, appName, verbose);
   }
 
   return {

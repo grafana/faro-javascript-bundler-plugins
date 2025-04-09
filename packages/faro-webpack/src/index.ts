@@ -10,7 +10,7 @@ import {
   uploadCompressedSourceMaps,
   consoleInfoOrange,
   THIRTY_MB_IN_BYTES,
-  exportBundleIdToEnv,
+  exportBundleIdToFile,
   shouldProcessFile,
 } from "@grafana/faro-bundlers-shared";
 
@@ -54,7 +54,7 @@ export default class FaroSourceMapUploaderPlugin
 
     // Export bundleId to environment variable if skipUpload is true
     if (this.skipUpload) {
-      exportBundleIdToEnv(this.bundleId, this.appName, this.verbose);
+      exportBundleIdToFile(this.bundleId, this.appName, this.verbose);
     }
   }
 

@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 import webpack, { Configuration, Stats } from 'webpack';
@@ -38,19 +38,6 @@ const runWebpack = async (customConfig = {}, filename = 'bundle.js') => {
   });
 };
 
-// Store original env to restore after tests
-let originalEnv: NodeJS.ProcessEnv;
-
-beforeEach(() => {
-  // Save the original environment variables
-  originalEnv = { ...process.env };
-});
-
-afterEach(() => {
-  // Restore original environment variables
-  process.env = originalEnv;
-});
-
 describe('Faro Webpack Plugin', () => {
   // Test the default bundleId injection
   test('basic bundleId injection test', async () => {
@@ -75,14 +62,14 @@ describe('Faro Webpack Plugin', () => {
   });
 
   // Test skipUpload option
-  test('skipUpload option sets environment variable with bundleId', async () => {
+  test('skipUpload option sets environment variable file with bundleId', async () => {
     await runWebpack({
       bundleId: 'env-test-id',
       skipUpload: true
     });
 
     // Verify the environment variable was set
-    expect(process.env['FARO_BUNDLE_ID_WEBPACK_TEST_APP']).toBe('env-test-id');
+    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.WEBPACK_TEST_APP'), 'utf8')).toContain('FARO_BUNDLE_ID_WEBPACK_TEST_APP=env-test-id');
   });
 
   // Test that the bundleId code is placed at the beginning of the file

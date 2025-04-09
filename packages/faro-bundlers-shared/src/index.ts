@@ -3,7 +3,7 @@ import fs from "fs";
 import { create } from "tar";
 import fetch from "cross-fetch";
 import { ansi256 } from "ansis";
-
+import path from "path";
 export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
   appName: string;
@@ -201,18 +201,26 @@ export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
 
 export const JS_SOURCEMAP_PATTERN = /\.(js|ts|jsx|tsx|mjs|cjs)\.map$/;
 
+export const cleanAppName = (appName: string) => {
+  return appName.toUpperCase().replace(/[^A-Z0-9]/g, '_');
+};
+
 /**
- * Exports the bundleId to an environment variable for use in the CLI
+ * Exports the bundleId to an environment variable file for use in the CLI
  * @param bundleId The bundleId to export
  * @param appName The name of the app
  * @param verbose Whether to log the export
  */
-export const exportBundleIdToEnv = (bundleId: string, appName: string, verbose?: boolean): void => {
-  const envVarName = `FARO_BUNDLE_ID_${appName.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
-  process.env[envVarName] = bundleId;
+export const exportBundleIdToFile = (bundleId: string, appName: string, verbose?: boolean): void => {
+  const appNameClean = cleanAppName(appName);
+  const envVarName = `FARO_BUNDLE_ID_${appNameClean}`;
+  const envFilePath = path.resolve(process.cwd(), `.env.${appNameClean}`);
+
+  // Append the bundleId to the .env file
+  fs.writeFileSync(envFilePath, `${envVarName}=${bundleId}\n`);
 
   if (verbose) {
-    consoleInfoOrange(`Exported bundleId ${bundleId} to environment variable ${envVarName}`);
+    consoleInfoOrange(`Exported bundleId ${bundleId} to file ${envFilePath}`);
   }
 };
 

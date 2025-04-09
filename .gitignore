@@ -8,3 +8,4 @@ yalc.lock
 .npmrc
 lerna-debug.log
 .DS_Store
+.env.*

@@ -1,9 +1,10 @@
 import { Command } from 'commander';
 import { uploadSourceMaps, generateCurlCommand, injectBundleId } from './index';
-import { consoleInfoOrange, exportBundleIdToEnv, JS_SOURCEMAP_PATTERN, randomString } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, exportBundleIdToFile, JS_SOURCEMAP_PATTERN, randomString, cleanAppName } from '@grafana/faro-bundlers-shared';
 import path from 'path';
 import fs from 'fs';
 import { glob } from 'glob';
+import dotenv from 'dotenv';
 
 interface UploadOptions {
   endpoint: string;
@@ -60,8 +61,12 @@ program
       // Check if bundleId is provided or should be read from environment variable
       let bundleId = options.bundleId;
 
+
       if (bundleId === 'env' && options.appName) {
-        const envVarName = `FARO_BUNDLE_ID_${options.appName.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`;
+        const appNameClean = cleanAppName(options.appName);
+        const envVarName = `FARO_BUNDLE_ID_${appNameClean}`;
+        dotenv.config({ path: path.resolve(process.cwd(), `.env.${appNameClean}`) });
+
         bundleId = process.env[envVarName] || '';
 
         if (!bundleId) {
@@ -232,7 +237,7 @@ Example:
         consoleInfoOrange(`Modified ${modifiedCount} of ${matchedFiles.length} files`);
 
         // Export bundleId to environment variable for potential later use
-        exportBundleIdToEnv(bundleId, options.appName, options.verbose);
+        exportBundleIdToFile(bundleId, options.appName, options.verbose);
       }
     } catch (err) {
       console.error('Error:', err);

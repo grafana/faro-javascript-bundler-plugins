@@ -1,9 +1,11 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import fs from 'fs';
+import path from 'path';
 import {
   faroBundleIdSnippet,
   randomString,
   shouldProcessFile,
-  exportBundleIdToEnv,
+  exportBundleIdToFile,
 } from '../index';
 
 // Store original env to restore after tests
@@ -77,21 +79,21 @@ describe('Bundlers Shared Utilities', () => {
     expect(shouldProcessFile('module.js.map', arrayFilter)).toBeFalsy();
   });
 
-  test('exportBundleIdToEnv sets environment variable', () => {
+  test('exportBundleIdToFile sets environment variable', () => {
     const bundleId = 'test-bundle-id';
     const appName = 'test-app';
 
-    exportBundleIdToEnv(bundleId, appName, false);
+    exportBundleIdToFile(bundleId, appName, false);
 
-    expect(process.env['FARO_BUNDLE_ID_TEST_APP']).toBe(bundleId);
+    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP'), 'utf8')).toBe(`FARO_BUNDLE_ID_TEST_APP=${bundleId}`);
   });
 
-  test('exportBundleIdToEnv sanitizes app name for environment variable', () => {
+  test('exportBundleIdToFile sanitizes app name for environment variable', () => {
     const bundleId = 'test-bundle-id';
     const appName = 'test-app-with-special-chars!@#';
 
-    exportBundleIdToEnv(bundleId, appName, false);
+    exportBundleIdToFile(bundleId, appName, false);
 
-    expect(process.env['FARO_BUNDLE_ID_TEST_APP_WITH_SPECIAL_CHARS']).toBe(bundleId);
+    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP_WITH_SPECIAL_CHARS'), 'utf8')).toBe(`FARO_BUNDLE_ID_TEST_APP_WITH_SPECIAL_CHARS=${bundleId}`);
   });
 });

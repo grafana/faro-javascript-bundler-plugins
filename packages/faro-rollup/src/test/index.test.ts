@@ -1,7 +1,7 @@
 import { ModuleFormat, rollup } from 'rollup';
 import faroUploader from '@grafana/faro-rollup-plugin';
 import path from 'path';
-
+import fs from 'fs';
 // Helper to create a run rollup with custom config
 const runRollup = async (customConfig = {}, outputConfig = {}) => {
   const bundle = await rollup({
@@ -27,19 +27,6 @@ const runRollup = async (customConfig = {}, outputConfig = {}) => {
 
   return bundle.write(output);
 };
-
-// Store original env to restore after tests
-let originalEnv: NodeJS.ProcessEnv;
-
-beforeEach(() => {
-  // Save the original environment variables
-  originalEnv = { ...process.env };
-});
-
-afterEach(() => {
-  // Restore original environment variables
-  process.env = originalEnv;
-});
 
 describe('Faro Rollup Plugin', () => {
   test('basic bundleId injection test', async () => {
@@ -74,7 +61,7 @@ describe('Faro Rollup Plugin', () => {
     });
 
     // Verify the environment variable was set
-    expect(process.env['FARO_BUNDLE_ID_ROLLUP_TEST_APP']).toBe('env-test-id');
+    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.ROLLUP_TEST_APP'), 'utf8')).toContain('FARO_BUNDLE_ID_ROLLUP_TEST_APP=env-test-id');
   });
 
   test('bundleId is prepended to the code', async () => {
