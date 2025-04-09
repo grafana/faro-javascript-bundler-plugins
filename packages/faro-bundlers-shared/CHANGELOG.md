@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.4.0...faro-bundlers-shared-v0.4.1) (2025-04-09)
+
+
+### Bug Fixes
+
+* export the bundle ID to a .env file rather than directly to environment variables ([#161](https://github.com/grafana/faro-javascript-bundler-plugins/issues/161)) ([8564ecb](https://github.com/grafana/faro-javascript-bundler-plugins/commit/8564ecbb892f8bf763da293da4869bbd27722d54))
+
 ## [0.4.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.3.0...faro-bundlers-shared-v0.4.0) (2025-04-03)
 
 
