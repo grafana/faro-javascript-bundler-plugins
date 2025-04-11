@@ -42,7 +42,8 @@ export default defineConfig(({ mode }) => {
       // other plugins
       faroUploader({
         appName: "$your-app-name",
-        endpoint: "$your-faro-collector-url",
+        // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads"
+        endpoint: "$your-faro-sourcemap-api-url",
         apiKey: "$your-api-key",
         appId: "$your-app-id",
         stackId: "$your-stack-id",
@@ -57,7 +58,7 @@ export default defineConfig(({ mode }) => {
 The following options are available for the Faro JavaScript bundler plugins:
 
 - `appName: string` *required*: The name of your application. This should match the `appName` value you are using in your Faro Web SDK configuration.
-- `endpoint: string` *required*: The URL of your Faro Collector endpoint. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps".
+- `endpoint: string` *required*: The URL of your Faro Collector endpoint. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads".
 - `apiKey: string` *required*: The API key for your Faro Collector. This value gets generated on grafana.com by creating a new scope (details provided in the plugin and in the "Obtaining API key" section of this document).
 - `appId: string` *required*: The ID of your application. This should match the `appId` value you are using in your Faro Web SDK configuration.
 - `outputFiles: string[] | RegExp` *optional*: Either an array of source map files to upload, or a regex to match the source map files to upload. By default, all source maps get uploaded.
