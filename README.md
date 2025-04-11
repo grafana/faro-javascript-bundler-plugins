@@ -80,7 +80,8 @@ module.exports = {
     // other plugins
     new FaroSourceMapUploaderPlugin({
       appName: "$your-app-name",
-      endpoint: "$your-faro-collector-url",
+      // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" tab
+      endpoint: "$your-faro-sourcemap-api-url",
       apiKey: "$your-api-key",
       appId: "$your-app-id",
       stackId: "$your-stack-id",
@@ -105,7 +106,8 @@ export default defineConfig(({ mode }) => {
       // other plugins
       faroUploader({
         appName: "$your-app-name",
-        endpoint: "$your-faro-collector-url",
+        // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" tab
+        endpoint: "$your-faro-sourcemap-api-url",
         apiKey: "$your-api-key",
         appId: "$your-app-id",
         stackId: "$your-stack-id",
@@ -121,10 +123,10 @@ export default defineConfig(({ mode }) => {
 The following options are available for the Faro JavaScript bundler plugins:
 
 - `appName: string` *required*: The name of your application, it should match the `appName` value used in your Faro Web SDK configuration
-- `endpoint: string` *required*: The URL of your Faro Collector endpoint, found in Frontend Observability under **Settings** and **Web SDK Config**
+- `endpoint: string` *required*: The URL of your Faro Collector endpoint, found in Frontend Observability under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `apiKey: string` *required*: The API key for your Faro Collector, you can generate a new scope on [grafana.com], refer to the [Obtaining API key](#obtaining-api-key) section
 - `appId: string` *required*: The ID of your application, it should match the `appId` value used in your Faro Web SDK configuration
-- `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** and **Web SDK Config**
+- `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `outputPath: string` *optional*: Folder where output files will be located
 - `outputFiles: string[] | RegExp` *optional*: Either an array of source map files to upload, or a regex to match the source map files to upload. By default, all source maps get uploaded.
 - `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
@@ -173,7 +175,8 @@ module.exports = {
     // other plugins
     new FaroSourceMapUploaderPlugin({
       appName: "$your-app-name",
-      endpoint: "$your-faro-collector-url",
+      // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads"
+      endpoint: "$your-faro-sourcemap-api-url",
       apiKey: "$your-api-key",
       appId: "$your-app-id",
       stackId: "$your-stack-id",
@@ -197,7 +200,8 @@ export default defineConfig(({ mode }) => {
       // other plugins
       faroUploader({
         appName: "$your-app-name",
-        endpoint: "$your-faro-collector-url",
+        // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads"
+        endpoint: "$your-faro-sourcemap-api-url",
         apiKey: "$your-api-key",
         appId: "$your-app-id",
         stackId: "$your-stack-id",

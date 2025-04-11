@@ -154,7 +154,8 @@ export default {
   plugins: [
     // ... other plugins
     faroUploader({
-      endpoint: 'https://faro-collector-prod-us-east-0.grafana.net',
+      // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads"
+      endpoint: 'https://faro-api-prod-us-east-0.grafana.net/faro/api/v1',
       appName: 'my-app',
       appId: 'your-app-id',
       apiKey: 'your-api-key',
@@ -193,7 +194,7 @@ module.exports = {
   plugins: [
     // ... other plugins
     new FaroSourceMapUploaderPlugin({
-      endpoint: 'https://faro-collector-prod-us-east-0.grafana.net',
+      endpoint: 'https://faro-api-prod-us-east-0.grafana.net/faro/api/v1',
       appName: 'my-app',
       appId: 'your-app-id',
       apiKey: 'your-api-key',
@@ -238,10 +239,10 @@ This will output a curl command that you can copy and run manually.
 
 ### Upload Command
 
-- `-e, --endpoint <url>`: Faro API endpoint URL (required)
+- `-e, --endpoint <url>`: Faro API endpoint URL (required) - find this value in the Frontend Observability plugin under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `-a, --app-id <id>`: Faro application ID (required)
 - `-k, --api-key <key>`: Faro API key (required)
-- `-s, --stack-id <id>`: Faro stack ID (required)
+- `-s, --stack-id <id>`: Faro stack ID (required) - find this value in the Frontend Observability plugin under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `-b, --bundle-id <id>`: Bundle ID (required, can be set to "env" to read from environment variable)
 - `-o, --output-path <path>`: Path to the directory containing source maps (required)
 - `-n, --app-name <name>`: Application name (used to find bundleId in environment variables)
@@ -253,10 +254,10 @@ This will output a curl command that you can copy and run manually.
 
 ### Curl Command
 
-- `-e, --endpoint <url>`: Faro API endpoint URL (required)
+- `-e, --endpoint <url>`: Faro API endpoint URL (required) - find this value in the Frontend Observability plugin under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `-a, --app-id <id>`: Faro application ID (required)
 - `-k, --api-key <key>`: Faro API key (required)
-- `-s, --stack-id <id>`: Faro stack ID (required)
+- `-s, --stack-id <id>`: Faro stack ID (required) - find this value in the Frontend Observability plugin under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `-b, --bundle-id <id>`: Bundle ID (required, can be set to "env" to read from environment variable)
 - `-f, --file <path>`: Path to the source map file (required)
 - `-n, --app-name <name>`: Application name (used to find bundleId in environment variables)
