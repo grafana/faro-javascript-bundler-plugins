@@ -24,7 +24,7 @@ jobs:
           owner: ${{ github.repository_owner }}
           repositories: |
             faro-javascript-bundler-plugins
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@a02a34c4d625f9be7cb89156071d8567266a2445
         id: release
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
@@ -44,21 +44,24 @@ jobs:
     name: Publish to NPM
     runs-on: ubuntu-latest
     needs: release-please
+    permissions:
+      contents: write
     if: ${{ needs.release-please.outputs.releases_created }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5
         with:
+          persist-credentials: false
           ref: main
 
       - name: Setup .npmrc file for NPM registry
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610
         with:
           node-version: 20.x
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
         with:
           cmd: install --frozen-lockfile
 
@@ -69,7 +72,7 @@ jobs:
           yarn test || yarn test || yarn test
 
       - name: Build production bundle
-        uses: borales/actions-yarn@v4
+        uses: borales/actions-yarn@3766bb1335b98fb13c60eaf358fe20811b730a88
         with:
           cmd: build
 
