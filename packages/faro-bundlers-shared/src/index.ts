@@ -2,7 +2,7 @@ import crypto from "crypto";
 import fs from "fs";
 import { create } from "tar";
 import fetch from "cross-fetch";
-import { ansi256 } from "ansis";
+import ansi from "ansis";
 import path from "path";
 export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
@@ -192,7 +192,7 @@ export function randomString(length?: number): string {
 }
 
 export const consoleInfoOrange = (message: string) =>
-  console.info(ansi256(214)`[Faro] ${message}`);
+  console.info(ansi.fg(214)`[Faro] ${message}`);
 
 export const WEBPACK_PLUGIN_NAME = "FaroSourceMapUploaderPlugin";
 export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-source-map-uploader";
