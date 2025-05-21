@@ -57,6 +57,7 @@ jobs:
     needs: release-please
     permissions:
       contents: write
+      id-token: write
     if: ${{ needs.release-please.outputs.releases_created }}
     steps:
       - id: get-secrets
