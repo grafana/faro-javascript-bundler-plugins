@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      id-token: write
     outputs:
       releases_created: ${{ steps.release.outputs.releases_created }}
 
