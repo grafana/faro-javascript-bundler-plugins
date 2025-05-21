@@ -15,21 +15,31 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
 
     steps:
+      - id: get-secrets
+        name: get secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@5d7e361bc7e0a183cde8afe9899fb7b596d2659b
+        with:
+          repo_secrets: |
+            FARO_SMU_CI_APP_ID=github:app-id
+            FARO_SMU_CI_PRIVATE_KEY=github:private-key
+
       - uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
         name: get github app token
         id: get-github-app-token
         with:
-          app-id: ${{ secrets.FARO_SMU_CI_APP_ID }}
-          private-key: ${{ secrets.FARO_SMU_CI_PRIVATE_KEY }}
+          app-id: ${{ env.FARO_SMU_CI_APP_ID }}
+          private-key: ${{ env.FARO_SMU_CI_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: |
             faro-javascript-bundler-plugins
+
       - uses: googleapis/release-please-action@a02a34c4d625f9be7cb89156071d8567266a2445
         id: release
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
           config-file: release-please-config.json
           manifest-file: release-please-manifest.json
+
       - name: log context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
@@ -48,6 +58,13 @@ jobs:
       contents: write
     if: ${{ needs.release-please.outputs.releases_created }}
     steps:
+      - id: get-secrets
+        name: get secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@5d7e361bc7e0a183cde8afe9899fb7b596d2659b
+        with:
+          repo_secrets: |
+            NPM_TOKEN=npm:token
+
       - name: Checkout
         uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5
         with:
@@ -81,4 +98,4 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
           yarn run publish from-package --yes --no-verify-access
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ env.NPM_TOKEN }}
