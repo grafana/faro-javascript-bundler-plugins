@@ -48,9 +48,10 @@ export default class FaroSourceMapUploaderPlugin
     this.gzipContents = options.gzipContents;
     this.verbose = options.verbose;
     this.skipUpload = options.skipUpload;
-    this.maxUploadSize = options.maxUploadSize && options.maxUploadSize > 0
-      ? options.maxUploadSize
-      : THIRTY_MB_IN_BYTES;
+    this.maxUploadSize =
+      options.maxUploadSize && options.maxUploadSize > 0
+        ? options.maxUploadSize
+        : THIRTY_MB_IN_BYTES;
 
     // Export bundleId to environment variable if skipUpload is true
     if (this.skipUpload) {
@@ -79,7 +80,10 @@ export default class FaroSourceMapUploaderPlugin
 
     // Skip uploading if skipUpload is true
     if (this.skipUpload) {
-      this.verbose && consoleInfoOrange(`Skipping sourcemap upload as skipUpload is set to true`);
+      this.verbose &&
+        consoleInfoOrange(
+          `Skipping sourcemap upload as skipUpload is set to true`
+        );
       return;
     }
 
@@ -92,16 +96,18 @@ export default class FaroSourceMapUploaderPlugin
       }
 
       try {
-        const filenames = fs.readdirSync(outputPath);
+        const filenames = fs.readdirSync(outputPath, { recursive: true });
         const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
         const filesToUpload = [];
         let totalSize = 0;
 
         for (let filename of filenames) {
-          const file = `${outputPath}/${filename}`;
+          // Ensure filename is a string (fs.readdirSync with recursive can return Buffer)
+          const filenameStr = filename.toString();
+          const file = `${outputPath}/${filenameStr}`;
 
           // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!shouldProcessFile(filename, this.outputFiles)) {
+          if (!shouldProcessFile(filenameStr, this.outputFiles)) {
             continue;
           }
 
@@ -141,14 +147,14 @@ export default class FaroSourceMapUploaderPlugin
               sourcemapEndpoint,
               apiKey: this.apiKey,
               stackId: this.stackId,
-              filename,
-              filePath: `${outputPath}/${filename}`,
+              filename: filenameStr,
+              filePath: `${outputPath}/${filenameStr}`,
               keepSourcemaps: !!this.keepSourcemaps,
               verbose: this.verbose,
             });
 
             if (result) {
-              uploadedSourcemaps.push(filename);
+              uploadedSourcemaps.push(filenameStr);
             }
           }
         }
@@ -176,7 +182,9 @@ export default class FaroSourceMapUploaderPlugin
       if (this.verbose) {
         consoleInfoOrange(
           uploadedSourcemaps.length
-            ? `Uploaded sourcemaps: ${uploadedSourcemaps.map(map => map.split('/').pop()).join(", ")}`
+            ? `Uploaded sourcemaps: ${uploadedSourcemaps
+                .map((map) => map.split("/").pop())
+                .join(", ")}`
             : "No sourcemaps uploaded"
         );
       }
