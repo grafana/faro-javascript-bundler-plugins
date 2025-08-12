@@ -18,6 +18,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   verbose?: boolean;
   skipUpload?: boolean;
   maxUploadSize?: number; // Maximum upload size in bytes
+  recursive?: boolean; // Whether to recursively search subdirectories for sourcemaps
 }
 
 interface UploadSourceMapOptions {
