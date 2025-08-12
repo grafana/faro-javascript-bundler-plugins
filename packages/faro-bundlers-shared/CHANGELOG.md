@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.4.1...faro-bundlers-shared-v0.5.0) (2025-08-12)
+
+
+### Features
+
+* add a recursive option to webpack/CLI to enable recursive searcing for maps ([#262](https://github.com/grafana/faro-javascript-bundler-plugins/issues/262)) ([6dc6dc7](https://github.com/grafana/faro-javascript-bundler-plugins/commit/6dc6dc70e6fb0f08a23047b05ccbb16fb966cb08))
+
 ## [0.4.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.4.0...faro-bundlers-shared-v0.4.1) (2025-04-09)
 
 
