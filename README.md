@@ -129,6 +129,7 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `outputPath: string` *optional*: Folder where output files will be located
 - `outputFiles: string[] | RegExp` *optional*: Either an array of source map files to upload, or a regex to match the source map files to upload. By default, all source maps get uploaded.
+- `recursive: boolean` *optional*: Whether to recursively search subdirectories for source maps, default `false`
 - `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
 - `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`

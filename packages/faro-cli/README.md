@@ -247,6 +247,7 @@ This will output a curl command that you can copy and run manually.
 - `-o, --output-path <path>`: Path to the directory containing source maps (required)
 - `-n, --app-name <name>`: Application name (used to find bundleId in environment variables)
 - `-k, --keep-sourcemaps`: Keep source maps after uploading (default: false)
+- `-r, --recursive`: Recursively search subdirectories for source maps (default: false)
 - `-g, --gzip-contents`: Compress source maps as a tarball before uploading; files are processed in a streaming fashion, accumulating until the size limit (default: false)
 - `-z, --gzip-payload`: Gzip the HTTP payload for smaller uploads (default: false)
 - `-v, --verbose`: Enable verbose logging (default: false)

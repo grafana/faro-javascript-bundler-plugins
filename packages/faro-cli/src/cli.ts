@@ -19,6 +19,7 @@ interface UploadOptions {
   gzipPayload: boolean;
   verbose: boolean;
   maxUploadSize?: number;
+  recursive: boolean;
 }
 
 interface CurlOptions {
@@ -55,7 +56,18 @@ program
   .option('-g, --gzip-contents', 'Compress sourcemaps as a tarball before uploading', false)
   .option('-z, --gzip-payload', 'Gzip the HTTP payload for smaller uploads', false)
   .option('-v, --verbose', 'Enable verbose logging', false)
+  .option('-r, --recursive', 'Recursively search subdirectories for source maps', false)
   .option('-x, --max-upload-size <size>', 'Maximum upload size in bytes (default: 30MB)', (value) => parseInt(value, 10))
+  .addHelpText('after', `
+Example:
+  # Upload all source maps from the dist folder
+  $ faro-cli upload -e "https://faro-collector-prod-us-east-0.grafana.net" -a "your-app-id" -k "your-api-key" -s "your-stack-id" -b "your-bundle-id" -o "./dist"
+
+  # Upload source maps recursively from subdirectories
+  $ faro-cli upload -e "https://faro-collector-prod-us-east-0.grafana.net" -a "your-app-id" -k "your-api-key" -s "your-stack-id" -b "your-bundle-id" -o "./dist" -r -v
+
+  # Upload with gzip compression and verbose logging
+  $ faro-cli upload -e "https://faro-collector-prod-us-east-0.grafana.net" -a "your-app-id" -k "your-api-key" -s "your-stack-id" -b "your-bundle-id" -o "./dist" -g -z -v`)
   .action(async (options: UploadOptions) => {
     try {
       // Check if bundleId is provided or should be read from environment variable
@@ -102,6 +114,7 @@ program
           gzipPayload: options.gzipPayload,
           verbose: options.verbose,
           maxUploadSize: options.maxUploadSize,
+          recursive: options.recursive,
         }
       );
 
