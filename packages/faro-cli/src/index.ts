@@ -508,20 +508,18 @@ cat ${filePath} | gzip -c | curl -X POST "${sourcemapEndpoint}" \\
 /**
  * Recursively finds all .map files in a directory
  * @param dir The directory to search
+ * @param recursive Whether to search subdirectories
  * @returns An array of paths to all .map files in the directory and its subdirectories
  */
-export const findMapFiles = (dir: string): string[] => {
+export const findMapFiles = (dir: string, recursive: boolean = false): string[] => {
   const sourcemapFiles: string[] = [];
-  const files = fs.readdirSync(dir);
+  const files = fs.readdirSync(dir, { recursive });
 
   for (const file of files) {
-    const filePath = path.join(dir, file);
+    const filePath = path.join(dir, file.toString());
     const stat = fs.statSync(filePath);
 
-    if (stat.isDirectory()) {
-      // Recursively search subdirectories
-      findMapFiles(filePath);
-    } else if (stat.isFile() && file.endsWith('.map')) {
+    if (stat.isFile() && file.toString().endsWith('.map')) {
       sourcemapFiles.push(filePath);
     }
   }
@@ -553,6 +551,7 @@ export const uploadSourceMaps = async (
     gzipPayload?: boolean;
     verbose?: boolean;
     maxUploadSize?: number;
+    recursive?: boolean;
   } = {}
 ): Promise<boolean> => {
   const {
@@ -561,13 +560,14 @@ export const uploadSourceMaps = async (
     gzipPayload = false,
     verbose = false,
     maxUploadSize,
+    recursive = false,
   } = options;
 
   const maxSize = maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
 
   try {
     // Find all .map files in the output directory
-    const sourcemapFiles = findMapFiles(outputPath);
+    const sourcemapFiles = findMapFiles(outputPath, recursive);
     if (sourcemapFiles.length === 0) {
       console.error(`Error: No sourcemap files found in ${outputPath}`);
       return false;

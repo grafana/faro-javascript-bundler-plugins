@@ -11,7 +11,7 @@ import path from "path";
 import os from "os";
 import webpack, { Configuration, Stats } from "webpack";
 import { setupServer } from "msw/node";
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, PathParams } from "msw";
 import FaroSourceMapUploaderPlugin from "@grafana/faro-webpack-plugin";
 import { FaroSourceMapUploaderPluginOptions } from "@grafana/faro-bundlers-shared";
 
@@ -30,7 +30,7 @@ const cleanupTempDir = async (dirPath: string) => {
 const server = setupServer(
   http.post(
     "http://localhost:8000/faro/api/v1/app/1/sourcemaps/:bundleId",
-    async ({ request, params }) => {
+    async ({ request, params }: { request: Request; params: PathParams }) => {
       const contentType = request.headers.get("content-type");
 
       if (contentType === "application/json") {
@@ -171,7 +171,7 @@ describe("Faro Webpack Plugin", () => {
     expect(firstCharsPos).toBeLessThan(200);
   });
 
-  test("nested source maps in output directory are uploaded", async () => {
+  test("nested source maps in output directory are not uploaded when recursive is false", async () => {
     const testOutputDir = await fs.mkdtemp(
       path.join(os.tmpdir(), "webpack-nested-test-")
     );
@@ -182,6 +182,42 @@ describe("Faro Webpack Plugin", () => {
         skipUpload: false,
         keepSourcemaps: true,
         outputPath: testOutputDir,
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const [rootSourceMapExists, nestedSourceMapExists] = await Promise.all([
+      fileExists(path.join(outputDir, "main.js.map")),
+      fileExists(path.join(outputDir, "nested/vendor.js.map")),
+    ]);
+
+    expect(rootSourceMapExists).toBe(true);
+    expect(nestedSourceMapExists).toBe(true);
+
+    // uploading is not awaited by webpack so this keeps checking until it resolves
+    await waitFor(() => {
+      expect(uploadedFiles.length).toBeGreaterThan(0);
+    });
+
+    expect(uploadedFiles.some((file) => file.includes("main.js"))).toBe(true);
+    expect(uploadedFiles.some((file) => file.includes("vendor.js"))).toBe(false);
+  });
+
+  test("nested source maps in output directory are uploaded when recursive is true", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-nested-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "nested-test",
+        skipUpload: false,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        recursive: true,
       },
       testOutputDir,
       {

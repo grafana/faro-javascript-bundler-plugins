@@ -30,6 +30,7 @@ export default class FaroSourceMapUploaderPlugin
   private bundleId: string;
   private outputPathOverride?: string;
   private outputFiles?: string[] | RegExp;
+  private recursive?: boolean;
   private keepSourcemaps?: boolean;
   private gzipContents?: boolean;
   private verbose?: boolean;
@@ -43,6 +44,7 @@ export default class FaroSourceMapUploaderPlugin
     this.endpoint = `${options.endpoint}/app/${options.appId}/sourcemaps/`;
     this.outputPathOverride = options.outputPath;
     this.outputFiles = options.outputFiles;
+    this.recursive = options.recursive;
     this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
     this.keepSourcemaps = options.keepSourcemaps;
     this.gzipContents = options.gzipContents;
@@ -96,7 +98,7 @@ export default class FaroSourceMapUploaderPlugin
       }
 
       try {
-        const filenames = fs.readdirSync(outputPath, { recursive: true });
+        const filenames = fs.readdirSync(outputPath, { recursive: this.recursive });
         const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
         const filesToUpload = [];
         let totalSize = 0;
