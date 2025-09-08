@@ -67,6 +67,7 @@ const mockUploadHandler = async (options: any) => {
         gzipContents: options.gzipContents,
         gzipPayload: options.gzipPayload,
         verbose: options.verbose,
+        recursive: options.recursive,
       }
     );
 
@@ -363,6 +364,86 @@ describe('CLI', () => {
         'Error:',
         expect.any(Error)
       );
+    });
+
+    it('should upload sourcemaps with recursive flag enabled', async () => {
+      // Create options object with recursive flag
+      const options = {
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        outputPath: mockOutputPath,
+        keepSourcemaps: false,
+        gzipContents: false,
+        gzipPayload: false,
+        verbose: false,
+        recursive: true
+      };
+
+      // Call the mock handler directly
+      await mockUploadHandler(options);
+
+      // Verify uploadSourceMaps was called with correct arguments including recursive flag
+      expect(uploadSourceMaps).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        expect.any(String), // resolved output path
+        expect.objectContaining({
+          keepSourcemaps: false,
+          gzipContents: false,
+          gzipPayload: false,
+          verbose: false,
+          recursive: true
+        })
+      );
+
+      // Verify success message was displayed
+      expect(consoleInfoOrange).toHaveBeenCalledWith('Sourcemaps uploaded successfully');
+    });
+
+    it('should upload sourcemaps with recursive flag disabled (default)', async () => {
+      // Create options object without recursive flag (should default to undefined)
+      const options = {
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        outputPath: mockOutputPath,
+        keepSourcemaps: false,
+        gzipContents: false,
+        gzipPayload: false,
+        verbose: false
+        // recursive not specified, should be undefined
+      };
+
+      // Call the mock handler directly
+      await mockUploadHandler(options);
+
+      // Verify uploadSourceMaps was called with correct arguments including recursive flag as undefined
+      expect(uploadSourceMaps).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        expect.any(String), // resolved output path
+        expect.objectContaining({
+          keepSourcemaps: false,
+          gzipContents: false,
+          gzipPayload: false,
+          verbose: false,
+          recursive: undefined
+        })
+      );
+
+      // Verify success message was displayed
+      expect(consoleInfoOrange).toHaveBeenCalledWith('Sourcemaps uploaded successfully');
     });
   });
 

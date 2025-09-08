@@ -250,6 +250,7 @@ This will output a curl command that you can copy and run manually.
 - `-g, --gzip-contents`: Compress source maps as a tarball before uploading; files are processed in a streaming fashion, accumulating until the size limit (default: false)
 - `-z, --gzip-payload`: Gzip the HTTP payload for smaller uploads (default: false)
 - `-v, --verbose`: Enable verbose logging (default: false)
+- `-r, --recursive`: Recursively search subdirectories for source maps (default: false)
 - `-x, --max-upload-size <size>`: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
 
 ### Curl Command
