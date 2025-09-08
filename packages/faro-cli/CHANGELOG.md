@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.5.0...faro-cli-v0.5.1) (2025-09-08)
+
+
+### Bug Fixes
+
+* enabling recursive option for CLI ([#287](https://github.com/grafana/faro-javascript-bundler-plugins/issues/287)) ([6a2f301](https://github.com/grafana/faro-javascript-bundler-plugins/commit/6a2f3016cb4048fbb4365926f7a47f24dea9723f))
+
 ## [0.5.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.4.1...faro-cli-v0.5.0) (2025-08-12)
 
 
