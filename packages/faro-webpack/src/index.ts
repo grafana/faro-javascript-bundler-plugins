@@ -13,6 +13,7 @@ import {
   exportBundleIdToFile,
   shouldProcessFile,
 } from "@grafana/faro-bundlers-shared";
+import { sources } from "webpack";
 
 interface BannerPluginOptions {
   hash?: string;
@@ -96,32 +97,31 @@ export default class FaroSourceMapUploaderPlugin
 
     if (this.nextjs) {
       // Find all .map files and modify their file property to prepend _next/ if it doesn't already have it
-      compiler.hooks.emit.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
-        Object.keys(compilation.assets).forEach((filename) => {
-          if (filename.endsWith('.map')) {
-            const asset = compilation.assets[filename];
-            const source = asset.source().toString();
-            const sourceMap = JSON.parse(source);
+      compiler.hooks.compilation.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
+        compilation.hooks.processAssets.tap(
+          {
+            name: WEBPACK_PLUGIN_NAME,
+            stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
+          },
+          (assets) => {
+            Object.keys(assets).forEach((filename) => {
+              if (filename.endsWith('.map')) {
+                const sourceMapAsset = compilation.getAsset(filename);
+                const sourceMapContent = sourceMapAsset?.source.source().toString();
+                const sourceMap = JSON.parse(sourceMapContent ?? '');
 
-            if (sourceMap.file && !sourceMap.file.startsWith('_next/')) {
-              sourceMap.file = `_next/${sourceMap.file}`;
+                if (sourceMap.file && !sourceMap.file.startsWith('_next/')) {
+                  sourceMap.file = `_next/${sourceMap.file}`;
 
-              compilation.assets[filename] = {
-                source: () => JSON.stringify(sourceMap, null, 2),
-                size: () => JSON.stringify(sourceMap, null, 2).length,
-                buffer: () => Buffer.from(JSON.stringify(sourceMap, null, 2)),
-                map: () => null,
-                sourceAndMap: () => ({
-                  source: JSON.stringify(sourceMap, null, 2),
-                  map: null,
-                }),
-                updateHash: (hash: any) => {
-                  hash.update(JSON.stringify(sourceMap, null, 2));
-                },
-              };
-            }
+                  compilation.updateAsset(
+                    filename,
+                    new sources.RawSource(JSON.stringify(sourceMap))
+                  );
+                }
+              }
+            });
           }
-        });
+        );
       });
     }
 
