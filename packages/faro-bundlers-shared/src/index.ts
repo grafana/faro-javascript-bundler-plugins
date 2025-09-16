@@ -41,6 +41,47 @@ interface UploadCompressedSourceMapsOptions {
   verbose?: boolean;
 }
 
+type FetchOptions = RequestInit & {
+  retries?: number;
+  backoff?: number;
+  requestId?: string;
+  verbose?: boolean;
+};
+
+async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init?: FetchOptions
+): Promise<Response> {
+  const {
+    retries = 3,
+    backoff = 300,
+    verbose,
+    requestId,
+    ...options
+  } = init ?? {};
+
+  try {
+    const response = await fetch(input, options);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    return response;
+  } catch (error) {
+    if (retries > 0) {
+      verbose && requestId && consoleInfoOrange(`Uploading ${requestId} failed. Retrying after ${backoff}ms`);
+      await new Promise(resolve => setTimeout(resolve, backoff));
+      return fetchWithRetry(input, {
+        ...options,
+        retries: retries - 1,
+        backoff: backoff * 2,
+      });
+    }
+    throw error;
+  }
+}
+
 export const uploadSourceMap = async (
   options: UploadSourceMapOptions
 ): Promise<boolean> => {
@@ -56,13 +97,15 @@ export const uploadSourceMap = async (
   let success = true;
 
   verbose && consoleInfoOrange(`Uploading ${filename} to ${sourcemapEndpoint}`);
-  await fetch(sourcemapEndpoint, {
+  await fetchWithRetry(sourcemapEndpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${stackId}:${apiKey}`,
     },
     body: fs.readFileSync(filePath),
+    verbose,
+    requestId: filename,
   })
     .then((res) => {
       if (res.ok) {
@@ -96,19 +139,17 @@ export const uploadCompressedSourceMaps = async (
   const tarball = `${outputPath}/${randomString()}.tar.gz`;
   await create({ z: true, file: tarball }, files);
 
-  verbose &&
-    consoleInfoOrange(
-      `Uploading ${files
-        .map((file) => file.split("/").pop())
-        .join(", ")} to ${sourcemapEndpoint}`
-    );
-  await fetch(sourcemapEndpoint, {
+  const filename = files.map((file) => file.split("/").pop()).join(", ");
+  verbose && consoleInfoOrange(`Uploading ${filename} to ${sourcemapEndpoint}`);
+  await fetchWithRetry(sourcemapEndpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/gzip",
       "Authorization": `Bearer ${stackId}:${apiKey}`,
     },
     body: fs.readFileSync(tarball),
+    verbose,
+    requestId: filename,
   })
     .then((res) => {
       if (res.ok) {
