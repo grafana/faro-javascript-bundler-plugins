@@ -61,11 +61,14 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `endpoint: string` *required*: The URL of your Faro Collector endpoint. This value is in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads".
 - `apiKey: string` *required*: The API key for your Faro Collector. This value gets generated on grafana.com by creating a new scope (details provided in the plugin and in the "Obtaining API key" section of this document).
 - `appId: string` *required*: The ID of your application. This should match the `appId` value you are using in your Faro Web SDK configuration.
-- `outputFiles: string[] | RegExp` *optional*: Either an array of source map files to upload, or a regex to match the source map files to upload. By default, all source maps get uploaded.
-- `bundleId: string` *optional*: The ID of the bundle/build. You can specify this value to filter by bundle ID in the Frontend Observability plugin. Otherwise the bundler uses an auto-generated ID.
-- `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading. Defaults to `false`.
-- `gzipContents: boolean` *optional*: Whether to tarball and Gzip the contents of the source maps before uploading. Defaults to `true`.
-- `verbose: boolean` *optional*: Whether to log verbose output during the upload process. Defaults to `false`.
+- `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** -> **Source Maps** -> **Configure source map uploads**
+- `outputFiles: string[] | RegExp` *optional*: An array of source map files to upload or a regex pattern to match files, by default Faro uploads all source maps
+- `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
+- `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
+- `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`
+- `verbose: boolean` *optional*: Whether to log verbose output during the upload process, default `false`
+- `skipUpload: boolean` *optional*: Whether to skip uploading source maps and only export the bundleId to an environment file, default `false`
+- `maxUploadSize: number` *optional*: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
 
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
 
