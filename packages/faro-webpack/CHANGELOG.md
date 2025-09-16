@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.6.0...faro-webpack-plugin-v0.7.0) (2025-09-16)
+
+
+### Features
+
+* nextjs webpack support ([#293](https://github.com/grafana/faro-javascript-bundler-plugins/issues/293)) ([af8d0b8](https://github.com/grafana/faro-javascript-bundler-plugins/commit/af8d0b8c03eb60f9969c5e8d7240376d4e52333b))
+
 ## [0.6.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.5.1...faro-webpack-plugin-v0.6.0) (2025-08-12)
 
 
