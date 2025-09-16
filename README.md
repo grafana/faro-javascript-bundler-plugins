@@ -127,13 +127,16 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `apiKey: string` *required*: The API key for your Faro Collector, you can generate a new scope on [grafana.com], refer to the [Obtaining API key](#obtaining-api-key) section
 - `appId: string` *required*: The ID of your application, it should match the `appId` value used in your Faro Web SDK configuration
 - `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** -> **Source Maps** -> **Configure source map uploads**
-- `outputPath: string` *optional*: Folder where output files will be located
-- `outputFiles: string[] | RegExp` *optional*: Either an array of source map files to upload, or a regex to match the source map files to upload. By default, all source maps get uploaded.
+- `outputPath: string` *optional*: Override the output directory path where source maps are located, by default uses the bundler's output.path
+- `outputFiles: string[] | RegExp` *optional*: An array of source map files to upload or a regex pattern to match files, by default Faro uploads all source maps
 - `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
 - `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`
 - `verbose: boolean` *optional*: Whether to log verbose output during the upload process, default `false`
+- `skipUpload: boolean` *optional*: Whether to skip uploading source maps and only export the bundleId to an environment file, default `false`
 - `maxUploadSize: number` *optional*: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
+- `recursive: boolean` *optional*: Whether to recursively search subdirectories for source maps, default `false`
+- `nextjs: boolean` *optional*: Whether to prepend `_next/` to source map file properties for Next.js compatibility. This should only be needed if your NextJS application has both client and server side code. If your application is only client side, this should not be needed. Default `false` (Webpack only)
 
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
 
@@ -159,61 +162,60 @@ To install the CLI with `yarn`, run:
 yarn add --dev @grafana/faro-cli
 ```
 
-### Usage with Bundler Plugins
+### Basic Usage
 
 When using with the Faro bundler plugins, you can set the `skipUpload` option to `true` in the plugin configuration to skip uploading source maps during the build process and instead use the CLI to upload them later.
 
-#### Webpack Example
-
-```javascript
-// webpack.config.js
-const FaroSourceMapUploaderPlugin = require('@grafana/faro-webpack-plugin');
-
-module.exports = {
-  // other configs
-  plugins: [
-    // other plugins
-    new FaroSourceMapUploaderPlugin({
-      appName: "$your-app-name",
-      // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads"
-      endpoint: "$your-faro-sourcemap-api-url",
-      apiKey: "$your-api-key",
-      appId: "$your-app-id",
-      stackId: "$your-stack-id",
-      skipUpload: true, // Skip uploading during build
-      verbose: true,
-    }),
-  ],
-};
+```bash
+npx faro-cli upload \
+  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --app-id "your-app-id" \
+  --api-key "your-api-key" \
+  --stack-id "your-stack-id" \
+  --bundle-id "your-bundle-id" \
+  --output-path "./dist" \
+  --verbose
 ```
 
-#### Rollup/Vite Example
+#### File Size Limits
 
-```javascript
-// rollup.config.js or vite.config.js
-import faroUploader from '@grafana/faro-rollup-plugin';
+The Faro API has a 30MB limit for individual file uploads by default. This limit applies to the uncompressed size of the files, regardless of whether compression is used during transmission. The CLI automatically handles this by:
 
-export default defineConfig(({ mode }) => {
-  return {
-    // other configs
-    plugins: [
-      // other plugins
-      faroUploader({
-        appName: "$your-app-name",
-        // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" -> "Configure source map uploads"
-        endpoint: "$your-faro-sourcemap-api-url",
-        apiKey: "$your-api-key",
-        appId: "$your-app-id",
-        stackId: "$your-stack-id",
-        skipUpload: true, // Skip uploading during build
-        verbose: true,
-      }),
-    ],
-  };
-});
+1. Checking file sizes before uploading
+2. Warning about files that exceed the limit
+3. Skipping files that are too large
+4. Processing files in a streaming fashion, accumulating files until reaching the size limit before uploading each batch
+
+This streaming approach is the same method used by the bundler plugins, ensuring consistent behavior across all upload methods. The CLI intelligently processes files one by one, uploading batches as they reach the size limit, which optimizes the upload process while staying within the API's size limits.
+
+While the `--gzip-payload` option can significantly reduce the network transfer size, the original uncompressed file size must still be under the configured size limit to be accepted by the API.
+
+You can customize the maximum upload size using the `--max-upload-size` option, which allows you to specify a different size limit in bytes.
+
+#### Gzipping Options
+
+The CLI provides two different gzipping options to optimize uploads:
+
+1. **Gzip Contents (`-g, --gzip-contents`)**: Compresses multiple source map files into a tarball before uploading. Files are processed in a streaming fashion, accumulating until reaching the 30MB limit before creating and uploading each tarball. This is useful when uploading multiple files at once.
+
+2. **Gzip Payload (`-z, --gzip-payload`)**: Compresses the HTTP payload itself using gzip content encoding. This can significantly reduce upload size and is especially useful for large source map files.
+
+Example with gzip payload:
+
+```bash
+npx faro-cli upload \
+  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --app-id "your-app-id" \
+  --api-key "your-api-key" \
+  --stack-id "your-stack-id" \
+  --bundle-id "your-bundle-id" \
+  --output-path "./dist" \
+  --patterns "*.map" \
+  --gzip-payload \
+  --verbose
 ```
 
-Then, after the build, you can upload the source maps using the CLI:
+You can use both options together for maximum compression:
 
 ```bash
 npx faro-cli upload \
@@ -224,9 +226,87 @@ npx faro-cli upload \
   --bundle-id env \
   --app-name "$your-app-name" \
   --output-path "./dist" \
+  --patterns "*.map" \
+  --gzip-contents \
+  --gzip-payload \
   --verbose
 ```
 
-Note the use of `--bundle-id env` and `--app-name "$your-app-name"` to read the bundle ID from the environment variable set by the bundler plugin.
+### Injecting Bundle ID into JavaScript Files
+
+For applications that don't use Webpack or Rollup, or in cases where you need to add the bundle ID to already built JavaScript files, you can use the `inject-bundle-id` command:
+
+```bash
+npx faro-cli inject-bundle-id \
+  --bundle-id "your-bundle-id" \
+  --app-name "your-app-name" \
+  --files "dist/**/*.js" \
+  --verbose
+```
+
+This command will:
+1. Locate all JavaScript files matching the specified glob patterns
+2. Check if each file already has a bundle ID snippet
+3. Prepend the bundle ID snippet to files that don't have it
+4. Export the bundle ID to an environment variable for potential later use with other commands
+
+#### Options
+
+- `--bundle-id, -b`: The bundle ID to inject (leave blank to generate a random ID)
+- `--app-name, -n`: Application name used in the bundle ID snippet
+- `--files, -f`: File patterns to match (multiple patterns can be specified)
+- `--verbose, -v`: Enable verbose logging
+- `--dry-run, -d`: Only print which files would be modified without making changes
+
+#### Examples
+
+Generate a random bundle ID and inject it into all JS files:
+
+```bash
+npx faro-cli inject-bundle-id \
+  --app-name "my-app" \
+  --files "dist/**/*.js" \
+  --verbose
+```
+
+Do a dry run first to see which files would be modified:
+
+```bash
+npx faro-cli inject-bundle-id \
+  --bundle-id "your-bundle-id" \
+  --app-name "my-app" \
+  --files "dist/**/*.js" \
+  --dry-run \
+  --verbose
+```
+
+### Generating a curl Command
+
+If you prefer to use curl directly, you can generate a curl command:
+
+```bash
+npx faro-cli curl \
+  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --app-id "your-app-id" \
+  --api-key "your-api-key" \
+  --stack-id "your-stack-id" \
+  --bundle-id "your-bundle-id" \
+  --file "./dist/main.js.map"
+```
+
+You can also generate a curl command that uses gzip compression:
+
+```bash
+npx faro-cli curl \
+  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --app-id "your-app-id" \
+  --api-key "your-api-key" \
+  --stack-id "your-stack-id" \
+  --bundle-id "your-bundle-id" \
+  --file "./dist/main.js.map" \
+  --gzip-payload
+```
+
+This will output a curl command that you can copy and run manually.
 
 For more information about the CLI, see the [CLI README](packages/faro-cli/README.md).

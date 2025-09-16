@@ -26,7 +26,9 @@
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@types/node": "^24.0.3",
     "msw": "^2.10.4",
-    "tslib": "^2.6.2"
+    "node-fetch": "^2.7.0",
+    "tslib": "^2.6.2",
+    "undici": "^7.16.0"
   },
   "resolutions": {
     "axios": "^1.7.4"

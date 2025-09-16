@@ -20,9 +20,12 @@ interface BannerPluginOptions {
   filename: string;
 }
 
+export interface WebpackFaroSourceMapUploaderPluginOptions extends FaroSourceMapUploaderPluginOptions {
+  nextjs?: boolean;
+}
+
 export default class FaroSourceMapUploaderPlugin
-  implements webpack.WebpackPluginInstance
-{
+  implements webpack.WebpackPluginInstance {
   private appName: string;
   private apiKey: string;
   private stackId: string;
@@ -36,8 +39,9 @@ export default class FaroSourceMapUploaderPlugin
   private verbose?: boolean;
   private skipUpload?: boolean;
   private maxUploadSize: number;
+  private nextjs?: boolean;
 
-  constructor(options: FaroSourceMapUploaderPluginOptions) {
+  constructor(options: WebpackFaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
     this.apiKey = options.apiKey;
     this.stackId = options.stackId;
@@ -50,6 +54,7 @@ export default class FaroSourceMapUploaderPlugin
     this.gzipContents = options.gzipContents;
     this.verbose = options.verbose;
     this.skipUpload = options.skipUpload;
+    this.nextjs = options.nextjs;
     this.maxUploadSize =
       options.maxUploadSize && options.maxUploadSize > 0
         ? options.maxUploadSize
@@ -87,6 +92,37 @@ export default class FaroSourceMapUploaderPlugin
           `Skipping sourcemap upload as skipUpload is set to true`
         );
       return;
+    }
+
+    if (this.nextjs) {
+      // Find all .map files and modify their file property to prepend _next/ if it doesn't already have it
+      compiler.hooks.emit.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
+        Object.keys(compilation.assets).forEach((filename) => {
+          if (filename.endsWith('.map')) {
+            const asset = compilation.assets[filename];
+            const source = asset.source().toString();
+            const sourceMap = JSON.parse(source);
+
+            if (sourceMap.file && !sourceMap.file.startsWith('_next/')) {
+              sourceMap.file = `_next/${sourceMap.file}`;
+
+              compilation.assets[filename] = {
+                source: () => JSON.stringify(sourceMap, null, 2),
+                size: () => JSON.stringify(sourceMap, null, 2).length,
+                buffer: () => Buffer.from(JSON.stringify(sourceMap, null, 2)),
+                map: () => null,
+                sourceAndMap: () => ({
+                  source: JSON.stringify(sourceMap, null, 2),
+                  map: null,
+                }),
+                updateHash: (hash: any) => {
+                  hash.update(JSON.stringify(sourceMap, null, 2));
+                },
+              };
+            }
+          }
+        });
+      });
     }
 
     compiler.hooks.afterEmit.tap(WEBPACK_PLUGIN_NAME, async () => {
@@ -185,8 +221,8 @@ export default class FaroSourceMapUploaderPlugin
         consoleInfoOrange(
           uploadedSourcemaps.length
             ? `Uploaded sourcemaps: ${uploadedSourcemaps
-                .map((map) => map.split("/").pop())
-                .join(", ")}`
+              .map((map) => map.split("/").pop())
+              .join(", ")}`
             : "No sourcemaps uploaded"
         );
       }

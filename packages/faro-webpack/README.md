@@ -56,12 +56,16 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `apiKey: string` *required*: The API key for your Faro Collector, you can generate a new scope on [grafana.com], refer to the [Obtaining API key](#obtaining-api-key) section
 - `appId: string` *required*: The ID of your application, it should match the `appId` value used in your Faro Web SDK configuration
 - `stackId: string` *required*: The ID of the stack, found in Frontend Observability under **Settings** -> **Source Maps** -> **Configure source map uploads**
-- `outputFiles: string[]` *optional*: An array of source map files to upload, by default Faro uploads all source maps
+- `outputPath: string` *optional*: Override the output directory path where source maps are located, by default uses Webpack's output.path
+- `outputFiles: string[] | RegExp` *optional*: An array of source map files to upload or a regex pattern to match files, by default Faro uploads all source maps
 - `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
 - `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`
 - `verbose: boolean` *optional*: Whether to log verbose output during the upload process, default `false`
+- `skipUpload: boolean` *optional*: Whether to skip uploading source maps and only export the bundleId to an environment file, default `false`
 - `maxUploadSize: number` *optional*: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
+- `recursive: boolean` *optional*: Whether to recursively search subdirectories for source maps, default `false`
+- `nextjs: boolean` *optional*: Whether to prepend `_next/` to source map file properties for Next.js compatibility. This should only be needed if your NextJS application has both client and server side code. If your application is only client side, this should not be needed. Default `false`
 
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
 
