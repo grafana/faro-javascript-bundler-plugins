@@ -50,7 +50,7 @@ This streaming approach is the same method used by the bundler plugins, ensuring
 
 While the `--gzip-payload` option can significantly reduce the network transfer size, the original uncompressed file size must still be under the configured size limit to be accepted by the API.
 
-You can customize the maximum upload size using the `--max-upload-size` option, which allows you to specify a different size limit in bytes.
+You can customize the maximum upload size using the `--max-upload-size` option, which allows you to specify a different size limit in bytes. However, you must file a support ticket with Grafana Cloud to increase the limit on the backend.
 
 #### Gzipping Options
 

@@ -1,19 +1,18 @@
+import FaroSourceMapUploaderPlugin, { WebpackFaroSourceMapUploaderPluginOptions } from "@grafana/faro-webpack-plugin";
 import {
-  describe,
-  test,
-  expect,
-  beforeAll,
   afterAll,
   afterEach,
+  beforeAll,
+  describe,
+  expect,
+  test,
 } from "@jest/globals";
 import fs from "fs/promises";
-import path from "path";
-import os from "os";
-import webpack, { Configuration, Stats } from "webpack";
-import { setupServer } from "msw/node";
 import { http, HttpResponse, PathParams } from "msw";
-import FaroSourceMapUploaderPlugin from "@grafana/faro-webpack-plugin";
-import { FaroSourceMapUploaderPluginOptions } from "@grafana/faro-bundlers-shared";
+import { setupServer } from "msw/node";
+import os from "os";
+import path from "path";
+import webpack, { Configuration, Stats } from "webpack";
 
 const uploadedFiles: string[] = [];
 const tempDirectories: string[] = [];
@@ -54,7 +53,7 @@ const server = setupServer(
 
 // Helper function to run webpack with custom configuration
 const runWebpack = async (
-  customConfig: Partial<FaroSourceMapUploaderPluginOptions> = {},
+  customConfig: Partial<WebpackFaroSourceMapUploaderPluginOptions> = {},
   tempDir?: string,
   webpackOverrides: webpack.Configuration = {}
 ) => {
@@ -240,6 +239,30 @@ describe("Faro Webpack Plugin", () => {
 
     expect(uploadedFiles.some((file) => file.includes("main.js"))).toBe(true);
     expect(uploadedFiles.some((file) => file.includes("vendor.js"))).toBe(true);
+  });
+
+  test("_next is prepended to the file property of the sourcemap when nextjs is true", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-nested-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "nextjs-test",
+        skipUpload: false,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        nextjs: true,
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const sourceMap = await fs.readFile(path.join(outputDir, "main.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("_next/main.js");
   });
 });
 
