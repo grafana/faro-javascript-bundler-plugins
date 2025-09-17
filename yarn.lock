@@ -2203,9 +2203,9 @@
   integrity sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==
 
 "@types/node@*", "@types/node@^24.0.3":
-  version "24.5.0"
-  resolved "https://registry.npmjs.org/@types/node/-/node-24.5.0.tgz#70a482e6b1d50e603729d74e62a9a43705ddc9d7"
-  integrity sha512-y1dMvuvJspJiPSDZUQ+WMBvF7dpnEqN4x9DDC9ie5Fs/HUZJA3wFp7EhHoVaKX/iI0cRoECV8X2jL8zi0xrHCg==
+  version "24.5.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-24.5.1.tgz#dab6917c47113eb4502d27d06e89a407ec0eff95"
+  integrity sha512-/SQdmUP2xa+1rdx7VwB9yPq8PaKej8TD5cQ+XfKDPWWC+VDJU4rvVVagXqKUzhKjtFoNA8rXDJAkCxQPAe00+Q==
   dependencies:
     undici-types "~7.12.0"
 
@@ -4020,6 +4020,7 @@ inquirer@^8.2.4:
 
 ip@^2.0.0, "ip@https://registry.npmjs.org/neoip/-/neoip-2.1.0.tgz":
   version "2.1.0"
+  uid "66c8fb429ef007c341902261641e906b046cf594"
   resolved "https://registry.npmjs.org/neoip/-/neoip-2.1.0.tgz#66c8fb429ef007c341902261641e906b046cf594"
 
 is-arrayish@^0.2.1:
