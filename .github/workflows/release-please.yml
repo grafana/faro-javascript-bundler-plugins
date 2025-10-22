@@ -68,7 +68,7 @@ jobs:
             NPM_TOKEN=npm:token
 
       - name: Checkout
-        uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5
+        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
         with:
           persist-credentials: false
           ref: main
