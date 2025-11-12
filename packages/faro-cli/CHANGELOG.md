@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.6.0...faro-cli-v0.7.0) (2025-11-12)
+
+
+### Features
+
+* adding proxy and proxy user options to the CLI ([#338](https://github.com/grafana/faro-javascript-bundler-plugins/issues/338)) ([ddf2e64](https://github.com/grafana/faro-javascript-bundler-plugins/commit/ddf2e6490393b4a192fc3764a3c22474bdfddf37))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.5.0 to ^0.6.0
+
 ## [0.6.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.5.1...faro-cli-v0.6.0) (2025-09-16)
 
 
