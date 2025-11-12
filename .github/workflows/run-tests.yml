@@ -3,6 +3,15 @@ on:
   pull_request:
 
 jobs:
+  renovate-reviewer:
+    name: Renovate reviewer
+    permissions:
+      pull-requests: write
+      contents: write
+      # This permission is needed to assume roles from Github's OIDC.
+      id-token: write
+    uses: ./.github/workflows/renovate-reviewer.yml
+
   run-tests:
     name: Testing with Node version (${{ matrix.node }})
     runs-on: ubuntu-latest
