@@ -4,6 +4,7 @@ on:
 
 jobs:
   renovate-reviewer:
+    name: Renovate reviewer
     permissions:
       pull-requests: write
       contents: write
