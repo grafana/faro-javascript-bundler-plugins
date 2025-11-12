@@ -46,6 +46,41 @@ interface UploadCompressedSourceMapsOptions {
   proxy?: string;
 }
 
+
+export const validateProxyUrl = (proxyUrl: string): void => {
+  if (!proxyUrl || typeof proxyUrl !== 'string') {
+    throw new Error('Proxy URL must be a non-empty string');
+  }
+
+  // Check that the URL starts with http:// or https://
+  if (!proxyUrl.match(/^https?:\/\//i)) {
+    throw new Error('Proxy URL must start with http:// or https://');
+  }
+
+  // Check for dangerous URL schemes
+  const dangerousSchemes = ['javascript:', 'data:', 'file:', 'vbscript:'];
+  const lowerUrl = proxyUrl.toLowerCase();
+  for (const scheme of dangerousSchemes) {
+    if (lowerUrl.includes(scheme)) {
+      throw new Error(`Proxy URL contains invalid scheme: ${scheme}`);
+    }
+  }
+
+  // Try to parse the URL to ensure it's valid
+  try {
+    const url = new URL(proxyUrl);
+    // Ensure it has a hostname
+    if (!url.hostname) {
+      throw new Error('Proxy URL must include a hostname');
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(`Invalid proxy URL format: ${error.message}`);
+    }
+    throw error;
+  }
+};
+
 export const uploadSourceMap = async (
   options: UploadSourceMapOptions
 ): Promise<boolean> => {
@@ -60,6 +95,17 @@ export const uploadSourceMap = async (
     proxy,
   } = options;
   let success = true;
+
+  // Validate proxy URL if provided
+  if (proxy) {
+    try {
+      validateProxyUrl(proxy);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Invalid proxy URL: ${errorMessage}`);
+      return false;
+    }
+  }
 
   verbose && consoleInfoOrange(`Uploading ${filename} to ${sourcemapEndpoint}`);
   await fetch(sourcemapEndpoint, {
@@ -100,6 +146,17 @@ export const uploadCompressedSourceMaps = async (
   const { sourcemapEndpoint, stackId, files, keepSourcemaps, outputPath, apiKey, verbose, proxy } = options;
 
   let success = true;
+
+  // Validate proxy URL if provided
+  if (proxy) {
+    try {
+      validateProxyUrl(proxy);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Invalid proxy URL: ${errorMessage}`);
+      return false;
+    }
+  }
 
   const tarball = `${outputPath}/${randomString()}.tar.gz`;
   await create({ z: true, file: tarball }, files);

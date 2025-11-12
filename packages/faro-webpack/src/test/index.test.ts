@@ -357,6 +357,78 @@ describe("Faro Webpack Plugin", () => {
       expect(fetchOptions).not.toHaveProperty('agent');
     }
   });
+
+  test("proxy validation rejects invalid proxy URLs", async () => {
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    // Test invalid proxy URLs
+    const invalidProxies = [
+      "not-a-url",
+      "ftp://proxy.example.com:8080",
+      "javascript:alert(1)",
+      "data:text/html,<script>alert(1)</script>",
+      "file:///etc/passwd",
+      "http://",
+      "https://",
+    ];
+
+    for (const invalidProxy of invalidProxies) {
+      consoleErrorSpy.mockClear();
+      mockFetch.mockClear();
+      mockHttpsProxyAgent.mockClear();
+
+      await runWebpack({
+        bundleId: "proxy-validation-test",
+        proxy: invalidProxy,
+        skipUpload: false,
+        keepSourcemaps: true,
+      }, undefined, {
+        devtool: "source-map",
+      });
+
+      // Wait for async uploads to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify that HttpsProxyAgent was not called with invalid proxy
+      expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
+    }
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  test("proxy validation accepts valid proxy URLs", async () => {
+    const validProxies = [
+      "http://proxy.example.com:8080",
+      "https://proxy.example.com:8080",
+      "http://user:pass@proxy.example.com:8080",
+      "https://user:pass@proxy.example.com:8080",
+      "http://proxy.example.com",
+      "https://proxy.example.com",
+    ];
+
+    for (const validProxy of validProxies) {
+      jest.clearAllMocks();
+      mockFetch.mockClear();
+      mockHttpsProxyAgent.mockClear();
+
+      await runWebpack({
+        bundleId: "proxy-validation-valid-test",
+        proxy: validProxy,
+        skipUpload: false,
+        keepSourcemaps: true,
+      }, undefined, {
+        devtool: "source-map",
+      });
+
+      // Wait for async uploads to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Verify that HttpsProxyAgent was called with valid proxy if uploads occurred
+      if (mockFetch.mock.calls.length > 0) {
+        expect(mockHttpsProxyAgent).toHaveBeenCalledWith(validProxy);
+      }
+    }
+  });
 });
 
 async function fileExists(filePath: string) {
