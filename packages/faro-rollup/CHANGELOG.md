@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.6.0...faro-rollup-plugin-v0.7.0) (2025-11-12)
+
+
+### Features
+
+* adding proxy support to the Faro bundlers ([#339](https://github.com/grafana/faro-javascript-bundler-plugins/issues/339)) ([8010352](https://github.com/grafana/faro-javascript-bundler-plugins/commit/80103526212b69152288f3ecda437a7dc3f07fe5))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.5.0 to ^0.6.0
+
 ## [0.6.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.5.2...faro-rollup-plugin-v0.6.0) (2025-09-16)
 
 

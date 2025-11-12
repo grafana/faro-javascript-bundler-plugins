@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.5.0...faro-bundlers-shared-v0.6.0) (2025-11-12)
+
+
+### Features
+
+* adding proxy support to the Faro bundlers ([#339](https://github.com/grafana/faro-javascript-bundler-plugins/issues/339)) ([8010352](https://github.com/grafana/faro-javascript-bundler-plugins/commit/80103526212b69152288f3ecda437a7dc3f07fe5))
+
 ## [0.5.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.4.1...faro-bundlers-shared-v0.5.0) (2025-08-12)
 
 
