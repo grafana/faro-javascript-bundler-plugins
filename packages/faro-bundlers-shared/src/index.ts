@@ -4,6 +4,8 @@ import { create } from "tar";
 import fetch from "cross-fetch";
 import ansi from "ansis";
 import path from "path";
+import { HttpsProxyAgent } from "https-proxy-agent";
+
 export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
   appName: string;
@@ -19,6 +21,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   skipUpload?: boolean;
   maxUploadSize?: number; // Maximum upload size in bytes
   recursive?: boolean; // Whether to recursively search subdirectories for sourcemaps
+  proxy?: string; // Proxy URL to use for source map uploads (e.g., "http://proxy.example.com:8080" or "http://user:pass@proxy.example.com:8080")
 }
 
 interface UploadSourceMapOptions {
@@ -29,6 +32,7 @@ interface UploadSourceMapOptions {
   filename: string;
   keepSourcemaps: boolean;
   verbose?: boolean;
+  proxy?: string;
 }
 
 interface UploadCompressedSourceMapsOptions {
@@ -39,6 +43,7 @@ interface UploadCompressedSourceMapsOptions {
   files: string[];
   keepSourcemaps: boolean;
   verbose?: boolean;
+  proxy?: string;
 }
 
 export const uploadSourceMap = async (
@@ -52,6 +57,7 @@ export const uploadSourceMap = async (
     keepSourcemaps,
     verbose,
     filename,
+    proxy,
   } = options;
   let success = true;
 
@@ -63,6 +69,8 @@ export const uploadSourceMap = async (
       "Authorization": `Bearer ${stackId}:${apiKey}`,
     },
     body: fs.readFileSync(filePath),
+    // @ts-ignore
+    agent: proxy ? new HttpsProxyAgent(proxy) : undefined,
   })
     .then((res) => {
       if (res.ok) {
@@ -89,7 +97,7 @@ export const uploadSourceMap = async (
 export const uploadCompressedSourceMaps = async (
   options: UploadCompressedSourceMapsOptions
 ): Promise<boolean> => {
-  const { sourcemapEndpoint, stackId, files, keepSourcemaps, outputPath, apiKey, verbose } = options;
+  const { sourcemapEndpoint, stackId, files, keepSourcemaps, outputPath, apiKey, verbose, proxy } = options;
 
   let success = true;
 
@@ -109,6 +117,8 @@ export const uploadCompressedSourceMaps = async (
       "Authorization": `Bearer ${stackId}:${apiKey}`,
     },
     body: fs.readFileSync(tarball),
+    // @ts-ignore
+    agent: proxy ? new HttpsProxyAgent(proxy) : undefined,
   })
     .then((res) => {
       if (res.ok) {

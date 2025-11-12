@@ -47,6 +47,31 @@ module.exports = {
 };
 ```
 
+#### Using a Proxy
+
+If you need to route source map uploads through a proxy server, you can use the `proxy` option:
+
+```javascript
+new FaroSourceMapUploaderPlugin({
+  appName: "$your-app-name",
+  endpoint: "$your-faro-collector-url",
+  apiKey: "$your-api-key",
+  appId: "$your-app-id",
+  stackId: "$your-stack-id",
+  proxy: "http://proxy.example.com:8080",
+  gzipContents: true,
+}),
+```
+
+If your proxy requires authentication, include credentials in the URL:
+
+```javascript
+new FaroSourceMapUploaderPlugin({
+  // ... other options
+  proxy: "http://username:password@proxy.example.com:8080",
+}),
+```
+
 ### Configuration Options
 
 The following options are available for the Faro JavaScript bundler plugins:
@@ -65,6 +90,7 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `skipUpload: boolean` *optional*: Whether to skip uploading source maps and only export the bundleId to an environment file, default `false`
 - `maxUploadSize: number` *optional*: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
 - `recursive: boolean` *optional*: Whether to recursively search subdirectories for source maps, default `false`
+- `proxy: string` *optional*: Proxy URL to use for source map uploads. Supports both HTTP and HTTPS proxies. If your proxy requires authentication, include credentials in the URL format: `http://username:password@proxy.example.com:8080`. Example: `http://proxy.example.com:8080` or `https://user:pass@proxy.example.com:8080`
 - `nextjs: boolean` *optional*: Whether to prepend `_next/` to source map file properties for Next.js compatibility. This should only be needed if your NextJS application has both client and server side code. If your application is only client side, this should not be needed. Default `false`
 
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
