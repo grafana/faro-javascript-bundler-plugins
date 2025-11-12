@@ -6,6 +6,7 @@ import {
   describe,
   expect,
   test,
+  jest,
 } from "@jest/globals";
 import fs from "fs/promises";
 import { http, HttpResponse, PathParams } from "msw";
@@ -13,6 +14,21 @@ import { setupServer } from "msw/node";
 import os from "os";
 import path from "path";
 import webpack, { Configuration, Stats } from "webpack";
+
+// Mock https-proxy-agent
+const mockHttpsProxyAgent = jest.fn().mockImplementation((proxyUrl: any) => {
+  return {
+    proxyUrl,
+    // Mock agent object
+    options: { proxy: proxyUrl }
+  };
+});
+
+jest.mock('https-proxy-agent', () => {
+  return {
+    HttpsProxyAgent: mockHttpsProxyAgent
+  };
+});
 
 const uploadedFiles: string[] = [];
 const tempDirectories: string[] = [];
@@ -110,6 +126,7 @@ describe("Faro Webpack Plugin", () => {
     await Promise.all(tempDirectories.map(cleanupTempDir));
     uploadedFiles.length = 0;
     tempDirectories.length = 0;
+    jest.clearAllMocks();
   });
 
   afterAll(() => server.close());
@@ -263,6 +280,51 @@ describe("Faro Webpack Plugin", () => {
     const sourceMap = await fs.readFile(path.join(outputDir, "main.js.map"), "utf8");
     const sourceMapJson = JSON.parse(sourceMap);
     expect(sourceMapJson.file).toBe("_next/main.js");
+  });
+
+  test("proxy option with authentication is passed correctly", async () => {
+    const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
+
+    // Clear previous calls
+    mockHttpsProxyAgent.mockClear();
+
+    await runWebpack({
+      bundleId: "proxy-auth-test",
+      proxy: mockProxyUrl,
+      skipUpload: false,
+      keepSourcemaps: true,
+    }, undefined, {
+      devtool: "source-map",
+    });
+
+    // Wait for uploads to complete
+    await waitFor(() => {
+      expect(uploadedFiles.length).toBeGreaterThan(0);
+    });
+
+    // Verify HttpsProxyAgent was called with the authenticated proxy URL
+    expect(mockHttpsProxyAgent).toHaveBeenCalledWith(mockProxyUrl);
+  });
+
+  test("no proxy agent is used when proxy option is not provided", async () => {
+    // Clear previous calls
+    mockHttpsProxyAgent.mockClear();
+
+    await runWebpack({
+      bundleId: "no-proxy-test",
+      skipUpload: false,
+      keepSourcemaps: true,
+    }, undefined, {
+      devtool: "source-map",
+    });
+
+    // Wait for uploads to complete
+    await waitFor(() => {
+      expect(uploadedFiles.length).toBeGreaterThan(0);
+    });
+
+    // Verify HttpsProxyAgent was not called when proxy is not provided
+    expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
   });
 });
 
