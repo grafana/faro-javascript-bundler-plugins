@@ -68,6 +68,8 @@ const mockUploadHandler = async (options: any) => {
         gzipPayload: options.gzipPayload,
         verbose: options.verbose,
         recursive: options.recursive,
+        proxy: options.proxy,
+        proxyUser: options.proxyUser,
       }
     );
 
@@ -115,7 +117,10 @@ const mockCurlHandler = (options: any) => {
       options.stackId,
       bundleId,
       filePath,
-      options.gzipPayload
+      options.maxUploadSize,
+      options.gzipPayload,
+      options.proxy,
+      options.proxyUser
     );
 
     console.log(curlCommand);
@@ -472,7 +477,10 @@ describe('CLI', () => {
         mockStackId,
         mockBundleId,
         expect.any(String), // resolved file path
-        false // gzipPayload
+        undefined, // maxUploadSize
+        false, // gzipPayload
+        undefined, // proxy
+        undefined // proxyUser
       );
 
       // Verify curl command was displayed
@@ -507,7 +515,10 @@ describe('CLI', () => {
         mockStackId,
         'env-bundle-id',
         expect.any(String), // resolved file path
-        false // gzipPayload
+        undefined, // maxUploadSize
+        false, // gzipPayload
+        undefined, // proxy
+        undefined // proxyUser
       );
     });
 
@@ -584,6 +595,141 @@ describe('CLI', () => {
       expect(console.error).toHaveBeenCalledWith(
         'Error:',
         expect.any(Error)
+      );
+    });
+
+    it('should pass proxy option to uploadSourceMaps', async () => {
+      const mockProxy = 'http://proxy.example.com:8080';
+      const options = {
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        outputPath: mockOutputPath,
+        keepSourcemaps: false,
+        gzipContents: false,
+        gzipPayload: false,
+        verbose: false,
+        proxy: mockProxy
+      };
+
+      await mockUploadHandler(options);
+
+      expect(uploadSourceMaps).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        expect.any(String),
+        expect.objectContaining({
+          keepSourcemaps: false,
+          gzipContents: false,
+          gzipPayload: false,
+          verbose: false,
+          proxy: mockProxy
+        })
+      );
+    });
+
+    it('should pass proxy option to generateCurlCommand', () => {
+      const mockProxy = 'http://proxy.example.com:8080';
+      const options = {
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        file: mockFilePath,
+        contentType: 'application/json',
+        gzipPayload: false,
+        proxy: mockProxy
+      };
+
+      mockCurlHandler(options);
+
+      expect(generateCurlCommand).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        expect.any(String),
+        undefined, // maxUploadSize
+        false, // gzipPayload
+        mockProxy, // proxy
+        undefined // proxyUser
+      );
+    });
+
+    it('should pass proxyUser option to uploadSourceMaps', async () => {
+      const mockProxy = 'http://proxy.example.com:8080';
+      const mockProxyUser = 'user:pass';
+      const options = {
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        outputPath: mockOutputPath,
+        keepSourcemaps: false,
+        gzipContents: false,
+        gzipPayload: false,
+        verbose: false,
+        proxy: mockProxy,
+        proxyUser: mockProxyUser
+      };
+
+      await mockUploadHandler(options);
+
+      expect(uploadSourceMaps).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        expect.any(String),
+        expect.objectContaining({
+          keepSourcemaps: false,
+          gzipContents: false,
+          gzipPayload: false,
+          verbose: false,
+          proxy: mockProxy,
+          proxyUser: mockProxyUser
+        })
+      );
+    });
+
+    it('should pass proxyUser option to generateCurlCommand', () => {
+      const mockProxy = 'http://proxy.example.com:8080';
+      const mockProxyUser = 'user:pass';
+      const options = {
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        file: mockFilePath,
+        contentType: 'application/json',
+        gzipPayload: false,
+        proxy: mockProxy,
+        proxyUser: mockProxyUser
+      };
+
+      mockCurlHandler(options);
+
+      expect(generateCurlCommand).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        expect.any(String),
+        undefined, // maxUploadSize
+        false, // gzipPayload
+        mockProxy, // proxy
+        mockProxyUser // proxyUser
       );
     });
   });

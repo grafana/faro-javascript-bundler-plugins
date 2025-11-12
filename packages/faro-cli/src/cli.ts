@@ -20,6 +20,8 @@ interface UploadOptions {
   verbose: boolean;
   maxUploadSize?: number;
   recursive?: boolean;
+  proxy?: string;
+  proxyUser?: string;
 }
 
 interface CurlOptions {
@@ -33,6 +35,8 @@ interface CurlOptions {
   contentType?: string;
   gzipPayload: boolean;
   maxUploadSize?: number;
+  proxy?: string;
+  proxyUser?: string;
 }
 
 const program = new Command();
@@ -57,7 +61,9 @@ program
   .option('-z, --gzip-payload', 'Gzip the HTTP payload for smaller uploads', false)
   .option('-v, --verbose', 'Enable verbose logging', false)
   .option('-r, --recursive', 'Recursively search subdirectories for sourcemaps', false)
-  .option('-x, --max-upload-size <size>', 'Maximum upload size in bytes (default: 30MB)', (value) => parseInt(value, 10))
+  .option('-i, --max-upload-size <size>', 'Maximum upload size in bytes (default: 30MB)', (value) => parseInt(value, 10))
+  .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
+  .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
   .action(async (options: UploadOptions) => {
     try {
       // Check if bundleId is provided or should be read from environment variable
@@ -105,6 +111,8 @@ program
           verbose: options.verbose,
           maxUploadSize: options.maxUploadSize,
           recursive: options.recursive,
+          proxy: options.proxy,
+          proxyUser: options.proxyUser,
         }
       );
 
@@ -132,6 +140,8 @@ program
   .option('-n, --app-name <name>', 'Application name (used to find bundleId in environment variables)')
   .option('-t, --content-type <type>', 'Content type for the upload', 'application/json')
   .option('-z, --gzip-payload', 'Generate a command that gzips the payload', false)
+  .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
+  .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
   .action((options: CurlOptions) => {
     try {
       // Check if bundleId is provided or should be read from environment variable
@@ -168,7 +178,9 @@ program
         bundleId,
         filePath,
         options.maxUploadSize,
-        options.gzipPayload
+        options.gzipPayload,
+        options.proxy,
+        options.proxyUser
       );
 
       console.log(`cURL command: ${options.gzipPayload ? 'gzip -c ' : ''}${curlCommand}`);

@@ -18,6 +18,8 @@ export interface UploadSourceMapOptions {
   gzipPayload?: boolean;
   verbose?: boolean;
   maxUploadSize?: number;
+  proxy?: string;
+  proxyUser?: string;
 }
 
 export interface UploadCompressedSourceMapsOptions {
@@ -32,6 +34,8 @@ export interface UploadCompressedSourceMapsOptions {
   gzipPayload?: boolean;
   verbose?: boolean;
   maxUploadSize?: number;
+  proxy?: string;
+  proxyUser?: string;
 }
 
 /**
@@ -91,6 +95,8 @@ const exceedsMaxSize = (filePath: string, maxSize?: number): boolean => {
  * @param contentType Content type of the request
  * @param gzipPayload Whether to gzip the payload
  * @param maxUploadSize Optional custom max upload size in bytes
+ * @param proxy Optional proxy URL to use for the request
+ * @param proxyUser Optional username:password for proxy authentication
  * @returns Promise<boolean> indicating success or failure
  */
 const executeCurl = (
@@ -99,7 +105,9 @@ const executeCurl = (
   headers: Record<string, string>,
   contentType: string,
   gzipPayload: boolean = false,
-  maxUploadSize?: number
+  maxUploadSize?: number,
+  proxy?: string,
+  proxyUser?: string
 ): boolean => {
   try {
     let fileToUpload = filePath;
@@ -129,7 +137,9 @@ const executeCurl = (
       .join(' ');
 
     // Build the curl command
-    const curlCommand = `curl -s -X POST ${headerArgs} --data-binary @${fileToUpload} "${url}"`;
+    const proxyArg = proxy ? `--proxy "${proxy}"` : '';
+    const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}"` : '';
+    const curlCommand = `curl -s -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @${fileToUpload}`;
 
     // Execute the curl command
     const result = execSync(curlCommand, { encoding: 'utf8' });
@@ -172,6 +182,8 @@ export const uploadSourceMap = async (
     verbose,
     filename,
     maxUploadSize,
+    proxy,
+    proxyUser,
   } = options;
 
   const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
@@ -193,7 +205,9 @@ export const uploadSourceMap = async (
       { "Authorization": `Bearer ${stackId}:${apiKey}` },
       "application/json",
       gzipPayload,
-      maxUploadSize
+      maxUploadSize,
+      proxy,
+      proxyUser
     );
 
     if (success) {
@@ -235,6 +249,8 @@ export const uploadCompressedSourceMaps = async (
     gzipPayload,
     verbose,
     maxUploadSize,
+    proxy,
+    proxyUser,
   } = options;
 
   const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
@@ -265,7 +281,9 @@ export const uploadCompressedSourceMaps = async (
         gzipPayload ?? false,
         verbose ?? false,
         false,
-        maxUploadSize
+        maxUploadSize,
+        proxy,
+        proxyUser
       );
     }
 
@@ -284,7 +302,9 @@ export const uploadCompressedSourceMaps = async (
       { "Authorization": `Bearer ${stackId}:${apiKey}` },
       "application/gzip",
       false, // Don't gzip again as tarball is already compressed
-      maxUploadSize
+      maxUploadSize,
+      proxy,
+      proxyUser
     );
 
     if (success) {
@@ -355,7 +375,9 @@ const uploadFilesInChunks = async (
   gzipPayload: boolean,
   verbose: boolean,
   gzipContents: boolean = false,
-  maxUploadSize?: number
+  maxUploadSize?: number,
+  proxy?: string,
+  proxyUser?: string
 ): Promise<boolean> => {
   // Split files into chunks based on size
   const chunks: string[][] = [];
@@ -426,6 +448,8 @@ const uploadFilesInChunks = async (
         gzipPayload,
         verbose,
         maxUploadSize,
+        proxy,
+        proxyUser,
       });
     } else {
       // Upload files individually
@@ -443,6 +467,8 @@ const uploadFilesInChunks = async (
           gzipPayload,
           verbose,
           maxUploadSize,
+          proxy,
+          proxyUser,
         });
 
         if (!fileResult) {
@@ -469,7 +495,10 @@ const uploadFilesInChunks = async (
  * @param stackId The stack ID
  * @param bundleId The bundle ID
  * @param filePath The path to the sourcemap file
+ * @param maxUploadSize Maximum upload size in bytes
  * @param gzipPayload Whether to gzip the payload
+ * @param proxy Optional proxy URL to use for the request
+ * @param proxyUser Optional username:password for proxy authentication
  * @returns string The cURL command
  */
 export const generateCurlCommand = (
@@ -480,7 +509,9 @@ export const generateCurlCommand = (
   bundleId: string,
   filePath: string,
   maxUploadSize: number = THIRTY_MB_IN_BYTES,
-  gzipPayload: boolean = false
+  gzipPayload: boolean = false,
+  proxy?: string,
+  proxyUser?: string
 ): string => {
   const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
 
@@ -489,15 +520,18 @@ export const generateCurlCommand = (
     console.warn(`Warning: File ${path.basename(filePath)} exceeds the maximum allowed size of ${maxUploadSize} bytes for upload.`);
   }
 
+  const proxyArg = proxy ? `--proxy "${proxy}"` : '';
+  const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}"` : '';
+
   if (gzipPayload) {
     return `# This command gzips the file content before uploading
-cat ${filePath} | gzip -c | curl -X POST "${sourcemapEndpoint}" \\
+cat ${filePath} | gzip -c | curl -X POST ${proxyArg} ${proxyUserArg} "${sourcemapEndpoint}" \\
   -H "Content-Type: application/json" \\
   -H "Content-Encoding: gzip" \\
   -H "Authorization: Bearer ${stackId}:${apiKey}" \\
   --data-binary @-`;
   } else {
-    return `curl -X POST "${sourcemapEndpoint}" \\
+    return `curl -X POST ${proxyArg} ${proxyUserArg} "${sourcemapEndpoint}" \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${stackId}:${apiKey}" \\
   --data-binary @${filePath}`;
@@ -552,6 +586,8 @@ export const uploadSourceMaps = async (
     verbose?: boolean;
     maxUploadSize?: number;
     recursive?: boolean;
+    proxy?: string;
+    proxyUser?: string;
   } = {}
 ): Promise<boolean> => {
   const {
@@ -561,6 +597,8 @@ export const uploadSourceMaps = async (
     verbose = false,
     maxUploadSize,
     recursive = false,
+    proxy,
+    proxyUser,
   } = options;
 
   const maxSize = maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
@@ -622,7 +660,9 @@ export const uploadSourceMaps = async (
           gzipPayload,
           verbose,
           false,
-          maxUploadSize
+          maxUploadSize,
+          proxy,
+          proxyUser
         );
       }
 
@@ -634,7 +674,9 @@ export const uploadSourceMaps = async (
         { "Authorization": `Bearer ${stackId}:${apiKey}` },
         "application/gzip",
         false, // Don't gzip again as tarball is already compressed
-        maxUploadSize
+        maxUploadSize,
+        proxy,
+        proxyUser
       );
 
       // Delete the tarball
@@ -667,7 +709,9 @@ export const uploadSourceMaps = async (
         gzipPayload,
         verbose,
         false,
-        maxUploadSize
+        maxUploadSize,
+        proxy,
+        proxyUser
       );
     }
 
@@ -689,6 +733,8 @@ export const uploadSourceMaps = async (
         gzipPayload,
         verbose,
         maxUploadSize,
+        proxy,
+        proxyUser,
       });
 
       if (!result) {

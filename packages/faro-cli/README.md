@@ -26,7 +26,7 @@ The CLI uses cURL under the hood to upload source maps to the Faro API:
 
 ```bash
 npx faro-cli upload \
-  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --endpoint "your-faro-sourcemap-api-url" \
   --app-id "your-app-id" \
   --api-key "your-api-key" \
   --stack-id "your-stack-id" \
@@ -64,7 +64,7 @@ Example with gzip payload:
 
 ```bash
 npx faro-cli upload \
-  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --endpoint "your-faro-sourcemap-api-url" \
   --app-id "your-app-id" \
   --api-key "your-api-key" \
   --stack-id "your-stack-id" \
@@ -79,7 +79,7 @@ You can use both options together for maximum compression:
 
 ```bash
 npx faro-cli upload \
-  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --endpoint "your-faro-sourcemap-api-url" \
   --app-id "your-app-id" \
   --api-key "your-api-key" \
   --stack-id "your-stack-id" \
@@ -90,6 +90,25 @@ npx faro-cli upload \
   --gzip-payload \
   --verbose
 ```
+
+#### Using a Proxy
+
+If you need to route requests through a proxy server, you can use the `--proxy` option:
+
+```bash
+npx faro-cli upload \
+  --endpoint "your-faro-sourcemap-api-url" \
+  --app-id "your-app-id" \
+  --api-key "your-api-key" \
+  --stack-id "your-stack-id" \
+  --bundle-id "your-bundle-id" \
+  --output-path "./dist" \
+  --proxy "your-proxy:port" \
+  --proxy-user "user:pass" \
+  --verbose
+```
+
+The proxy URL will be passed to cURL using the `--proxy` parameter. If your proxy requires authentication, you can use the `--proxy-user` option (or `-U`) to provide credentials in the format `username:password`.
 
 ### Injecting Bundle ID into JavaScript Files
 
@@ -171,7 +190,7 @@ Then, after the build, you can upload the source maps using the CLI:
 
 ```bash
 npx faro-cli upload \
-  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --endpoint "your-faro-sourcemap-api-url" \
   --app-id "your-app-id" \
   --api-key "your-api-key" \
   --stack-id "your-stack-id" \
@@ -212,7 +231,7 @@ If you prefer to use curl directly, you can generate a curl command:
 
 ```bash
 npx faro-cli curl \
-  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --endpoint "your-faro-sourcemap-api-url" \
   --app-id "your-app-id" \
   --api-key "your-api-key" \
   --stack-id "your-stack-id" \
@@ -224,13 +243,27 @@ You can also generate a curl command that uses gzip compression:
 
 ```bash
 npx faro-cli curl \
-  --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
+  --endpoint "your-faro-sourcemap-api-url" \
   --app-id "your-app-id" \
   --api-key "your-api-key" \
   --stack-id "your-stack-id" \
   --bundle-id "your-bundle-id" \
   --file "./dist/main.js.map" \
   --gzip-payload
+```
+
+You can also generate a curl command that uses a proxy:
+
+```bash
+npx faro-cli curl \
+  --endpoint "your-faro-sourcemap-api-url" \
+  --app-id "your-app-id" \
+  --api-key "your-api-key" \
+  --stack-id "your-stack-id" \
+  --bundle-id "your-bundle-id" \
+  --file "./dist/main.js.map" \
+  --proxy "http://proxy.example.com:8080" \
+  --proxy-user "username:password"
 ```
 
 This will output a curl command that you can copy and run manually.
@@ -251,7 +284,9 @@ This will output a curl command that you can copy and run manually.
 - `-z, --gzip-payload`: Gzip the HTTP payload for smaller uploads (default: false)
 - `-v, --verbose`: Enable verbose logging (default: false)
 - `-r, --recursive`: Recursively search subdirectories for source maps (default: false)
-- `-x, --max-upload-size <size>`: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
+- `-i, --max-upload-size <size>`: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
+- `-x, --proxy <url>`: Proxy URL to use for cURL requests (optional)
+- `-U, --proxy-user <user:password>`: Username and password for proxy authentication (optional)
 
 ### Curl Command
 
@@ -264,6 +299,8 @@ This will output a curl command that you can copy and run manually.
 - `-n, --app-name <name>`: Application name (used to find bundleId in environment variables)
 - `-t, --content-type <type>`: Content type for the upload (default: "application/json")
 - `-z, --gzip-payload`: Generate a command that gzips the payload (default: false)
+- `-x, --proxy <url>`: Proxy URL to use for cURL requests (optional)
+- `-U, --proxy-user <user:password>`: Username and password for proxy authentication (optional)
 
 ## License
 
