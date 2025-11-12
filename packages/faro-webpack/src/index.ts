@@ -41,6 +41,7 @@ export default class FaroSourceMapUploaderPlugin
   private skipUpload?: boolean;
   private maxUploadSize: number;
   private nextjs?: boolean;
+  private proxy?: string;
 
   constructor(options: WebpackFaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -60,6 +61,7 @@ export default class FaroSourceMapUploaderPlugin
       options.maxUploadSize && options.maxUploadSize > 0
         ? options.maxUploadSize
         : THIRTY_MB_IN_BYTES;
+    this.proxy = options.proxy;
 
     // Export bundleId to environment variable if skipUpload is true
     if (this.skipUpload) {
@@ -167,6 +169,7 @@ export default class FaroSourceMapUploaderPlugin
                 files: filesToUpload,
                 keepSourcemaps: !!this.keepSourcemaps,
                 verbose: this.verbose,
+                proxy: this.proxy,
               });
 
               if (result) {
@@ -189,6 +192,7 @@ export default class FaroSourceMapUploaderPlugin
               filePath: `${outputPath}/${filenameStr}`,
               keepSourcemaps: !!this.keepSourcemaps,
               verbose: this.verbose,
+              proxy: this.proxy,
             });
 
             if (result) {
@@ -207,6 +211,7 @@ export default class FaroSourceMapUploaderPlugin
             files: filesToUpload,
             keepSourcemaps: !!this.keepSourcemaps,
             verbose: this.verbose,
+            proxy: this.proxy,
           });
 
           if (result) {

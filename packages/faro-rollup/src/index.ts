@@ -29,6 +29,7 @@ export default function faroUploader(
     gzipContents,
     verbose,
     skipUpload,
+    proxy,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -109,6 +110,7 @@ export default function faroUploader(
                 files: filesToUpload,
                 keepSourcemaps: !!keepSourcemaps,
                 verbose: verbose,
+                proxy: proxy,
               });
 
               if (result) {
@@ -131,6 +133,7 @@ export default function faroUploader(
               filePath: `${outputPath}/${filename}`,
               keepSourcemaps: !!keepSourcemaps,
               verbose: verbose,
+              proxy: proxy,
             });
 
             if (result) {
@@ -149,6 +152,7 @@ export default function faroUploader(
             files: filesToUpload,
             keepSourcemaps: !!keepSourcemaps,
             verbose: verbose,
+            proxy: proxy,
           });
 
           if (result) {
