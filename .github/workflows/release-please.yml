@@ -74,7 +74,7 @@ jobs:
           ref: main
 
       - name: Setup .npmrc file for NPM registry
-        uses: actions/setup-node@3235b876344d2a9aa001b8d1453c930bba69e610
+        uses: actions/setup-node@dda4788290998366da86b6a4f497909644397bb2
         with:
           node-version: 20.x
           registry-url: "https://registry.npmjs.org"
