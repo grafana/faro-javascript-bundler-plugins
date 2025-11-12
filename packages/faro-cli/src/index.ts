@@ -137,8 +137,8 @@ const executeCurl = (
       .join(' ');
 
     // Build the curl command
-    const proxyArg = proxy ? `--proxy "${proxy}" ` : '';
-    const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}" ` : '';
+    const proxyArg = proxy ? `--proxy "${proxy}"` : '';
+    const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}"` : '';
     const curlCommand = `curl -s -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @${fileToUpload}`;
 
     // Execute the curl command
