@@ -1,0 +1,21 @@
+name: Bundle Stats
+
+on:
+  workflow_call: {}
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      # this permission is needed to assume roles from Github's OIDC.
+      id-token: write
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
+
+      - name: check bundle size
+        uses: grafana/plugin-actions/bundle-size@bundle-size/v1.0.3

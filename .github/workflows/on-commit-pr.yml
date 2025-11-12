@@ -1,4 +1,4 @@
-name: run-tests
+name: On commit/PR
 on:
   pull_request:
 
@@ -11,6 +11,16 @@ jobs:
       # This permission is needed to assume roles from Github's OIDC.
       id-token: write
     uses: ./.github/workflows/renovate-reviewer.yml
+
+  bundle-size:
+    name: Bundle size
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+      # This permission is needed to assume roles from Github's OIDC.
+      id-token: write
+    uses: ./.github/workflows/bundle-size.yml
 
   run-tests:
     name: Testing with Node version (${{ matrix.node }})
