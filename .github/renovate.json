@@ -1,0 +1,48 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "github>grafana/grafana-renovate-config//presets/plugin-ci-workflows"
+  ],
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Label patch updates",
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "labels": [
+        "automerge-patch",
+        "dependencies"
+      ]
+    },
+    {
+      "description": "Label minor updates",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "labels": [
+        "automerge-minor",
+        "dependencies"
+      ]
+    },
+    {
+      "description": "Label digest updates",
+      "matchUpdateTypes": [
+        "digest"
+      ],
+      "labels": [
+        "automerge-digest",
+        "dependencies"
+      ]
+    }
+  ]
+}
