@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.8.0...faro-webpack-plugin-v0.8.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* fixing issue with skipUpload preventing nextjs flag from applying ([#349](https://github.com/grafana/faro-javascript-bundler-plugins/issues/349)) ([21ccb4f](https://github.com/grafana/faro-javascript-bundler-plugins/commit/21ccb4f6ab83355c2e1cbc036e1855b6562365a8))
+
 ## [0.8.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.7.0...faro-webpack-plugin-v0.8.0) (2025-11-12)
 
 
