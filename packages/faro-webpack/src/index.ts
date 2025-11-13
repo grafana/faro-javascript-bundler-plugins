@@ -88,15 +88,6 @@ export default class FaroSourceMapUploaderPlugin
       })
     );
 
-    // Skip uploading if skipUpload is true
-    if (this.skipUpload) {
-      this.verbose &&
-        consoleInfoOrange(
-          `Skipping sourcemap upload as skipUpload is set to true`
-        );
-      return;
-    }
-
     if (this.nextjs) {
       // Find all .map files and modify their file property to prepend _next/ if it doesn't already have it
       compiler.hooks.compilation.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
@@ -125,6 +116,15 @@ export default class FaroSourceMapUploaderPlugin
           }
         );
       });
+    }
+
+    // Skip uploading if skipUpload is true
+    if (this.skipUpload) {
+      this.verbose &&
+        consoleInfoOrange(
+          `Skipping sourcemap upload as skipUpload is set to true`
+        );
+      return;
     }
 
     compiler.hooks.afterEmit.tap(WEBPACK_PLUGIN_NAME, async () => {
