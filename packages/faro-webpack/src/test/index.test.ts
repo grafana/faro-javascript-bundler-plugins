@@ -296,6 +296,30 @@ describe("Faro Webpack Plugin", () => {
     expect(sourceMapJson.file).toBe("_next/main.js");
   });
 
+  test("_next is prepended to the file property of the sourcemap when nextjs is true and skipUpload is true", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-nested-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "nextjs-skip-upload-test",
+        skipUpload: true,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        nextjs: true,
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const sourceMap = await fs.readFile(path.join(outputDir, "main.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("_next/main.js");
+  });
+
   test("proxy option with authentication is passed correctly", async () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 
