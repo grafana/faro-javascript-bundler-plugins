@@ -37,7 +37,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        uses: borales/actions-yarn@f46b5a247707facb0ce09d4604b4fbacb5f1a8ba
+        uses: borales/actions-yarn@a00d5858f03a62641356460b652826cfd03c9ddb
         with:
           cmd: install --frozen-lockfile
 
@@ -48,6 +48,6 @@ jobs:
           yarn test || yarn test || yarn test
 
       - name: Build production bundle
-        uses: borales/actions-yarn@f46b5a247707facb0ce09d4604b4fbacb5f1a8ba
+        uses: borales/actions-yarn@a00d5858f03a62641356460b652826cfd03c9ddb
         with:
           cmd: build
