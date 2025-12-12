@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.6.0...faro-bundlers-shared-v0.7.0) (2025-12-12)
+
+
+### Features
+
+* esbuild bundler plugin ([#375](https://github.com/grafana/faro-javascript-bundler-plugins/issues/375)) ([e59d9cf](https://github.com/grafana/faro-javascript-bundler-plugins/commit/e59d9cf606598e518934def2b09963561e33b447))
+
 ## [0.6.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.5.0...faro-bundlers-shared-v0.6.0) (2025-11-12)
 
 
