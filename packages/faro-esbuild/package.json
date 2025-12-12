@@ -1,0 +1,28 @@
+{
+  "name": "@grafana/faro-esbuild-plugin",
+  "version": "0.1.0",
+  "description": "Upload a source map to the Faro source map API from an esbuild build pipeline",
+  "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "module": "dist/esm/index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
+    "directory": "packages/faro-esbuild"
+  },
+  "license": "Apache-2.0",
+  "author": "Grafana Labs",
+  "scripts": {
+    "build": "rollup --config rollup.config.mjs",
+    "test": "jest"
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "@grafana/faro-bundlers-shared": "^0.6.0",
+    "cross-fetch": "^4.0.0",
+    "esbuild": "^0.24.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

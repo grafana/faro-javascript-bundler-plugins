@@ -264,6 +264,7 @@ export const consoleInfoOrange = (message: string) =>
 
 export const WEBPACK_PLUGIN_NAME = "FaroSourceMapUploaderPlugin";
 export const ROLLUP_PLUGIN_NAME = "rollup-plugin-faro-source-map-uploader";
+export const ESBUILD_PLUGIN_NAME = "faro-esbuild-plugin";
 
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
 
