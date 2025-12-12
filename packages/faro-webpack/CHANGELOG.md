@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.8.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.8.1...faro-webpack-plugin-v0.8.2) (2025-12-12)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.6.0 to ^0.7.0
+
 ## [0.8.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.8.0...faro-webpack-plugin-v0.8.1) (2025-11-13)
 
 
