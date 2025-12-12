@@ -122,6 +122,44 @@ describe('Faro Esbuild Plugin', () => {
     expect(code).toMatch(bundleIdRegex);
   });
 
+  test('banner string is preserved and bundleId snippet is prepended', async () => {
+    const existingBanner = '/* custom banner */';
+    const { code } = await runEsbuild(
+      { bundleId: 'banner-test' },
+      { banner: existingBanner }
+    );
+
+    // verify the bundleId snippet is prepended to the existing banner
+    expect(code).toContain(`g["__faroBundleId_esbuild-test-app"]="banner-test"`);
+    expect(code).toContain(existingBanner);
+
+    // verify bundleId snippet comes before the existing banner
+    const bundleIdIndex = code.indexOf(`g["__faroBundleId_esbuild-test-app"]="banner-test"`);
+    const bannerIndex = code.indexOf(existingBanner);
+    expect(bundleIdIndex).toBeLessThan(bannerIndex);
+  });
+
+  test('banner object with css property is preserved and does not interfere with js banner', async () => {
+    const existingCssBanner = '/* css banner */';
+    const existingJsBanner = '/* js banner */';
+    const { code } = await runEsbuild(
+      { bundleId: 'css-banner-test' },
+      { banner: { js: existingJsBanner, css: existingCssBanner } }
+    );
+
+    // verify the bundleId snippet is prepended to the existing js banner
+    expect(code).toContain(`g["__faroBundleId_esbuild-test-app"]="css-banner-test"`);
+    expect(code).toContain(existingJsBanner);
+
+    // verify bundleId snippet comes before the existing js banner
+    const bundleIdIndex = code.indexOf(`g["__faroBundleId_esbuild-test-app"]="css-banner-test"`);
+    const jsBannerIndex = code.indexOf(existingJsBanner);
+    expect(bundleIdIndex).toBeLessThan(jsBannerIndex);
+
+    // css banner should not appear in js output
+    expect(code).not.toContain(existingCssBanner);
+  });
+
   test('proxy option with authentication is passed correctly', async () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 
