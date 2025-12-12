@@ -50,17 +50,25 @@ export default function faroEsbuildPlugin(
       // inject bundleId snippet at the beginning of js/ts files using banner
       const bundleIdSnippet = faroBundleIdSnippet(bundleId, appName);
 
-      // set banner for all js/ts file extensions
-      if (!build.initialOptions.banner) {
+      // set banner for js files (esbuild banner only accepts "js" or "css" as keys)
+      // the "js" banner applies to all JavaScript/TypeScript files (.js, .ts, .jsx, .tsx, .mjs, .cjs)
+      // normalize banner to an object if it's a string or undefined
+      let existingJsBanner = '';
+
+      if (typeof build.initialOptions.banner === 'string') {
+        // if banner is already a string, preserve it and convert to object
+        existingJsBanner = build.initialOptions.banner;
         build.initialOptions.banner = {};
+      } else if (!build.initialOptions.banner || typeof build.initialOptions.banner !== 'object') {
+        // if banner is undefined or not an object, create a new object
+        build.initialOptions.banner = {};
+      } else {
+        // if banner already exists as an object, preserve the existing js banner
+        existingJsBanner = build.initialOptions.banner.js || '';
       }
-      // esbuild banner option uses file extensions as keys
-      build.initialOptions.banner.js = bundleIdSnippet;
-      build.initialOptions.banner.ts = bundleIdSnippet;
-      build.initialOptions.banner.jsx = bundleIdSnippet;
-      build.initialOptions.banner.tsx = bundleIdSnippet;
-      build.initialOptions.banner.mjs = bundleIdSnippet;
-      build.initialOptions.banner.cjs = bundleIdSnippet;
+
+      // prepend our bundleId snippet to any existing banner
+      build.initialOptions.banner.js = bundleIdSnippet + existingJsBanner;
 
       // skip uploading if skipUpload is true
       if (skipUpload) {
