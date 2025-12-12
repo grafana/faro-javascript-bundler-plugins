@@ -22,6 +22,10 @@
     "packages/faro-webpack": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "node"
+    },
+    "packages/faro-esbuild": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node"
     }
   },
   "include-v-in-tag": true,
