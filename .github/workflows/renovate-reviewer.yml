@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Get secrets
         id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@0a7a2fc07560de0f2fe500ed9fd1f53ec7d86d33
+        uses: grafana/shared-workflows/actions/get-vault-secrets@37d83429d084173e084cb68a4c5681f1ad62a707
         with:
           repo_secrets: |
             FARO_SMU_CI_APP_ID=github:app-id
