@@ -11,6 +11,7 @@ import {
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
   shouldProcessFile,
+  modifySourceMapFileProperty,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
@@ -30,6 +31,7 @@ export default function faroUploader(
     verbose,
     skipUpload,
     proxy,
+    prefixPath,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -89,6 +91,14 @@ export default function faroUploader(
           // Only include JavaScript-related source maps or match the outputFiles regex
           if (!shouldProcessFile(filename, outputFiles)) {
             continue;
+          }
+
+          // modify source map file properties if prefixPath is provided
+          if (prefixPath) {
+            const filePath = `${outputPath}/${filename}`;
+            if (fs.existsSync(filePath)) {
+              modifySourceMapFileProperty(filePath, prefixPath, verbose);
+            }
           }
 
           // if we are tar/gzipping contents, collect N files and upload them all at once

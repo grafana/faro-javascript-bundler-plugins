@@ -12,6 +12,7 @@ import {
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
   shouldProcessFile,
+  normalizePrefix,
 } from "@grafana/faro-bundlers-shared";
 import { sources } from "webpack";
 
@@ -21,8 +22,52 @@ interface BannerPluginOptions {
   filename: string;
 }
 
+/**
+ * Modifies source map assets to prepend a prefix to the file property
+ * @param compilation The webpack compilation object
+ * @param prefix The prefix to prepend (will be normalized)
+ * @param verbose Whether to log verbose messages
+ */
+function modifySourceMapAssets(
+  compilation: webpack.Compilation,
+  prefix: string,
+  verbose?: boolean
+): void {
+  const normalizedPrefix = normalizePrefix(prefix);
+
+  Object.keys(compilation.assets).forEach((filename) => {
+    if (filename.endsWith('.map')) {
+      try {
+        const sourceMapAsset = compilation.getAsset(filename);
+        const sourceMapContent = sourceMapAsset?.source.source().toString();
+        const sourceMap = JSON.parse(sourceMapContent ?? '');
+
+        if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
+          sourceMap.file = `${normalizedPrefix}${sourceMap.file}`;
+
+          compilation.updateAsset(
+            filename,
+            new sources.RawSource(JSON.stringify(sourceMap))
+          );
+
+          verbose &&
+            consoleInfoOrange(
+              `Modified source map file property: ${filename} -> ${sourceMap.file}`
+            );
+        }
+      } catch (error) {
+        console.error(
+          `Error modifying source map ${filename}:`,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    }
+  });
+}
+
 export interface WebpackFaroSourceMapUploaderPluginOptions extends FaroSourceMapUploaderPluginOptions {
   nextjs?: boolean;
+  prefixPath?: string;
 }
 
 export default class FaroSourceMapUploaderPlugin
@@ -42,6 +87,7 @@ export default class FaroSourceMapUploaderPlugin
   private maxUploadSize: number;
   private nextjs?: boolean;
   private proxy?: string;
+  private prefixPath?: string;
 
   constructor(options: WebpackFaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -57,6 +103,7 @@ export default class FaroSourceMapUploaderPlugin
     this.verbose = options.verbose;
     this.skipUpload = options.skipUpload;
     this.nextjs = options.nextjs;
+    this.prefixPath = options.prefixPath;
     this.maxUploadSize =
       options.maxUploadSize && options.maxUploadSize > 0
         ? options.maxUploadSize
@@ -88,31 +135,27 @@ export default class FaroSourceMapUploaderPlugin
       })
     );
 
-    if (this.nextjs) {
-      // Find all .map files and modify their file property to prepend _next/ if it doesn't already have it
+    // modify source map file properties if prefixPath or nextjs is provided
+    // if both are provided, combine them as `${prefixPath}/_next/`
+    let prefixToUse: string | undefined;
+    if (this.prefixPath && this.nextjs) {
+      prefixToUse = `${normalizePrefix(this.prefixPath)}_next/`;
+    } else if (this.prefixPath) {
+      prefixToUse = normalizePrefix(this.prefixPath);
+    } else if (this.nextjs) {
+      prefixToUse = '_next/';
+    }
+
+    if (prefixToUse) {
+      const finalPrefix = prefixToUse; // capture for type narrowing
       compiler.hooks.compilation.tap(WEBPACK_PLUGIN_NAME, (compilation) => {
         compilation.hooks.processAssets.tap(
           {
             name: WEBPACK_PLUGIN_NAME,
             stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
           },
-          (assets) => {
-            Object.keys(assets).forEach((filename) => {
-              if (filename.endsWith('.map')) {
-                const sourceMapAsset = compilation.getAsset(filename);
-                const sourceMapContent = sourceMapAsset?.source.source().toString();
-                const sourceMap = JSON.parse(sourceMapContent ?? '');
-
-                if (sourceMap.file && !sourceMap.file.startsWith('_next/')) {
-                  sourceMap.file = `_next/${sourceMap.file}`;
-
-                  compilation.updateAsset(
-                    filename,
-                    new sources.RawSource(JSON.stringify(sourceMap))
-                  );
-                }
-              }
-            });
+          () => {
+            modifySourceMapAssets(compilation, finalPrefix, this.verbose);
           }
         );
       });
