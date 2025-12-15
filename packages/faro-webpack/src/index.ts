@@ -13,8 +13,10 @@ import {
   exportBundleIdToFile,
   shouldProcessFile,
   normalizePrefix,
+  ensureSourceMapFileProperty,
 } from "@grafana/faro-bundlers-shared";
 import { sources } from "webpack";
+import path from "path";
 
 interface BannerPluginOptions {
   hash?: string;
@@ -39,8 +41,12 @@ function modifySourceMapAssets(
     if (filename.endsWith('.map')) {
       try {
         const sourceMapAsset = compilation.getAsset(filename);
-        const sourceMapContent = sourceMapAsset?.source.source().toString();
+        const sourceMapContent = sourceMapAsset?.source?.source()?.toString();
         const sourceMap = JSON.parse(sourceMapContent ?? '');
+
+        if (!sourceMap.file) {
+          sourceMap.file = filename.replace('.map', '');
+        }
 
         if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
           sourceMap.file = `${normalizedPrefix}${sourceMap.file}`;
@@ -187,7 +193,7 @@ export default class FaroSourceMapUploaderPlugin
         for (let filename of filenames) {
           // Ensure filename is a string (fs.readdirSync with recursive can return Buffer)
           const filenameStr = filename.toString();
-          const file = `${outputPath}/${filenameStr}`;
+          const file = path.join(outputPath, filenameStr);
 
           // Only include JavaScript-related source maps or match the outputFiles regex
           if (!shouldProcessFile(filenameStr, this.outputFiles)) {
