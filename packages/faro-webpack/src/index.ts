@@ -13,7 +13,6 @@ import {
   exportBundleIdToFile,
   shouldProcessFile,
   normalizePrefix,
-  ensureSourceMapFileProperty,
 } from "@grafana/faro-bundlers-shared";
 import { sources } from "webpack";
 import path from "path";
