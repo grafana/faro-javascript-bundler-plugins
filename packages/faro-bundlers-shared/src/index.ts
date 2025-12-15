@@ -304,6 +304,39 @@ export const normalizePrefix = (prefix: string): string => {
 };
 
 /**
+ * Ensures a source map has a file property, setting it from the source map filename if missing
+ * @param filePath Path to the source map file
+ * @param verbose Whether to log verbose messages
+ */
+export const ensureSourceMapFileProperty = (
+  filePath: string,
+  verbose?: boolean
+): void => {
+  try {
+    const sourceMapContent = fs.readFileSync(filePath, "utf-8");
+    const sourceMap = JSON.parse(sourceMapContent);
+
+    // if file property is missing, derive it from the source map filename
+    if (!sourceMap.file) {
+      const mapFileName = path.basename(filePath);
+      // remove .map extension to get the js file name
+      const jsFileName = mapFileName.replace(/\.map$/, "");
+      sourceMap.file = jsFileName;
+      fs.writeFileSync(filePath, JSON.stringify(sourceMap, null, 2));
+      verbose &&
+        consoleInfoOrange(
+          `Added file property to source map: ${mapFileName} -> file: ${jsFileName}`
+        );
+    }
+  } catch (error) {
+    console.error(
+      `Error ensuring source map file property ${filePath}:`,
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+};
+
+/**
  * Modifies a source map file to prepend a prefix to the file property
  * @param filePath Path to the source map file
  * @param prefix Prefix to prepend to the file property (will be normalized)
@@ -315,6 +348,9 @@ export const modifySourceMapFileProperty = (
   verbose?: boolean
 ): void => {
   try {
+    // ensure file property exists before modifying
+    ensureSourceMapFileProperty(filePath, false);
+
     const normalizedPrefix = normalizePrefix(prefix);
     const sourceMapContent = fs.readFileSync(filePath, "utf-8");
     const sourceMap = JSON.parse(sourceMapContent);

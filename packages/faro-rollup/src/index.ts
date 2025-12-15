@@ -15,6 +15,7 @@ import {
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
+import path from "path";
 
 export default function faroUploader(
   pluginOptions: FaroSourceMapUploaderPluginOptions
@@ -73,6 +74,24 @@ export default function faroUploader(
       return null;
     },
     async writeBundle(options: OutputOptions, bundle: OutputBundle) {
+      // handle both dir and file output modes
+      const outputPath = options.dir || (options.file ? path.dirname(options.file) : process.cwd());
+
+      // modify source map file properties if prefixPath is provided (do this regardless of skipUpload)
+      if (prefixPath) {
+        for (let filename in bundle) {
+          // Only include JavaScript-related source maps or match the outputFiles regex
+          if (!shouldProcessFile(filename, outputFiles)) {
+            continue;
+          }
+
+          const filePath = path.join(outputPath, filename);
+          if (fs.existsSync(filePath)) {
+            modifySourceMapFileProperty(filePath, prefixPath, verbose);
+          }
+        }
+      }
+
       // Skip uploading if skipUpload is true
       if (skipUpload) {
         verbose && consoleInfoOrange(`Skipping sourcemap upload as skipUpload is set to true`);
@@ -82,7 +101,6 @@ export default function faroUploader(
       const uploadedSourcemaps = [];
 
       try {
-        const outputPath = options.dir!;
         const sourcemapEndpoint = uploadEndpoint + bundleId;
         const filesToUpload = [];
         let totalSize = 0;
@@ -93,18 +111,10 @@ export default function faroUploader(
             continue;
           }
 
-          // modify source map file properties if prefixPath is provided
-          if (prefixPath) {
-            const filePath = `${outputPath}/${filename}`;
-            if (fs.existsSync(filePath)) {
-              modifySourceMapFileProperty(filePath, prefixPath, verbose);
-            }
-          }
-
           // if we are tar/gzipping contents, collect N files and upload them all at once
           // total size of all files uploaded at once must be less than the configured max size (uncompressed)
           if (gzipContents) {
-            const file = `${outputPath}/${filename}`;
+            const file = path.join(outputPath, filename);
             const { size } = fs.statSync(file);
 
             filesToUpload.push(file);
@@ -140,7 +150,7 @@ export default function faroUploader(
               apiKey,
               stackId,
               filename,
-              filePath: `${outputPath}/${filename}`,
+              filePath: path.join(outputPath, filename),
               keepSourcemaps: !!keepSourcemaps,
               verbose: verbose,
               proxy: proxy,

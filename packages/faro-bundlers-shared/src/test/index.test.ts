@@ -6,7 +6,12 @@ import {
   randomString,
   shouldProcessFile,
   exportBundleIdToFile,
+  normalizePrefix,
+  modifySourceMapFileProperty,
+  ensureSourceMapFileProperty,
 } from '../index';
+
+
 
 // Store original env to restore after tests
 let originalEnv: NodeJS.ProcessEnv;
@@ -95,5 +100,127 @@ describe('Bundlers Shared Utilities', () => {
     exportBundleIdToFile(bundleId, appName, false);
 
     expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP_WITH_SPECIAL_CHARS'), 'utf8')).toBe(`FARO_BUNDLE_ID_TEST_APP_WITH_SPECIAL_CHARS=${bundleId}`);
+  });
+
+  test('normalizePrefix adds trailing slash when missing', () => {
+    expect(normalizePrefix('robo/assets')).toBe('robo/assets/');
+    expect(normalizePrefix('_next')).toBe('_next/');
+    expect(normalizePrefix('custom/path')).toBe('custom/path/');
+  });
+
+  test('normalizePrefix preserves trailing slash when present', () => {
+    expect(normalizePrefix('robo/assets/')).toBe('robo/assets/');
+    expect(normalizePrefix('_next/')).toBe('_next/');
+    expect(normalizePrefix('custom/path/')).toBe('custom/path/');
+  });
+
+  test('modifySourceMapFileProperty prepends prefix to file property', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'test.js.map');
+
+    const sourceMap = {
+      version: 3,
+      file: 'test.js',
+      sources: ['test.ts'],
+      mappings: 'AAAA',
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    modifySourceMapFileProperty(sourceMapPath, 'robo/assets', false);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('robo/assets/test.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('modifySourceMapFileProperty does not double-prefix', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'test.js.map');
+
+    const sourceMap = {
+      version: 3,
+      file: 'robo/assets/test.js',
+      sources: ['test.ts'],
+      mappings: 'AAAA',
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    modifySourceMapFileProperty(sourceMapPath, 'robo/assets', false);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('robo/assets/test.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('modifySourceMapFileProperty normalizes prefix without trailing slash', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'test.js.map');
+
+    const sourceMap = {
+      version: 3,
+      file: 'test.js',
+      sources: ['test.ts'],
+      mappings: 'AAAA',
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    modifySourceMapFileProperty(sourceMapPath, 'robo/assets', false);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('robo/assets/test.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('ensureSourceMapFileProperty adds file property when missing', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'bundle.js.map');
+
+    const sourceMap = {
+      version: 3,
+      sources: ['test.ts'],
+      mappings: 'AAAA',
+      // file property is missing
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    ensureSourceMapFileProperty(sourceMapPath, false);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('bundle.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('ensureSourceMapFileProperty does not modify existing file property', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'bundle.js.map');
+
+    const sourceMap = {
+      version: 3,
+      file: 'custom.js',
+      sources: ['test.ts'],
+      mappings: 'AAAA',
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    ensureSourceMapFileProperty(sourceMapPath, false);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('custom.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 });

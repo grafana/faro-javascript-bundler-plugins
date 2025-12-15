@@ -63,9 +63,11 @@ const runEsbuild = async (customConfig = {}, buildOptions = {}) => {
   // read the output files
   const outputFiles = fs.readdirSync(outdir);
   const jsFile = outputFiles.find(f => f.endsWith('.js'));
+  const mapFile = outputFiles.find(f => f.endsWith('.map'));
   const code = jsFile ? fs.readFileSync(path.join(outdir, jsFile), 'utf8') : '';
+  const mapCode = mapFile ? fs.readFileSync(path.join(outdir, mapFile), 'utf8') : '';
 
-  return { result, code, outdir };
+  return { result, code, outdir, mapCode };
 };
 
 describe('Faro Esbuild Plugin', () => {
@@ -275,6 +277,60 @@ describe('Faro Esbuild Plugin', () => {
       if (mockFetch.mock.calls.length > 0) {
         expect(mockHttpsProxyAgent).toHaveBeenCalledWith(validProxy);
       }
+    }
+  });
+
+  test('prefixPath is prepended to the file property of the sourcemap when prefixPath is provided', async () => {
+    const { mapCode } = await runEsbuild({
+      bundleId: 'prefixpath-test',
+      skipUpload: false,
+      keepSourcemaps: true,
+      prefixPath: 'robo/assets',
+    });
+
+    const outputFiles = fs.readdirSync(path.resolve(process.cwd(), 'dist'));
+    const mapFile = outputFiles.find(f => f.endsWith('.map'));
+    expect(mapFile).toBeTruthy();
+
+    if (mapFile) {
+      const sourceMap = JSON.parse(mapCode);
+      expect(sourceMap.file).toBe('robo/assets/' + mapFile.replace('.map', ''));
+    }
+  });
+
+  test('prefixPath with trailing slash is prepended correctly', async () => {
+    const { mapCode } = await runEsbuild({
+      bundleId: 'prefixpath-slash-test',
+      skipUpload: false,
+      keepSourcemaps: true,
+      prefixPath: 'robo/assets/',
+    });
+
+    const outputFiles = fs.readdirSync(path.resolve(process.cwd(), 'dist'));
+    const mapFile = outputFiles.find(f => f.endsWith('.map'));
+    expect(mapFile).toBeTruthy();
+
+    if (mapFile) {
+      const sourceMap = JSON.parse(mapCode);
+      expect(sourceMap.file).toBe('robo/assets/' + mapFile.replace('.map', ''));
+    }
+  });
+
+  test('prefixPath is applied when skipUpload is true', async () => {
+    const { mapCode } = await runEsbuild({
+      bundleId: 'prefixpath-skip-upload-test',
+      skipUpload: true,
+      keepSourcemaps: true,
+      prefixPath: 'robo/assets',
+    });
+
+    const outputFiles = fs.readdirSync(path.resolve(process.cwd(), 'dist'));
+    const mapFile = outputFiles.find(f => f.endsWith('.map'));
+    expect(mapFile).toBeTruthy();
+
+    if (mapFile) {
+      const sourceMap = JSON.parse(mapCode);
+      expect(sourceMap.file).toBe('robo/assets/' + mapFile.replace('.map', ''));
     }
   });
 });
