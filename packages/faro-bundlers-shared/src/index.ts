@@ -22,6 +22,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   maxUploadSize?: number; // Maximum upload size in bytes
   recursive?: boolean; // Whether to recursively search subdirectories for sourcemaps
   proxy?: string; // Proxy URL to use for source map uploads (e.g., "http://proxy.example.com:8080" or "http://user:pass@proxy.example.com:8080")
+  prefixPath?: string; // Prefix to prepend to the file property in source maps (e.g., "_next/" or "robo/assets/")
 }
 
 interface UploadSourceMapOptions {
@@ -290,6 +291,83 @@ export const exportBundleIdToFile = (bundleId: string, appName: string, verbose?
 
   if (verbose) {
     consoleInfoOrange(`Exported bundleId ${bundleId} to file ${envFilePath}`);
+  }
+};
+
+/**
+ * Normalizes a prefix path by ensuring it ends with a forward slash
+ * @param prefix The prefix to normalize
+ * @returns The normalized prefix
+ */
+export const normalizePrefix = (prefix: string): string => {
+  return prefix.endsWith('/') ? prefix : `${prefix}/`;
+};
+
+/**
+ * Ensures a source map has a file property, setting it from the source map filename if missing
+ * @param filePath Path to the source map file
+ * @param verbose Whether to log verbose messages
+ */
+export const ensureSourceMapFileProperty = (
+  filePath: string,
+  verbose?: boolean
+): void => {
+  try {
+    const sourceMapContent = fs.readFileSync(filePath, "utf-8");
+    const sourceMap = JSON.parse(sourceMapContent);
+
+    // if file property is missing, derive it from the source map filename
+    if (!sourceMap.file) {
+      const mapFileName = path.basename(filePath);
+      // remove .map extension to get the js file name
+      const jsFileName = mapFileName.replace(/\.map$/, "");
+      sourceMap.file = jsFileName;
+      fs.writeFileSync(filePath, JSON.stringify(sourceMap, null, 2));
+      verbose &&
+        consoleInfoOrange(
+          `Added file property to source map: ${mapFileName} -> file: ${jsFileName}`
+        );
+    }
+  } catch (error) {
+    console.error(
+      `Error ensuring source map file property ${filePath}:`,
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+};
+
+/**
+ * Modifies a source map file to prepend a prefix to the file property
+ * @param filePath Path to the source map file
+ * @param prefix Prefix to prepend to the file property (will be normalized)
+ * @param verbose Whether to log verbose messages
+ */
+export const modifySourceMapFileProperty = (
+  filePath: string,
+  prefix: string,
+  verbose?: boolean
+): void => {
+  try {
+    // ensure file property exists before modifying
+    ensureSourceMapFileProperty(filePath, false);
+
+    const normalizedPrefix = normalizePrefix(prefix);
+    const sourceMapContent = fs.readFileSync(filePath, "utf-8");
+    const sourceMap = JSON.parse(sourceMapContent);
+
+    if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
+      sourceMap.file = `${normalizedPrefix}${sourceMap.file}`;
+      fs.writeFileSync(filePath, JSON.stringify(sourceMap, null, 2));
+      verbose &&
+        consoleInfoOrange(
+          `Modified source map file property: ${path.basename(filePath)} -> ${sourceMap.file}`
+        );
+    }
+  } catch (error) {
+    console.error(
+      `Error modifying source map file ${filePath}:`,
+      error instanceof Error ? error.message : String(error)
+    );
   }
 };
 
