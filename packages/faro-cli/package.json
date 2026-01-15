@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.7.0",
-    "commander": "^13.1.0",
+    "commander": "^14.0.0",
     "dotenv": "^17.0.1",
     "glob": "^13.0.0",
     "tar": "^7.1.0"
