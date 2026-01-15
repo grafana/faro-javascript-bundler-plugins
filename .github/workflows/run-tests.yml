@@ -31,7 +31,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup NPM
-        uses: actions/setup-node@dda4788290998366da86b6a4f497909644397bb2
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
           node-version: ${{ matrix.node }}
           registry-url: "https://registry.npmjs.org"
