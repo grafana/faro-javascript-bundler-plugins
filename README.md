@@ -11,6 +11,13 @@ After you have an instrumented JavaScript application sending data to Grafana Cl
 > [!NOTE]
 > The Faro JavaScript bundler plugins work with client-side rendered applications. Server-side rendering isn't yet supported.
 
+---
+
+> [!NOTE]
+> Supported Node versions - Faro and the Faro bundler plugins supports all active LTS (Long Term Support) and current Node versions.
+> When Node.js versions reach end-of-life, we remove them from our test matrix and add new versions as they are released.
+> You can find a [release schedule on nodejs.org](https://nodejs.org/en/about/previous-releases#looking-for-the-latest-release-of-a-version-branch)
+
 ## Installation
 
 To install the Faro JavaScript bundler plugins, use the package manager of your choice.
