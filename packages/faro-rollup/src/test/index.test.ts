@@ -228,4 +228,49 @@ describe('Faro Rollup Plugin', () => {
       }
     }
   });
+
+  test('prefixPath is prepended to the file property of the sourcemap when prefixPath is provided', async () => {
+    await runRollup({
+      bundleId: 'prefixpath-test',
+      skipUpload: false,
+      keepSourcemaps: true,
+      prefixPath: 'robo/assets',
+    }, {
+      sourcemap: true,
+    });
+
+    const sourceMapPath = path.resolve(process.cwd(), 'dist/bundle.js.map');
+    const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(sourceMap.file).toBe('robo/assets/bundle.js');
+  });
+
+  test('prefixPath with trailing slash is prepended correctly', async () => {
+    await runRollup({
+      bundleId: 'prefixpath-slash-test',
+      skipUpload: false,
+      keepSourcemaps: true,
+      prefixPath: 'robo/assets/',
+    }, {
+      sourcemap: true,
+    });
+
+    const sourceMapPath = path.resolve(process.cwd(), 'dist/bundle.js.map');
+    const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(sourceMap.file).toBe('robo/assets/bundle.js');
+  });
+
+  test('prefixPath is applied when skipUpload is true', async () => {
+    await runRollup({
+      bundleId: 'prefixpath-skip-upload-test',
+      skipUpload: true,
+      keepSourcemaps: true,
+      prefixPath: 'robo/assets',
+    }, {
+      sourcemap: true,
+    });
+
+    const sourceMapPath = path.resolve(process.cwd(), 'dist/bundle.js.map');
+    const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(sourceMap.file).toBe('robo/assets/bundle.js');
+  });
 });
