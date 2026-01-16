@@ -155,6 +155,10 @@ In addition to the bundler plugins, this repository also provides a CLI tool for
 
 The CLI uses cURL under the hood to make HTTP requests, which means cURL must be installed on your system. It also provides options for gzipping the payload to reduce upload sizes, which is especially useful for large source map files.
 
+## Supported Node versions
+
+Bundler plugins supports all active LTS (Long Term Support) and current Node versions. When Node.js versions reach end-of-life, we remove them from our test matrix and add new versions as they are released. You can find a release schedule on nodejs.org
+
 ### Installation
 
 To install the CLI with `npm`, run:
