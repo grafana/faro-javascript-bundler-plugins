@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-esbuild-plugin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Upload a source map to the Faro source map API from an esbuild build pipeline",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",

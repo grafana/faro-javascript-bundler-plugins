@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.2.0...faro-esbuild-plugin-v0.2.1) (2026-01-17)
+
+
+### Bug Fixes
+
+* **deps:** update dependency esbuild to ^0.25.0 [security] ([#377](https://github.com/grafana/faro-javascript-bundler-plugins/issues/377)) ([34713aa](https://github.com/grafana/faro-javascript-bundler-plugins/commit/34713aa821aa69abec05aca1a42f059d618c0b1a))
+* **deps:** update dependency esbuild to ^0.27.0 ([#391](https://github.com/grafana/faro-javascript-bundler-plugins/issues/391)) ([58d50c7](https://github.com/grafana/faro-javascript-bundler-plugins/commit/58d50c723ffdc58c97ddd1f25d5b45ad15ff060e))
+
 ## [0.2.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.1.0...faro-esbuild-plugin-v0.2.0) (2025-12-12)
 
 
