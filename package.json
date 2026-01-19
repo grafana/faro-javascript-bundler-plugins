@@ -23,7 +23,7 @@
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-typescript": "^11.1.5",
-    "lerna": "^8.0.1",
+    "lerna": "^9.0.0",
     "rollup": "^4.54.0",
     "typescript": "^5.9.2"
   },
