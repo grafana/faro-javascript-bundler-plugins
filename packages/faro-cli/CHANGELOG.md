@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.7.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.1...faro-cli-v0.7.2) (2026-01-21)
+
+
+### Bug Fixes
+
+* **deps:** remove jest from faro-cli dependencies ([#382](https://github.com/grafana/faro-javascript-bundler-plugins/issues/382)) ([a1cbfa5](https://github.com/grafana/faro-javascript-bundler-plugins/commit/a1cbfa5ce3bef2d02c426872a8e0c30b4dc7fdab))
+* **deps:** update dependency commander to v14 ([#394](https://github.com/grafana/faro-javascript-bundler-plugins/issues/394)) ([f5cd426](https://github.com/grafana/faro-javascript-bundler-plugins/commit/f5cd4266d8e44bf9319a17afd30cdc8e8f9e941e))
+* **deps:** update dependency glob to v13 ([#395](https://github.com/grafana/faro-javascript-bundler-plugins/issues/395)) ([ddf8e79](https://github.com/grafana/faro-javascript-bundler-plugins/commit/ddf8e79ee107733e9baa8212e93481d19dcb4fea))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.7.0 to ^0.8.0
+
 ## [0.7.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.0...faro-cli-v0.7.1) (2025-12-12)
 
 

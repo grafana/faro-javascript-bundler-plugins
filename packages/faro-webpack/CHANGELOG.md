@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.8.2...faro-webpack-plugin-v0.9.0) (2026-01-21)
+
+
+### Features
+
+* adding file prefix option ([#380](https://github.com/grafana/faro-javascript-bundler-plugins/issues/380)) ([c16b3d2](https://github.com/grafana/faro-javascript-bundler-plugins/commit/c16b3d201ed888f6f07c303b0d092902c7ed3c43))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.7.0 to ^0.8.0
+
 ## [0.8.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.8.1...faro-webpack-plugin-v0.8.2) (2025-12-12)
 
 

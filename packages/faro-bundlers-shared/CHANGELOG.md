@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.7.0...faro-bundlers-shared-v0.8.0) (2026-01-21)
+
+
+### Features
+
+* adding file prefix option ([#380](https://github.com/grafana/faro-javascript-bundler-plugins/issues/380)) ([c16b3d2](https://github.com/grafana/faro-javascript-bundler-plugins/commit/c16b3d201ed888f6f07c303b0d092902c7ed3c43))
+
 ## [0.7.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.6.0...faro-bundlers-shared-v0.7.0) (2025-12-12)
 
 
