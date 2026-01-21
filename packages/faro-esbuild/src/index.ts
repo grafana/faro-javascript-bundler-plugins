@@ -12,6 +12,8 @@ import {
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
   shouldProcessFile,
+  modifySourceMapFileProperty,
+  ensureSourceMapFileProperty,
 } from "@grafana/faro-bundlers-shared";
 
 export default function faroEsbuildPlugin(
@@ -32,6 +34,7 @@ export default function faroEsbuildPlugin(
     maxUploadSize,
     recursive,
     proxy,
+    prefixPath,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -70,19 +73,8 @@ export default function faroEsbuildPlugin(
       // prepend our bundleId snippet to any existing banner
       build.initialOptions.banner.js = bundleIdSnippet + existingJsBanner;
 
-      // skip uploading if skipUpload is true
-      if (skipUpload) {
-        verbose &&
-          consoleInfoOrange(
-            `Skipping sourcemap upload as skipUpload is set to true`
-          );
-        return;
-      }
-
-      // register onEnd callback to upload sourcemaps after build completes
+      // register onEnd callback to modify sourcemaps and optionally upload them
       build.onEnd(async (result) => {
-        const uploadedSourcemaps = [];
-
         // determine output directory
         let outputDir: string | undefined;
         if (outputPath) {
@@ -94,7 +86,7 @@ export default function faroEsbuildPlugin(
         } else {
           verbose &&
             consoleInfoOrange(
-              "No output directory found, skipping sourcemap upload"
+              "No output directory found, skipping sourcemap processing"
             );
           return;
         }
@@ -102,6 +94,67 @@ export default function faroEsbuildPlugin(
         if (!outputDir) {
           return;
         }
+
+        // ensure all source maps have a file property (do this regardless of skipUpload or prefixPath)
+        try {
+          const filenames = fs.readdirSync(outputDir, {
+            recursive: recursive || false,
+          });
+
+          for (let filename of filenames) {
+            // ensure filename is a string (fs.readdirSync with recursive can return Buffer)
+            const filenameStr = filename.toString();
+            const file = path.join(outputDir, filenameStr);
+
+            // only include javascript-related source maps or match the outputFiles regex
+            if (!shouldProcessFile(filenameStr, outputFiles)) {
+              continue;
+            }
+
+            if (fs.existsSync(file)) {
+              ensureSourceMapFileProperty(file, verbose);
+            }
+          }
+        } catch (e) {
+          console.error('Error ensuring source map file properties:', e);
+        }
+
+        // modify source map file properties if prefixPath is provided (do this regardless of skipUpload)
+        if (prefixPath) {
+          try {
+            const filenames = fs.readdirSync(outputDir, {
+              recursive: recursive || false,
+            });
+
+            for (let filename of filenames) {
+              // ensure filename is a string (fs.readdirSync with recursive can return Buffer)
+              const filenameStr = filename.toString();
+              const file = path.join(outputDir, filenameStr);
+
+              // only include javascript-related source maps or match the outputFiles regex
+              if (!shouldProcessFile(filenameStr, outputFiles)) {
+                continue;
+              }
+
+              if (fs.existsSync(file)) {
+                modifySourceMapFileProperty(file, prefixPath, verbose);
+              }
+            }
+          } catch (e) {
+            console.error('Error modifying source maps:', e);
+          }
+        }
+
+        // skip uploading if skipUpload is true
+        if (skipUpload) {
+          verbose &&
+            consoleInfoOrange(
+              `Skipping sourcemap upload as skipUpload is set to true`
+            );
+          return;
+        }
+
+        const uploadedSourcemaps = [];
 
         try {
           const sourcemapEndpoint = `${uploadEndpoint}${bundleId}`;

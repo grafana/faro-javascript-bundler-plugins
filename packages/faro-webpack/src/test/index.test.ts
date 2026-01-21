@@ -320,6 +320,103 @@ describe("Faro Webpack Plugin", () => {
     expect(sourceMapJson.file).toBe("_next/main.js");
   });
 
+  test("prefixPath is prepended to the file property of the sourcemap when prefixPath is provided", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-prefixpath-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "prefixpath-test",
+        skipUpload: false,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        prefixPath: "robo/assets",
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const sourceMap = await fs.readFile(path.join(outputDir, "main.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("robo/assets/main.js");
+  });
+
+  test("prefixPath with trailing slash is prepended correctly", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-prefixpath-slash-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "prefixpath-slash-test",
+        skipUpload: false,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        prefixPath: "robo/assets/",
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const sourceMap = await fs.readFile(path.join(outputDir, "main.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("robo/assets/main.js");
+  });
+
+  test("prefixPath and nextjs are combined when both are provided", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-prefixpath-nextjs-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "prefixpath-nextjs-test",
+        skipUpload: false,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        prefixPath: "robo/assets",
+        nextjs: true,
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const sourceMap = await fs.readFile(path.join(outputDir, "main.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("robo/assets/_next/main.js");
+  });
+
+  test("prefixPath is applied when skipUpload is true", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-prefixpath-skip-upload-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "prefixpath-skip-upload-test",
+        skipUpload: true,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        prefixPath: "robo/assets",
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const sourceMap = await fs.readFile(path.join(outputDir, "main.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("robo/assets/main.js");
+  });
+
   test("proxy option with authentication is passed correctly", async () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 
