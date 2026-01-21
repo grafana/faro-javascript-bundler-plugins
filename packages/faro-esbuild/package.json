@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-esbuild-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Upload a source map to the Faro source map API from an esbuild build pipeline",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
@@ -18,7 +18,7 @@
   },
   "devDependencies": {},
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "^0.7.0",
+    "@grafana/faro-bundlers-shared": "^0.8.0",
     "cross-fetch": "^4.0.0",
     "esbuild": "^0.27.0"
   },
