@@ -15,8 +15,8 @@
     "test": "echo \"No tests yet...\" && exit 0"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "^11.1.5",
-    "@types/tar": "^6.1.13"
+    "@rollup/plugin-typescript": "11.1.6",
+    "@types/tar": "6.1.13"
   },
   "dependencies": {
     "ansis": "^4.0.0",

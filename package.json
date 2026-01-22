@@ -15,17 +15,17 @@
   "license": "Apache-2.0",
   "dependencies": {},
   "devDependencies": {
-    "@babel/core": "^7.28.4",
-    "@babel/preset-env": "^7.28.5",
-    "@babel/preset-typescript": "^7.27.1",
-    "@grafana/tsconfig": "^2.0.0",
-    "@rollup/plugin-babel": "^6.1.0",
-    "@rollup/plugin-commonjs": "^29.0.0",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-typescript": "^11.1.5",
-    "lerna": "^9.0.0",
-    "rollup": "^4.54.0",
-    "typescript": "^5.9.2"
+    "@babel/core": "7.28.6",
+    "@babel/preset-env": "7.28.6",
+    "@babel/preset-typescript": "7.28.5",
+    "@grafana/tsconfig": "2.0.0",
+    "@rollup/plugin-babel": "6.1.0",
+    "@rollup/plugin-commonjs": "29.0.0",
+    "@rollup/plugin-json": "6.1.0",
+    "@rollup/plugin-typescript": "11.1.6",
+    "lerna": "9.0.3",
+    "rollup": "4.55.1",
+    "typescript": "5.9.3"
   },
   "resolutions": {
     "**/ip": "https://registry.npmjs.org/neoip/-/neoip-2.1.0.tgz",
