@@ -24,7 +24,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-typescript": "^11.1.5",
     "lerna": "^9.0.0",
-    "rollup": "^4.54.0",
+    "rollup": "^4.55.1",
     "typescript": "^5.9.2"
   },
   "resolutions": {
