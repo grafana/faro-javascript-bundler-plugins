@@ -16,7 +16,6 @@
     "build": "rollup --config rollup.config.mjs",
     "test": "jest"
   },
-  "devDependencies": {},
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.8.0",
     "cross-fetch": "^4.0.0",
