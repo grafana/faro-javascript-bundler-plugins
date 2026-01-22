@@ -29,8 +29,6 @@
   },
   "resolutions": {
     "**/ip": "https://registry.npmjs.org/neoip/-/neoip-2.1.0.tgz",
-    "lerna/**/tar": "7.5.6",
-    "@lerna/create/**/tar": "7.5.6",
     "brace-expansion": "2.0.2"
   }
 }
