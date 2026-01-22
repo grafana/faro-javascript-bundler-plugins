@@ -547,16 +547,24 @@ cat ${filePath} | gzip -c | curl -X POST ${proxyArg} ${proxyUserArg} "${sourcema
  */
 export const findMapFiles = (dir: string, recursive: boolean = false): string[] => {
   const sourcemapFiles: string[] = [];
-  const files = fs.readdirSync(dir, { recursive });
 
-  for (const file of files) {
-    const filePath = path.join(dir, file.toString());
-    const stat = fs.statSync(filePath);
+  const walk = (currentDir: string) => {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true });
 
-    if (stat.isFile() && file.toString().endsWith('.map')) {
-      sourcemapFiles.push(filePath);
+    for (const entry of entries) {
+      const entryPath = path.join(currentDir, entry.name);
+
+      if (entry.isDirectory()) {
+        if (recursive) {
+          walk(entryPath);
+        }
+      } else if (entry.isFile() && entry.name.endsWith('.map')) {
+        sourcemapFiles.push(entryPath);
+      }
     }
-  }
+  };
+
+  walk(dir);
 
   return sourcemapFiles;
 };
