@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.8.0...faro-rollup-plugin-v0.8.1) (2026-01-22)
+
+
+### Bug Fixes
+
+* reverting lerna pin  ([#414](https://github.com/grafana/faro-javascript-bundler-plugins/issues/414)) ([666313a](https://github.com/grafana/faro-javascript-bundler-plugins/commit/666313a3e3b57180fea1cef5ae61ce8b6d0f818b))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.8.0 to ^0.8.1
+
 ## [0.8.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.7.1...faro-rollup-plugin-v0.8.0) (2026-01-21)
 
 
