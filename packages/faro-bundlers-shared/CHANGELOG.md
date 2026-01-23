@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.8.0...faro-bundlers-shared-v0.8.1) (2026-01-22)
+
+
+### Bug Fixes
+
+* reverting lerna pin  ([#414](https://github.com/grafana/faro-javascript-bundler-plugins/issues/414)) ([666313a](https://github.com/grafana/faro-javascript-bundler-plugins/commit/666313a3e3b57180fea1cef5ae61ce8b6d0f818b))
+
 ## [0.8.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.7.0...faro-bundlers-shared-v0.8.0) (2026-01-21)
 
 
