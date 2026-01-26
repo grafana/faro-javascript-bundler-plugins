@@ -29,6 +29,8 @@
   },
   "resolutions": {
     "**/ip": "https://registry.npmjs.org/neoip/-/neoip-2.1.0.tgz",
-    "brace-expansion": "4.0.1"
+    "brace-expansion": "4.0.1",
+    "follow-redirects": "^1.15.6",
+    "serialize-javascript": "^7.0.0"
   }
 }
