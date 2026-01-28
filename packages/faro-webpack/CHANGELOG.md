@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.9.1...faro-webpack-plugin-v0.9.2) (2026-01-28)
+
+
+### Bug Fixes
+
+* forcing commit to publish new versions and resolve CVEs ([#427](https://github.com/grafana/faro-javascript-bundler-plugins/issues/427)) ([7595951](https://github.com/grafana/faro-javascript-bundler-plugins/commit/759595156942da9159016afe1f23ac47dbec0ee8))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.8.1 to ^0.8.2
+
 ## [0.9.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.9.0...faro-webpack-plugin-v0.9.1) (2026-01-22)
 
 
