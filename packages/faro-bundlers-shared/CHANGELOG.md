@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.8.1...faro-bundlers-shared-v0.8.2) (2026-01-28)
+
+
+### Bug Fixes
+
+* forcing commit to publish new versions and resolve CVEs ([#427](https://github.com/grafana/faro-javascript-bundler-plugins/issues/427)) ([7595951](https://github.com/grafana/faro-javascript-bundler-plugins/commit/759595156942da9159016afe1f23ac47dbec0ee8))
+
 ## [0.8.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.8.0...faro-bundlers-shared-v0.8.1) (2026-01-22)
 
 
