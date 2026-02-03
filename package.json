@@ -15,8 +15,8 @@
   "license": "Apache-2.0",
   "dependencies": {},
   "devDependencies": {
-    "@babel/core": "7.28.6",
-    "@babel/preset-env": "7.28.6",
+    "@babel/core": "7.29.0",
+    "@babel/preset-env": "7.29.0",
     "@babel/preset-typescript": "7.28.5",
     "@grafana/tsconfig": "2.0.1",
     "@rollup/plugin-babel": "6.1.0",
