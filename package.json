@@ -29,6 +29,7 @@
   },
   "resolutions": {
     "**/ip": "https://registry.npmjs.org/neoip/-/neoip-2.1.0.tgz",
-    "brace-expansion": "4.0.1"
+    "brace-expansion": "4.0.1",
+    "tar": "^7.5.4"
   }
 }
