@@ -14,6 +14,8 @@ import {
   shouldProcessFile,
   modifySourceMapFileProperty,
   ensureSourceMapFileProperty,
+  detectGitCommitHash,
+  exportGitCommitHashToFile,
 } from "@grafana/faro-bundlers-shared";
 
 export default function faroEsbuildPlugin(
@@ -38,6 +40,7 @@ export default function faroEsbuildPlugin(
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
+  const gitCommitHash = pluginOptions.gitCommitHash ?? detectGitCommitHash(verbose);
   const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
   const maxSize =
     maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
@@ -45,13 +48,16 @@ export default function faroEsbuildPlugin(
   // export bundleId to environment variable if skipUpload is true
   if (skipUpload) {
     exportBundleIdToFile(bundleId, appName, verbose);
+    if (gitCommitHash) {
+      exportGitCommitHashToFile(gitCommitHash, appName, verbose);
+    }
   }
 
   return {
     name: ESBUILD_PLUGIN_NAME,
     setup(build) {
       // inject bundleId snippet at the beginning of js/ts files using banner
-      const bundleIdSnippet = faroBundleIdSnippet(bundleId, appName);
+      const bundleIdSnippet = faroBundleIdSnippet(bundleId, appName, gitCommitHash);
 
       // set banner for js files (esbuild banner only accepts "js" or "css" as keys)
       // the "js" banner applies to all JavaScript/TypeScript files (.js, .ts, .jsx, .tsx, .mjs, .cjs)

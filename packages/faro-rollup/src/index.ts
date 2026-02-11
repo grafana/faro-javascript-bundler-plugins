@@ -12,6 +12,8 @@ import {
   exportBundleIdToFile,
   shouldProcessFile,
   modifySourceMapFileProperty,
+  detectGitCommitHash,
+  exportGitCommitHashToFile,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
@@ -36,6 +38,7 @@ export default function faroUploader(
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
+  const gitCommitHash = pluginOptions.gitCommitHash ?? detectGitCommitHash(verbose);
   const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
   const maxSize = pluginOptions.maxUploadSize && pluginOptions.maxUploadSize > 0
     ? pluginOptions.maxUploadSize
@@ -44,6 +47,9 @@ export default function faroUploader(
   // Export bundleId to environment variable if skipUpload is true
   if (skipUpload) {
     exportBundleIdToFile(bundleId, appName, verbose);
+    if (gitCommitHash) {
+      exportGitCommitHashToFile(gitCommitHash, appName, verbose);
+    }
   }
 
   return {
@@ -58,7 +64,7 @@ export default function faroUploader(
       if (chunk.fileName.match(/\.(js|ts|jsx|tsx|mjs|cjs)$/)) {
         const newCode = new MagicString(code);
 
-        newCode.prepend(faroBundleIdSnippet(bundleId, appName));
+        newCode.prepend(faroBundleIdSnippet(bundleId, appName, gitCommitHash));
 
         const map = newCode.generateMap({
           source: chunk.fileName,
