@@ -24,7 +24,7 @@
   "devDependencies": {
     "@rollup/plugin-babel": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.3",
-    "@types/node": "24.10.11",
+    "@types/node": "24.10.13",
     "msw": "2.11.2",
     "tslib": "2.8.1"
   },
