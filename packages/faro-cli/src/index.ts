@@ -124,7 +124,8 @@ const executeCurl = (
     if (gzipPayload && !filePath.endsWith('.gz') && !contentType.includes('gzip')) {
       tempFile = createGzippedFile(filePath);
       fileToUpload = tempFile;
-      finalContentType = 'application/gzip';
+      // Keep the original Content-Type (e.g. application/json) and signal compression
+      // via Content-Encoding: gzip instead, so the backend routes to the correct handler.
     }
 
     // Build headers string for curl command
