@@ -98,7 +98,7 @@ describe('Faro Rollup Plugin', () => {
     const output = await runRollup({ bundleId: 'test' });
 
     // Create a simple regex to check code starts with the bundle ID snippet
-    const bundleIdRegex = /^\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_rollup-test-app"\]="test".*\}catch\(l\)\{\}\}\)\(\);/;
+    const bundleIdRegex = /^\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_rollup-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
 
     expect(output.output[0].code).toMatch(bundleIdRegex);
   });
