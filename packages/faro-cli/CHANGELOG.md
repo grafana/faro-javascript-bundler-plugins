@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.6](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.5...faro-cli-v0.7.6) (2026-02-27)
+
+
+### Bug Fixes
+
+* fixing an issue where the version was not being properly read from the package version ([#471](https://github.com/grafana/faro-javascript-bundler-plugins/issues/471)) ([1e3d931](https://github.com/grafana/faro-javascript-bundler-plugins/commit/1e3d931e15ed614bf0cfb5cd6214c6071d6ed29b))
+
 ## [0.7.5](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.4...faro-cli-v0.7.5) (2026-02-27)
 
 

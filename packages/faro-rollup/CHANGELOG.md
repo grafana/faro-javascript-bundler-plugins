@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.8.2...faro-rollup-plugin-v0.8.3) (2026-02-27)
+
+
+### Bug Fixes
+
+* **faro-rollup:** use readdir for prefixPath to fix Vite subdirectory source maps ([#468](https://github.com/grafana/faro-javascript-bundler-plugins/issues/468)) ([a5fa793](https://github.com/grafana/faro-javascript-bundler-plugins/commit/a5fa7935c1cc4aafe0eddbd00edc129aefde6a1d))
+
 ## [0.8.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.8.1...faro-rollup-plugin-v0.8.2) (2026-01-28)
 
 
