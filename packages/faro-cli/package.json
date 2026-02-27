@@ -32,7 +32,7 @@
     "@rollup/plugin-typescript": "11.1.6",
     "@types/glob": "9.0.0",
     "@types/jest": "30.0.0",
-    "@types/node": "24.10.11",
+    "@types/node": "24.10.13",
     "@types/tar": "6.1.13",
     "jest": "30.2.0",
     "ts-jest": "29.4.6"
