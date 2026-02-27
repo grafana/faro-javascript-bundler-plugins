@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { glob } from 'glob';
 import dotenv from 'dotenv';
+import { version } from '../package.json';
 
 interface UploadOptions {
   endpoint: string;
@@ -44,7 +45,7 @@ const program = new Command();
 program
   .name('faro-cli')
   .description('CLI for uploading sourcemaps to the Faro source map API')
-  .version('0.4.1');
+  .version(version);
 
 program
   .command('upload')

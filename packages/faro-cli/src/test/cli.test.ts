@@ -3,6 +3,7 @@ import path from 'path';
 import { jest } from '@jest/globals';
 import { consoleInfoOrange } from '@grafana/faro-bundlers-shared';
 import { uploadSourceMaps, generateCurlCommand } from '../index';
+import { version } from '../../package.json';
 
 // Mock dependencies
 jest.mock('fs');
@@ -129,6 +130,12 @@ const mockCurlHandler = (options: any) => {
     throw new Error(`Process.exit called with code: 1`);
   }
 };
+
+describe('CLI version', () => {
+  it('reads version from package.json', () => {
+    expect(version).toMatch(/^\d+\.\d+\.\d+/);
+  });
+});
 
 describe('CLI', () => {
   // Setup common test variables
