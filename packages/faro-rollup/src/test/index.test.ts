@@ -273,4 +273,36 @@ describe('Faro Rollup Plugin', () => {
     const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
     expect(sourceMap.file).toBe('robo/assets/bundle.js');
   });
+
+  test('prefixPath is applied to source maps in subdirectories (Vite-style dir output)', async () => {
+    // Vite places chunks under assets/ inside the output dir, and those .map files
+    // may not appear as separate OutputBundle keys — only disk-based discovery finds them.
+    const bundle = await rollup({
+      input: path.resolve(process.cwd(), 'src/test/main.js'),
+      plugins: [
+        faroUploader({
+          appName: 'rollup-test-app',
+          endpoint: 'http://localhost:8000/faro/api/v1',
+          apiKey: 'test-api-key',
+          stackId: 'test-stack-id',
+          appId: '1',
+          bundleId: 'prefixpath-subdir-test',
+          skipUpload: true,
+          keepSourcemaps: true,
+          prefixPath: 'robo/assets',
+        })
+      ]
+    });
+
+    await bundle.write({
+      dir: path.resolve(process.cwd(), 'dist'),
+      format: 'esm' as ModuleFormat,
+      sourcemap: true,
+      entryFileNames: 'assets/[name].js',
+    });
+
+    const sourceMapPath = path.resolve(process.cwd(), 'dist/assets/main.js.map');
+    const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(sourceMap.file).toBe('robo/assets/main.js');
+  });
 });
