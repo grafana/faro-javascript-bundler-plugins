@@ -29,7 +29,6 @@
   },
   "resolutions": {
     "**/ip": "https://registry.npmjs.org/neoip/-/neoip-2.1.0.tgz",
-    "minimatch": "^8.0.5",
-    "tar": "^7.5.4"
+    "minimatch": "^8.0.5"
   }
 }
