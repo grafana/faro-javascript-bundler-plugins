@@ -54,6 +54,7 @@ jobs:
   publish:
     name: Publish to NPM
     runs-on: ubuntu-latest
+    environment: npm-trusted-publishing
     needs: release-please
     permissions:
       contents: write
