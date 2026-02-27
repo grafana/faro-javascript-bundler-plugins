@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.9.2...faro-webpack-plugin-v0.9.3) (2026-02-27)
+
+
+### Bug Fixes
+
+* removing incorrect content type injection from execute curl ([#458](https://github.com/grafana/faro-javascript-bundler-plugins/issues/458)) ([124b1b6](https://github.com/grafana/faro-javascript-bundler-plugins/commit/124b1b6268b74af2942d96f48ec8adc771c29414))
+
 ## [0.9.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.9.1...faro-webpack-plugin-v0.9.2) (2026-01-28)
 
 
