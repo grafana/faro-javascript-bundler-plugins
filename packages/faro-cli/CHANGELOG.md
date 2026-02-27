@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.5](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.4...faro-cli-v0.7.5) (2026-02-27)
+
+
+### Bug Fixes
+
+* removing incorrect content type injection from execute curl ([#458](https://github.com/grafana/faro-javascript-bundler-plugins/issues/458)) ([124b1b6](https://github.com/grafana/faro-javascript-bundler-plugins/commit/124b1b6268b74af2942d96f48ec8adc771c29414))
+
 ## [0.7.4](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.3...faro-cli-v0.7.4) (2026-01-28)
 
 
