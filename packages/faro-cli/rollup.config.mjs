@@ -1,6 +1,7 @@
 import resolve from "@rollup/plugin-node-resolve";
 import babel from "@rollup/plugin-babel";
 import commonjs from "@rollup/plugin-commonjs";
+import json from "@rollup/plugin-json";
 import typescript from '@rollup/plugin-typescript';
 import { readFileSync } from 'fs';
 
@@ -33,6 +34,7 @@ export default [
         include: ["src/**/*"],
         exclude: [/node_modules/, /test/, "*.test.ts"]
       }),
+      json(),
       resolve({
         extensions,
         rootDir: "./src",
@@ -71,6 +73,7 @@ export default [
         include: ["src/**/*"],
         exclude: [/node_modules/, /test/, "*.test.ts"]
       }),
+      json(),
       resolve({
         extensions,
         rootDir: "./src",
