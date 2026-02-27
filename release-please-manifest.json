@@ -1,7 +1,7 @@
 {
   "packages/faro-bundlers-shared": "0.8.2",
-  "packages/faro-cli": "0.7.5",
+  "packages/faro-cli": "0.7.6",
   "packages/faro-esbuild": "0.3.2",
-  "packages/faro-rollup": "0.8.2",
+  "packages/faro-rollup": "0.8.3",
   "packages/faro-webpack": "0.9.3"
 }
