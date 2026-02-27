@@ -78,17 +78,25 @@ export default function faroUploader(
       const outputPath = options.dir || (options.file ? path.dirname(options.file) : process.cwd());
 
       // modify source map file properties if prefixPath is provided (do this regardless of skipUpload)
+      // NOTE: we scan the output directory directly rather than iterating the bundle object because
+      // Vite (and some Rollup configurations) write source maps to subdirectories (e.g. assets/)
+      // and those files may not appear as separate entries in the OutputBundle.
       if (prefixPath) {
-        for (let filename in bundle) {
-          // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!shouldProcessFile(filename, outputFiles)) {
-            continue;
+        try {
+          const filenames = fs.readdirSync(outputPath, { recursive: true });
+          for (const filename of filenames) {
+            const filenameStr = filename.toString();
+            // Only include JavaScript-related source maps or match the outputFiles regex
+            if (!shouldProcessFile(filenameStr, outputFiles)) {
+              continue;
+            }
+            const filePath = path.join(outputPath, filenameStr);
+            if (fs.existsSync(filePath)) {
+              modifySourceMapFileProperty(filePath, prefixPath, verbose);
+            }
           }
-
-          const filePath = path.join(outputPath, filename);
-          if (fs.existsSync(filePath)) {
-            modifySourceMapFileProperty(filePath, prefixPath, verbose);
-          }
+        } catch (e) {
+          console.error('Error modifying source maps:', e);
         }
       }
 
