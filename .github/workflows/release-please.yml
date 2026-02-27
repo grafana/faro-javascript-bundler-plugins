@@ -97,4 +97,4 @@ jobs:
           cmd: build
 
       - name: Publish package to NPM
-        run: yarn run publish from-package --yes --no-verify-access
+        run: yarn run publish from-package --yes
