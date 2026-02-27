@@ -96,7 +96,10 @@ jobs:
           cmd: build
 
       - name: Publish package to NPM
-        run: yarn run publish from-package --yes --no-verify-access
+        run: |
+          unset ACTIONS_ID_TOKEN_REQUEST_URL
+          unset ACTIONS_ID_TOKEN_REQUEST_TOKEN
+          yarn run publish from-package --yes --no-verify-access
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "false"
