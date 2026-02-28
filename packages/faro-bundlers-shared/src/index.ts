@@ -5,6 +5,7 @@ import fetch from "cross-fetch";
 import ansi from "ansis";
 import path from "path";
 import { HttpsProxyAgent } from "https-proxy-agent";
+import { execSync } from "child_process";
 
 export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
@@ -15,6 +16,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   outputPath?: string;
   outputFiles?: string[] | RegExp;
   bundleId?: string;
+  gitCommitHash?: string;
   keepSourcemaps?: boolean;
   gzipContents?: boolean;
   verbose?: boolean;
@@ -252,8 +254,40 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
   return false;
 }
 
-export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;
+export const faroBundleIdSnippet = (
+  bundleId: string,
+  appName: string,
+  gitCommitHash?: string
+): string => {
+  const baseSnippet = `g["__faroBundleId_${appName}"]="${bundleId}";`;
+  const gitSnippet = gitCommitHash
+    ? `g["__faroGitCommitHash_${appName}"]="${gitCommitHash}";`
+    : '';
+
+  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};${baseSnippet}${gitSnippet}}catch(l){}})();`;
+};
+
+/**
+ * Detects the current Git commit hash using git rev-parse HEAD
+ * @param verbose Whether to log verbose messages
+ * @returns The full Git commit hash (40 characters) or undefined if detection fails
+ */
+export const detectGitCommitHash = (verbose?: boolean): string | undefined => {
+  try {
+    const gitHash = execSync('git rev-parse HEAD', {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+
+    if (gitHash && /^[0-9a-f]{40}$/i.test(gitHash)) {
+      verbose && consoleInfoOrange(`Detected Git commit hash: ${gitHash}`);
+      return gitHash;
+    }
+    return undefined;
+  } catch (error) {
+    verbose && consoleInfoOrange(`Could not detect Git commit hash: ${error instanceof Error ? error.message : String(error)}`);
+    return undefined;
+  }
 };
 
 export function randomString(length?: number): string {
@@ -286,11 +320,56 @@ export const exportBundleIdToFile = (bundleId: string, appName: string, verbose?
   const envVarName = `FARO_BUNDLE_ID_${appNameClean}`;
   const envFilePath = path.resolve(process.cwd(), `.env.${appNameClean}`);
 
-  // Append the bundleId to the .env file
-  fs.writeFileSync(envFilePath, `${envVarName}=${bundleId}\n`);
+  let existingContent = '';
+  if (fs.existsSync(envFilePath)) {
+    existingContent = fs.readFileSync(envFilePath, 'utf8');
+  }
+
+  const bundleIdRegex = new RegExp(`^${envVarName}=.*$`, 'm');
+  if (bundleIdRegex.test(existingContent)) {
+    existingContent = existingContent.replace(bundleIdRegex, `${envVarName}=${bundleId}`);
+    fs.writeFileSync(envFilePath, existingContent);
+  } else {
+    if (existingContent && !existingContent.endsWith('\n')) {
+      existingContent += '\n';
+    }
+    fs.writeFileSync(envFilePath, existingContent + `${envVarName}=${bundleId}\n`);
+  }
 
   if (verbose) {
     consoleInfoOrange(`Exported bundleId ${bundleId} to file ${envFilePath}`);
+  }
+};
+
+/**
+ * Exports the Git commit hash to an environment variable file for use in the CLI
+ * @param gitCommitHash The Git commit hash to export
+ * @param appName The name of the app
+ * @param verbose Whether to log the export
+ */
+export const exportGitCommitHashToFile = (gitCommitHash: string, appName: string, verbose?: boolean): void => {
+  const appNameClean = cleanAppName(appName);
+  const envVarName = `FARO_GIT_COMMIT_HASH_${appNameClean}`;
+  const envFilePath = path.resolve(process.cwd(), `.env.${appNameClean}`);
+
+  let existingContent = '';
+  if (fs.existsSync(envFilePath)) {
+    existingContent = fs.readFileSync(envFilePath, 'utf8');
+  }
+
+  const gitHashRegex = new RegExp(`^${envVarName}=.*$`, 'm');
+  if (gitHashRegex.test(existingContent)) {
+    existingContent = existingContent.replace(gitHashRegex, `${envVarName}=${gitCommitHash}`);
+    fs.writeFileSync(envFilePath, existingContent);
+  } else {
+    if (existingContent && !existingContent.endsWith('\n')) {
+      existingContent += '\n';
+    }
+    fs.writeFileSync(envFilePath, existingContent + `${envVarName}=${gitCommitHash}\n`);
+  }
+
+  if (verbose) {
+    consoleInfoOrange(`Exported Git commit hash to ${envFilePath}`);
   }
 };
 
