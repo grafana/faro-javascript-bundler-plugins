@@ -1546,10 +1546,10 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@lerna/create@9.0.4":
-  version "9.0.4"
-  resolved "https://registry.yarnpkg.com/@lerna/create/-/create-9.0.4.tgz#099aeb3ddc6455632fcc7468d47c16b01224e7e3"
-  integrity sha512-WxedGD98G8/a6HztCXNWquaM0x17oSvfvuqDsLxNNX1qXGyrzmMUmd1mQikF/47uy80X6qyWdaRtaAHlwkvEUA==
+"@lerna/create@9.0.5":
+  version "9.0.5"
+  resolved "https://registry.yarnpkg.com/@lerna/create/-/create-9.0.5.tgz#8f88793ad4c404ea08a764f6139164154c8a0cfe"
+  integrity sha512-Gwd6ooSqXMdkdhiCGvHAfLRstj7W3ttr72WQB3Jf9HPP1A6mWtw0O80D0X+T/2hakqfe7lNLuKrEid4f7C0qbg==
   dependencies:
     "@npmcli/arborist" "9.1.6"
     "@npmcli/package-json" "7.0.2"
@@ -1584,7 +1584,7 @@
     load-json-file "6.2.0"
     make-dir "4.0.0"
     make-fetch-happen "15.0.2"
-    minimatch "3.0.5"
+    minimatch "3.1.4"
     multimatch "5.0.0"
     npm-package-arg "13.0.1"
     npm-packlist "10.0.3"
@@ -1605,7 +1605,7 @@
     slash "^3.0.0"
     ssri "12.0.0"
     string-width "^4.2.3"
-    tar "7.5.7"
+    tar "7.5.8"
     temp-dir "1.0.0"
     through "2.3.8"
     tinyglobby "0.2.12"
@@ -5077,12 +5077,12 @@ kind-of@^6.0.3:
   resolved "https://registry.npmjs.org/kind-of/-/kind-of-6.0.3.tgz"
   integrity sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==
 
-lerna@9.0.4:
-  version "9.0.4"
-  resolved "https://registry.yarnpkg.com/lerna/-/lerna-9.0.4.tgz#b76364caf63f941895a34ca0adc59273a1b9df8f"
-  integrity sha512-wKy9TOkkdCWPWET0R5o7mh7J0KuNNjxE0g+qTruNAt5ffWwy54wfWiJtWyDSMOrcGDt6gtisDBTKniOqK/sJvw==
+lerna@9.0.5:
+  version "9.0.5"
+  resolved "https://registry.yarnpkg.com/lerna/-/lerna-9.0.5.tgz#b60a4f190c1495de00cffba021fc8d49a6398e30"
+  integrity sha512-LtwZu2wINHlKpjRCxrEdK3QopyeUpFuUS4v6uzLYdg/uxnAKqDHrGY/mDPxdxDR3YAXJzpWXBdz49AHNIKZaSg==
   dependencies:
-    "@lerna/create" "9.0.4"
+    "@lerna/create" "9.0.5"
     "@npmcli/arborist" "9.1.6"
     "@npmcli/package-json" "7.0.2"
     "@npmcli/run-script" "10.0.3"
@@ -5122,7 +5122,7 @@ lerna@9.0.4:
     load-json-file "6.2.0"
     make-dir "4.0.0"
     make-fetch-happen "15.0.2"
-    minimatch "3.0.5"
+    minimatch "3.1.4"
     multimatch "5.0.0"
     npm-package-arg "13.0.1"
     npm-packlist "10.0.3"
@@ -5145,7 +5145,7 @@ lerna@9.0.4:
     slash "3.0.0"
     ssri "12.0.0"
     string-width "^4.2.3"
-    tar "7.5.7"
+    tar "7.5.8"
     temp-dir "1.0.0"
     through "2.3.8"
     tinyglobby "0.2.12"
@@ -5419,7 +5419,7 @@ min-indent@^1.0.0:
   resolved "https://registry.npmjs.org/min-indent/-/min-indent-1.0.1.tgz"
   integrity sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==
 
-minimatch@3.0.5, minimatch@9.0.3, minimatch@^10.0.3, minimatch@^10.1.1, minimatch@^10.2.2, minimatch@^3.0.4, minimatch@^3.1.1, minimatch@^3.1.2, minimatch@^5.0.1, minimatch@^8.0.5, minimatch@^9.0.4:
+minimatch@3.1.4, minimatch@9.0.3, minimatch@^10.0.3, minimatch@^10.1.1, minimatch@^10.2.2, minimatch@^3.0.4, minimatch@^3.1.1, minimatch@^3.1.2, minimatch@^5.0.1, minimatch@^8.0.5, minimatch@^9.0.4:
   version "8.0.7"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-8.0.7.tgz#954766e22da88a3e0a17ad93b58c15c9d8a579de"
   integrity sha512-V+1uQNdzybxa14e/p00HZnQNNcTjnRJjDxg2V8wtkjFctq4M7hXFws4oekyTP0Jebeq7QYtpFyOeBAjc88zvYg==
@@ -6878,10 +6878,10 @@ tar@*, tar@^7.1.0, tar@^7.4.3, tar@^7.5.2:
     minizlib "^3.1.0"
     yallist "^5.0.0"
 
-tar@7.5.7:
-  version "7.5.7"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-7.5.7.tgz#adf99774008ba1c89819f15dbd6019c630539405"
-  integrity sha512-fov56fJiRuThVFXD6o6/Q354S7pnWMJIVlDBYijsTNx6jKSE4pvrDTs6lUnmGvNyfJwFQQwWy3owKz1ucIhveQ==
+tar@7.5.8:
+  version "7.5.8"
+  resolved "https://registry.yarnpkg.com/tar/-/tar-7.5.8.tgz#6bbdfdb487914803d401bab6a2abb100aaa253d5"
+  integrity sha512-SYkBtK99u0yXa+IWL0JRzzcl7RxNpvX/U08Z+8DKnysfno7M+uExnTZH8K+VGgShf2qFPKtbNr9QBl8n7WBP6Q==
   dependencies:
     "@isaacs/fs-minipass" "^4.0.0"
     chownr "^3.0.0"
