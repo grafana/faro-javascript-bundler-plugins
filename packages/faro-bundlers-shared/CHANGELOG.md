@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.8.2...faro-bundlers-shared-v0.9.0) (2026-03-04)
+
+
+### Features
+
+* add prefixPathBasenameOnly option ([#477](https://github.com/grafana/faro-javascript-bundler-plugins/issues/477)) ([5accb1e](https://github.com/grafana/faro-javascript-bundler-plugins/commit/5accb1ed9f5c34ab5187175137ca145107c839f7))
+
 ## [0.8.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.8.1...faro-bundlers-shared-v0.8.2) (2026-01-28)
 
 

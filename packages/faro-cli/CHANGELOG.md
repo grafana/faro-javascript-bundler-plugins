@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.7](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.6...faro-cli-v0.7.7) (2026-03-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.8.2 to ^0.9.0
+
 ## [0.7.6](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.5...faro-cli-v0.7.6) (2026-02-27)
 
 
