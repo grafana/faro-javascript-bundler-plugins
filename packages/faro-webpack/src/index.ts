@@ -32,7 +32,8 @@ interface BannerPluginOptions {
 function modifySourceMapAssets(
   compilation: webpack.Compilation,
   prefix: string,
-  verbose?: boolean
+  verbose?: boolean,
+  basenameOnly?: boolean
 ): void {
   const normalizedPrefix = normalizePrefix(prefix);
 
@@ -48,7 +49,8 @@ function modifySourceMapAssets(
         }
 
         if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
-          sourceMap.file = `${normalizedPrefix}${sourceMap.file}`;
+          const fileValue = basenameOnly ? path.basename(sourceMap.file) : sourceMap.file;
+          sourceMap.file = `${normalizedPrefix}${fileValue}`;
 
           compilation.updateAsset(
             filename,
@@ -93,6 +95,7 @@ export default class FaroSourceMapUploaderPlugin
   private nextjs?: boolean;
   private proxy?: string;
   private prefixPath?: string;
+  private prefixPathBasenameOnly?: boolean;
 
   constructor(options: WebpackFaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -109,6 +112,7 @@ export default class FaroSourceMapUploaderPlugin
     this.skipUpload = options.skipUpload;
     this.nextjs = options.nextjs;
     this.prefixPath = options.prefixPath;
+    this.prefixPathBasenameOnly = options.prefixPathBasenameOnly;
     this.maxUploadSize =
       options.maxUploadSize && options.maxUploadSize > 0
         ? options.maxUploadSize
@@ -160,7 +164,7 @@ export default class FaroSourceMapUploaderPlugin
             stage: webpack.Compilation.PROCESS_ASSETS_STAGE_SUMMARIZE,
           },
           () => {
-            modifySourceMapAssets(compilation, finalPrefix, this.verbose);
+            modifySourceMapAssets(compilation, finalPrefix, this.verbose, this.prefixPathBasenameOnly);
           }
         );
       });
