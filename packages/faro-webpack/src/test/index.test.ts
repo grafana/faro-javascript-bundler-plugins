@@ -417,6 +417,57 @@ describe("Faro Webpack Plugin", () => {
     expect(sourceMapJson.file).toBe("robo/assets/main.js");
   });
 
+  test("prefixPathBasenameOnly strips directory from file property before prepending prefix", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-prefixpath-basename-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "prefixpath-basename-test",
+        skipUpload: false,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        prefixPath: "robo/assets",
+        prefixPathBasenameOnly: true,
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    // nested/vendor.js.map has file: "nested/vendor.js" — with basenameOnly the directory should be stripped
+    const sourceMap = await fs.readFile(path.join(outputDir, "nested/vendor.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("robo/assets/vendor.js");
+  });
+
+  test("without prefixPathBasenameOnly the directory is preserved in the file property", async () => {
+    const testOutputDir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "webpack-prefixpath-no-basename-test-")
+    );
+
+    const { outputDir } = await runWebpack(
+      {
+        bundleId: "prefixpath-no-basename-test",
+        skipUpload: false,
+        keepSourcemaps: true,
+        outputPath: testOutputDir,
+        prefixPath: "robo/assets",
+        prefixPathBasenameOnly: false,
+      },
+      testOutputDir,
+      {
+        devtool: "source-map",
+      }
+    );
+
+    const sourceMap = await fs.readFile(path.join(outputDir, "nested/vendor.js.map"), "utf8");
+    const sourceMapJson = JSON.parse(sourceMap);
+    expect(sourceMapJson.file).toBe("robo/assets/nested/vendor.js");
+  });
+
   test("proxy option with authentication is passed correctly", async () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 

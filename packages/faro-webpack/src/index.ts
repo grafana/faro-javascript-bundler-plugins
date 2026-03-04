@@ -28,6 +28,7 @@ interface BannerPluginOptions {
  * @param compilation The webpack compilation object
  * @param prefix The prefix to prepend (will be normalized)
  * @param verbose Whether to log verbose messages
+ * @param basenameOnly Whether to only use the basename of the file
  */
 function modifySourceMapAssets(
   compilation: webpack.Compilation,

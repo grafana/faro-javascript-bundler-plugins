@@ -342,6 +342,7 @@ export const ensureSourceMapFileProperty = (
  * @param filePath Path to the source map file
  * @param prefix Prefix to prepend to the file property (will be normalized)
  * @param verbose Whether to log verbose messages
+ * @param basenameOnly Whether to only use the basename of the file
  */
 export const modifySourceMapFileProperty = (
   filePath: string,
