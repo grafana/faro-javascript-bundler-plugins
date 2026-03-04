@@ -23,6 +23,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   recursive?: boolean; // Whether to recursively search subdirectories for sourcemaps
   proxy?: string; // Proxy URL to use for source map uploads (e.g., "http://proxy.example.com:8080" or "http://user:pass@proxy.example.com:8080")
   prefixPath?: string; // Prefix to prepend to the file property in source maps (e.g., "_next/" or "robo/assets/")
+  prefixPathBasenameOnly?: boolean; // When true, strips the directory path from the file property before prepending prefixPath (useful for flat CDN uploads)
 }
 
 interface UploadSourceMapOptions {
@@ -345,7 +346,8 @@ export const ensureSourceMapFileProperty = (
 export const modifySourceMapFileProperty = (
   filePath: string,
   prefix: string,
-  verbose?: boolean
+  verbose?: boolean,
+  basenameOnly?: boolean
 ): void => {
   try {
     // ensure file property exists before modifying
@@ -356,7 +358,8 @@ export const modifySourceMapFileProperty = (
     const sourceMap = JSON.parse(sourceMapContent);
 
     if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
-      sourceMap.file = `${normalizedPrefix}${sourceMap.file}`;
+      const fileValue = basenameOnly ? path.basename(sourceMap.file) : sourceMap.file;
+      sourceMap.file = `${normalizedPrefix}${fileValue}`;
       fs.writeFileSync(filePath, JSON.stringify(sourceMap, null, 2));
       verbose &&
         consoleInfoOrange(

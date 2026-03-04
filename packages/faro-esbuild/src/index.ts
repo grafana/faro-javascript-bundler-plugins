@@ -35,6 +35,7 @@ export default function faroEsbuildPlugin(
     recursive,
     proxy,
     prefixPath,
+    prefixPathBasenameOnly,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -137,7 +138,7 @@ export default function faroEsbuildPlugin(
               }
 
               if (fs.existsSync(file)) {
-                modifySourceMapFileProperty(file, prefixPath, verbose);
+                modifySourceMapFileProperty(file, prefixPath, verbose, prefixPathBasenameOnly);
               }
             }
           } catch (e) {
