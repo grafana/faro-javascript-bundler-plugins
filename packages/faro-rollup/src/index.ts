@@ -33,6 +33,7 @@ export default function faroUploader(
     skipUpload,
     proxy,
     prefixPath,
+    prefixPathBasenameOnly,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -92,7 +93,7 @@ export default function faroUploader(
             }
             const filePath = path.join(outputPath, filenameStr);
             if (fs.existsSync(filePath)) {
-              modifySourceMapFileProperty(filePath, prefixPath, verbose);
+              modifySourceMapFileProperty(filePath, prefixPath, verbose, prefixPathBasenameOnly);
             }
           }
         } catch (e) {

@@ -180,6 +180,50 @@ describe('Bundlers Shared Utilities', () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
+  test('modifySourceMapFileProperty strips directory path when prefixPathBasenameOnly is true', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'index-DWRl9wIG.js.map');
+
+    const sourceMap = {
+      version: 3,
+      file: 'assets/index-DWRl9wIG.js',
+      sources: ['index.ts'],
+      mappings: 'AAAA',
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    modifySourceMapFileProperty(sourceMapPath, 'https://cdn.example.com/assets/', false, true);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('https://cdn.example.com/assets/index-DWRl9wIG.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('modifySourceMapFileProperty preserves directory path when prefixPathBasenameOnly is false', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'index-DWRl9wIG.js.map');
+
+    const sourceMap = {
+      version: 3,
+      file: 'assets/index-DWRl9wIG.js',
+      sources: ['index.ts'],
+      mappings: 'AAAA',
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    modifySourceMapFileProperty(sourceMapPath, 'https://cdn.example.com/robo/', false, false);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('https://cdn.example.com/robo/assets/index-DWRl9wIG.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
   test('ensureSourceMapFileProperty adds file property when missing', () => {
     const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
     const sourceMapPath = path.join(tempDir, 'bundle.js.map');
