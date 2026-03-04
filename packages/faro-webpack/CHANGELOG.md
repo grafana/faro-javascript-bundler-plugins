@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.10.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.9.3...faro-webpack-plugin-v0.10.0) (2026-03-04)
+
+
+### Features
+
+* add prefixPathBasenameOnly option ([#477](https://github.com/grafana/faro-javascript-bundler-plugins/issues/477)) ([5accb1e](https://github.com/grafana/faro-javascript-bundler-plugins/commit/5accb1ed9f5c34ab5187175137ca145107c839f7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.8.2 to ^0.9.0
+
 ## [0.9.3](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.9.2...faro-webpack-plugin-v0.9.3) (2026-02-27)
 
 
