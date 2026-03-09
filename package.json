@@ -19,7 +19,7 @@
     "@babel/preset-env": "7.29.0",
     "@babel/preset-typescript": "7.28.5",
     "@grafana/tsconfig": "2.0.1",
-    "@rollup/plugin-babel": "6.1.0",
+    "@rollup/plugin-babel": "7.0.0",
     "@rollup/plugin-commonjs": "29.0.2",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-typescript": "11.1.6",
