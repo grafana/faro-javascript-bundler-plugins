@@ -234,21 +234,6 @@ describe('faro-cli', () => {
   });
 
   describe('uploadSourceMaps', () => {
-    // it('should upload multiple sourcemap files successfully', async () => {
-    //   const result = await uploadSourceMaps(
-    //     mockEndpoint,
-    //     mockAppId,
-    //     mockApiKey,
-    //     mockStackId,
-    //     mockBundleId,
-    //     mockOutputPath
-    //   );
-
-    //   expect(result).toBe(true);
-    //   expect(findMapFiles).toHaveBeenCalledWith(mockOutputPath);
-    //   expect(execSync).toHaveBeenCalled();
-    // });
-
     it('should handle no sourcemap files found', async () => {
       const result = await uploadSourceMaps(
         mockEndpoint,
@@ -277,21 +262,166 @@ describe('faro-cli', () => {
       expect(result).toBe(false);
       expect(console.error).toHaveBeenCalled();
     });
+  });
 
-    // it('should upload files as compressed tarball when gzipContents is true', async () => {
-    //   const result = await uploadSourceMaps(
-    //     mockEndpoint,
-    //     mockAppId,
-    //     mockApiKey,
-    //     mockStackId,
-    //     mockBundleId,
-    //     mockOutputPath,
-    //     { gzipContents: true }
-    //   );
+  describe('batched uploads', () => {
+    const mockFiles = [
+      '/mock/output/path/a.js.map',
+      '/mock/output/path/b.js.map',
+      '/mock/output/path/c.js.map',
+      '/mock/output/path/d.js.map',
+      '/mock/output/path/e.js.map',
+    ];
 
-    //   expect(result).toBe(true);
-    //   expect(tar.create).toHaveBeenCalled();
-    // });
+    const makeDirent = (name: string, isFile: boolean) => ({
+      name,
+      isFile: () => isFile,
+      isDirectory: () => !isFile,
+      isBlockDevice: () => false,
+      isCharacterDevice: () => false,
+      isSymbolicLink: () => false,
+      isFIFO: () => false,
+      isSocket: () => false,
+      parentPath: mockOutputPath,
+      path: mockOutputPath,
+    });
+
+    const setupReaddirMock = (filenames: string[]) => {
+      (fs.readdirSync as jest.Mock).mockReturnValue(
+        filenames.map(name => makeDirent(name, true))
+      );
+    };
+
+    it('should split files into batches by batchSize with gzipContents', async () => {
+      setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map', 'd.js.map', 'e.js.map']);
+      // Each file is 1MB — well under 30MB size limit, so only batchSize should cause splitting
+      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 * 1024 } as fs.Stats);
+
+      const result = await uploadSourceMaps(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        mockOutputPath,
+        { gzipContents: true, batchSize: 2, verbose: true }
+      );
+
+      expect(result).toBe(true);
+      // 5 files with batchSize=2 → 3 batches (2, 2, 1), each creating a tarball
+      expect(tar.create).toHaveBeenCalledTimes(3);
+      expect(execSync).toHaveBeenCalledTimes(3);
+    });
+
+    it('should upload all files in a single batch when batchSize exceeds file count', async () => {
+      setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map']);
+      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 * 1024 } as fs.Stats);
+
+      const result = await uploadSourceMaps(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        mockOutputPath,
+        { gzipContents: true, batchSize: 100, verbose: true }
+      );
+
+      expect(result).toBe(true);
+      // All 3 files fit in one batch
+      expect(tar.create).toHaveBeenCalledTimes(1);
+      expect(execSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('should split files into batches by maxUploadSize', async () => {
+      setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map']);
+      // Each file is 20MB — two files would exceed 30MB limit
+      jest.mocked(fs.statSync).mockReturnValue({ size: 20 * 1024 * 1024 } as fs.Stats);
+
+      const result = await uploadSourceMaps(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        mockOutputPath,
+        { gzipContents: true, verbose: true }
+      );
+
+      expect(result).toBe(true);
+      // 3 files at 20MB each, 30MB limit → batches of 1 file each
+      expect(tar.create).toHaveBeenCalledTimes(3);
+      expect(execSync).toHaveBeenCalledTimes(3);
+    });
+
+    it('should respect whichever limit is hit first: batchSize or maxUploadSize', async () => {
+      setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map', 'd.js.map']);
+      // Each file is 5MB — well under 30MB, but batchSize=1 should force one file per batch
+      jest.mocked(fs.statSync).mockReturnValue({ size: 5 * 1024 * 1024 } as fs.Stats);
+
+      const result = await uploadSourceMaps(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        mockOutputPath,
+        { gzipContents: true, batchSize: 1, verbose: true }
+      );
+
+      expect(result).toBe(true);
+      // batchSize=1 forces 4 batches even though size limit wouldn't require it
+      expect(tar.create).toHaveBeenCalledTimes(4);
+      expect(execSync).toHaveBeenCalledTimes(4);
+    });
+
+    it('should use batchSize for non-gzip chunked uploads (>10 files)', async () => {
+      const manyFiles = Array.from({ length: 12 }, (_, i) => `file${i}.js.map`);
+      setupReaddirMock(manyFiles);
+      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 } as fs.Stats);
+
+      const result = await uploadSourceMaps(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        mockOutputPath,
+        { gzipContents: false, batchSize: 5, verbose: true }
+      );
+
+      expect(result).toBe(true);
+      // 12 files, batchSize=5, no gzip → individual uploads but chunked: 5+5+2 = 12 curl calls
+      expect(execSync).toHaveBeenCalledTimes(12);
+      // No tarballs created
+      expect(tar.create).not.toHaveBeenCalled();
+    });
+
+    it('should work with batchSize on uploadCompressedSourceMaps fallback', async () => {
+      // First call to statSync checks the tarball size — make it oversized to trigger chunking
+      (fs.statSync as jest.Mock).mockReturnValueOnce({ size: THIRTY_MB_IN_BYTES + 1 });
+      // Subsequent calls are for individual file sizes during chunking
+      (fs.statSync as jest.Mock).mockReturnValue({ size: 1024 * 1024 } as fs.Stats);
+
+      const result = await uploadCompressedSourceMaps({
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        outputPath: mockOutputPath,
+        files: mockFiles,
+        keepSourcemaps: false,
+        verbose: true,
+        batchSize: 2,
+      });
+
+      expect(result).toBe(true);
+      // Oversized tarball deleted, then falls back to chunked uploads
+      expect(fs.unlinkSync).toHaveBeenCalled();
+      // The initial oversized tarball + 3 chunk tarballs (2, 2, 1)
+      expect(tar.create).toHaveBeenCalled();
+    });
   });
 
   describe('generateCurlCommand', () => {
