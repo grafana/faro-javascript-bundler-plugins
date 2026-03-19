@@ -636,69 +636,26 @@ export const uploadSourceMaps = async (
       return false;
     }
 
-    // If we're gzipping the contents, upload all files at once
+    // If we're gzipping the contents, upload as compressed tarballs in batches
     if (gzipContents) {
-      verbose && consoleInfoOrange(`Compressing ${validFiles.length} sourcemap files as a tarball`);
+      verbose && consoleInfoOrange(`Uploading ${validFiles.length} sourcemap files as compressed tarball(s)`);
 
-      // Create a temporary directory for the tarball
-      const tempDir = fs.mkdtempSync(path.join(tmpdir(), 'faro-'));
-      const tarball = path.join(tempDir, `${bundleId}.tar.gz`);
-
-      // Create the tarball
-      await create({ z: true, file: tarball }, validFiles);
-
-      // Check tarball size
-      if (exceedsMaxSize(tarball, maxUploadSize)) {
-        verbose && consoleInfoOrange(`Tarball exceeds ${maxSize} byte limit. Splitting into smaller chunks.`);
-
-        // Delete the tarball
-        fs.unlinkSync(tarball);
-
-        // Upload files in chunks
-        return uploadFilesInChunks(
-          endpoint,
-          appId,
-          apiKey,
-          stackId,
-          bundleId,
-          outputPath,
-          validFiles,
-          keepSourcemaps,
-          gzipPayload,
-          verbose,
-          false,
-          maxUploadSize,
-          proxy,
-          proxyUser
-        );
-      }
-
-      // Upload the tarball
-      const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
-      const result = executeCurl(
-        sourcemapEndpoint,
-        tarball,
-        { "Authorization": `Bearer ${stackId}:${apiKey}` },
-        "application/gzip",
-        false, // Don't gzip again as tarball is already compressed
+      return uploadFilesInChunks(
+        endpoint,
+        appId,
+        apiKey,
+        stackId,
+        bundleId,
+        outputPath,
+        validFiles,
+        keepSourcemaps,
+        gzipPayload,
+        verbose,
+        true,
         maxUploadSize,
         proxy,
         proxyUser
       );
-
-      // Delete the tarball
-      fs.unlinkSync(tarball);
-      fs.rmdirSync(tempDir);
-
-      // Delete the sourcemaps if requested
-      if (!keepSourcemaps && result) {
-        verbose && consoleInfoOrange(`Deleting ${validFiles.length} sourcemap files`);
-        for (const file of validFiles) {
-          fs.unlinkSync(file);
-        }
-      }
-
-      return result;
     }
 
     // If we're not gzipping the contents, upload files individually or in chunks
