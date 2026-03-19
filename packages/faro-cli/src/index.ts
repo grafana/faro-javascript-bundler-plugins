@@ -34,6 +34,7 @@ export interface UploadCompressedSourceMapsOptions {
   gzipPayload?: boolean;
   verbose?: boolean;
   maxUploadSize?: number;
+  batchSize?: number;
   proxy?: string;
   proxyUser?: string;
 }
@@ -248,6 +249,7 @@ export const uploadCompressedSourceMaps = async (
     gzipPayload,
     verbose,
     maxUploadSize,
+    batchSize,
     proxy,
     proxyUser,
   } = options;
@@ -282,7 +284,8 @@ export const uploadCompressedSourceMaps = async (
         false,
         maxUploadSize,
         proxy,
-        proxyUser
+        proxyUser,
+        batchSize
       );
     }
 
@@ -376,9 +379,10 @@ const uploadFilesInChunks = async (
   gzipContents: boolean = false,
   maxUploadSize?: number,
   proxy?: string,
-  proxyUser?: string
+  proxyUser?: string,
+  batchSize?: number
 ): Promise<boolean> => {
-  // Split files into chunks based on size
+  // Split files into chunks based on size and optional file count limit
   const chunks: string[][] = [];
   let currentChunk: string[] = [];
   let currentSize = 0;
@@ -390,6 +394,7 @@ const uploadFilesInChunks = async (
   })).sort((a, b) => b.size - a.size);
 
   const maxSize = maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
+  const maxFilesPerChunk = batchSize && batchSize > 0 ? batchSize : Infinity;
 
   // Filter out files that are too large
   const oversizedFiles = filesWithSize.filter(file => file.size > maxSize);
@@ -404,10 +409,10 @@ const uploadFilesInChunks = async (
     return false;
   }
 
-  // Create chunks of files that fit within the size limit
+  // Create chunks of files that fit within the size and count limits
   for (const file of validFiles) {
-    // If adding this file would exceed the limit, start a new chunk
-    if (currentSize + file.size > maxSize) {
+    // If adding this file would exceed the size limit or file count limit, start a new chunk
+    if (currentSize + file.size > maxSize || currentChunk.length >= maxFilesPerChunk) {
       currentChunk = [];
       chunks.push(currentChunk);
       currentSize = 0;
@@ -592,6 +597,7 @@ export const uploadSourceMaps = async (
     gzipPayload?: boolean;
     verbose?: boolean;
     maxUploadSize?: number;
+    batchSize?: number;
     recursive?: boolean;
     proxy?: string;
     proxyUser?: string;
@@ -603,6 +609,7 @@ export const uploadSourceMaps = async (
     gzipPayload = false,
     verbose = false,
     maxUploadSize,
+    batchSize,
     recursive = false,
     proxy,
     proxyUser,
@@ -654,7 +661,8 @@ export const uploadSourceMaps = async (
         true,
         maxUploadSize,
         proxy,
-        proxyUser
+        proxyUser,
+        batchSize
       );
     }
 
@@ -675,7 +683,8 @@ export const uploadSourceMaps = async (
         false,
         maxUploadSize,
         proxy,
-        proxyUser
+        proxyUser,
+        batchSize
       );
     }
 

@@ -20,6 +20,7 @@ interface UploadOptions {
   gzipPayload: boolean;
   verbose: boolean;
   maxUploadSize?: number;
+  batchSize?: number;
   recursive?: boolean;
   proxy?: string;
   proxyUser?: string;
@@ -62,7 +63,8 @@ program
   .option('-z, --gzip-payload', 'Gzip the HTTP payload for smaller uploads', false)
   .option('-v, --verbose', 'Enable verbose logging', false)
   .option('-r, --recursive', 'Recursively search subdirectories for sourcemaps', false)
-  .option('-i, --max-upload-size <size>', 'Maximum upload size in bytes (default: 30MB)', (value) => parseInt(value, 10))
+  .option('-i, --max-upload-size <size>', 'Maximum upload size in bytes per batch (default: 30MB)', (value) => parseInt(value, 10))
+  .option('-c, --batch-size <count>', 'Maximum number of files per upload batch (default: unlimited)', (value) => parseInt(value, 10))
   .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
   .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
   .action(async (options: UploadOptions) => {
@@ -111,6 +113,7 @@ program
           gzipPayload: options.gzipPayload,
           verbose: options.verbose,
           maxUploadSize: options.maxUploadSize,
+          batchSize: options.batchSize,
           recursive: options.recursive,
           proxy: options.proxy,
           proxyUser: options.proxyUser,
