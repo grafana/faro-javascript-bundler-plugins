@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.7...faro-cli-v0.8.0) (2026-03-25)
+
+
+### Features
+
+* batch faro cli uploads ([#498](https://github.com/grafana/faro-javascript-bundler-plugins/issues/498)) ([c44e5d6](https://github.com/grafana/faro-javascript-bundler-plugins/commit/c44e5d6b80cc4ac118ad7c438736e592bb8fd444))
+
 ## [0.7.7](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.7.6...faro-cli-v0.7.7) (2026-03-04)
 
 
