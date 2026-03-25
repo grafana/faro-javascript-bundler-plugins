@@ -263,7 +263,7 @@ export const uploadCompressedSourceMaps = async (
     await create({ z: true, file: tarball }, files);
 
     // Check tarball size
-    if (exceedsMaxSize(outputPath, maxUploadSize)) {
+    if (exceedsMaxSize(tarball, maxUploadSize)) {
       verbose && consoleInfoOrange(`Tarball exceeds the maximum allowed size for upload. Splitting into smaller chunks.`);
 
       // Delete the oversized tarball
