@@ -19,7 +19,7 @@ jest.mock('https-proxy-agent', () => {
   };
 });
 
-// mock cross-fetch to capture fetch calls
+// Mock global fetch to capture fetch calls
 const mockFetch = jest.fn() as any;
 mockFetch.mockResolvedValue({
   ok: true,
@@ -28,10 +28,7 @@ mockFetch.mockResolvedValue({
   text: async () => '{}',
 });
 
-jest.mock('cross-fetch', () => ({
-  default: mockFetch,
-  __esModule: true,
-}));
+global.fetch = mockFetch;
 
 // helper to run esbuild with custom config
 const runEsbuild = async (customConfig = {}, buildOptions = {}) => {
@@ -179,9 +176,10 @@ describe('Faro Esbuild Plugin', () => {
     // wait for async uploads to complete (onEnd is async)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // verify HttpsProxyAgent was called with the authenticated proxy URL if uploads occurred
+    // verify HttpsProxyAgent was used via the fetch dispatcher
     if (mockFetch.mock.calls.length > 0) {
-      expect(mockHttpsProxyAgent).toHaveBeenCalledWith(mockProxyUrl);
+      const fetchOptions = mockFetch.mock.calls[0][1] as any;
+      expect(fetchOptions?.dispatcher).toBeDefined();
     } else {
       // if no uploads occurred, at least verify authenticated proxy URL is accepted
       expect(mockProxyUrl).toBeDefined();
@@ -205,12 +203,12 @@ describe('Faro Esbuild Plugin', () => {
     // verify HttpsProxyAgent was not called when proxy is not provided
     expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
 
-    // if uploads occurred, verify no agent was passed to fetch
+    // if uploads occurred, verify no dispatcher was passed to fetch
     const fetchCalls = mockFetch.mock.calls;
     if (fetchCalls.length > 0) {
       const fetchOptions = fetchCalls[0][1] as any;
-      // when no proxy, agent should be undefined
-      expect(fetchOptions?.agent).toBeUndefined();
+      // when no proxy, dispatcher should be undefined
+      expect(fetchOptions?.dispatcher).toBeUndefined();
     }
   });
 
@@ -273,9 +271,10 @@ describe('Faro Esbuild Plugin', () => {
       // wait for async uploads to complete
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // verify that HttpsProxyAgent was called with valid proxy if uploads occurred
+      // verify that a dispatcher was used for valid proxy if uploads occurred
       if (mockFetch.mock.calls.length > 0) {
-        expect(mockHttpsProxyAgent).toHaveBeenCalledWith(validProxy);
+        const fetchOptions = mockFetch.mock.calls[0][1] as any;
+        expect(fetchOptions?.dispatcher).toBeDefined();
       }
     }
   });
