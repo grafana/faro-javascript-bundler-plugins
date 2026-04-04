@@ -35,7 +35,7 @@
     "@types/node": "24.12.0",
     "@types/tar": "7.0.87",
     "jest": "30.3.0",
-    "ts-jest": "29.4.6"
+    "ts-jest": "29.4.9"
   },
   "publishConfig": {
     "access": "public"
