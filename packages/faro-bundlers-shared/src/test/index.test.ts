@@ -9,6 +9,7 @@ import {
   normalizePrefix,
   modifySourceMapFileProperty,
   ensureSourceMapFileProperty,
+  ensureSourceMapFileProperties,
 } from '../index';
 
 
@@ -266,5 +267,95 @@ describe('Bundlers Shared Utilities', () => {
 
     // cleanup
     fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+});
+
+describe('ensureSourceMapFileProperties', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('sets file property from matching JS sourceMappingURL', () => {
+    // Standard case: JS and map have the same basename
+    fs.writeFileSync(
+      path.join(tempDir, 'bundle.js'),
+      'console.log("hello");\n//# sourceMappingURL=bundle.js.map'
+    );
+    fs.writeFileSync(
+      path.join(tempDir, 'bundle.js.map'),
+      JSON.stringify({ version: 3, sources: ['test.ts'], mappings: 'AAAA' })
+    );
+
+    ensureSourceMapFileProperties(tempDir);
+
+    const result = JSON.parse(fs.readFileSync(path.join(tempDir, 'bundle.js.map'), 'utf8'));
+    expect(result.file).toBe('bundle.js');
+  });
+
+  test('sets file property with mismatched JS and map hashes (Turbopack)', () => {
+    // Turbopack case: JS hash differs from map hash
+    fs.writeFileSync(
+      path.join(tempDir, '68e2072d.js'),
+      'console.log("hello");\n//# sourceMappingURL=b4235de6.js.map'
+    );
+    fs.writeFileSync(
+      path.join(tempDir, 'b4235de6.js.map'),
+      JSON.stringify({ version: 3, sources: ['test.ts'], mappings: 'AAAA' })
+    );
+
+    ensureSourceMapFileProperties(tempDir);
+
+    const result = JSON.parse(fs.readFileSync(path.join(tempDir, 'b4235de6.js.map'), 'utf8'));
+    expect(result.file).toBe('68e2072d.js');
+  });
+
+  test('does not modify existing correct file property', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'app.js'),
+      'console.log("hello");\n//# sourceMappingURL=app.js.map'
+    );
+    const original = JSON.stringify({ version: 3, file: 'app.js', sources: ['test.ts'], mappings: 'AAAA' });
+    fs.writeFileSync(path.join(tempDir, 'app.js.map'), original);
+
+    ensureSourceMapFileProperties(tempDir);
+
+    const content = fs.readFileSync(path.join(tempDir, 'app.js.map'), 'utf8');
+    // File should not be rewritten (content unchanged)
+    expect(content).toBe(original);
+  });
+
+  test('falls back to deriving file from map filename for orphan maps', () => {
+    // No JS file references this map
+    fs.writeFileSync(
+      path.join(tempDir, 'orphan.js.map'),
+      JSON.stringify({ version: 3, sources: ['test.ts'], mappings: 'AAAA' })
+    );
+
+    ensureSourceMapFileProperties(tempDir);
+
+    const result = JSON.parse(fs.readFileSync(path.join(tempDir, 'orphan.js.map'), 'utf8'));
+    expect(result.file).toBe('orphan.js');
+  });
+
+  test('does not overwrite existing file property even if it differs from JS reference', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'real.js'),
+      'console.log("hello");\n//# sourceMappingURL=map123.js.map'
+    );
+    fs.writeFileSync(
+      path.join(tempDir, 'map123.js.map'),
+      JSON.stringify({ version: 3, file: 'map123.js', sources: ['test.ts'], mappings: 'AAAA' })
+    );
+
+    ensureSourceMapFileProperties(tempDir);
+
+    const result = JSON.parse(fs.readFileSync(path.join(tempDir, 'map123.js.map'), 'utf8'));
+    expect(result.file).toBe('map123.js');
   });
 });
