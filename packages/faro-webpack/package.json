@@ -31,6 +31,12 @@
   "resolutions": {
     "axios": "^1.7.4"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   }

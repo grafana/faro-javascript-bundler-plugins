@@ -21,6 +21,12 @@
     "cross-fetch": "^4.0.0",
     "esbuild": "^0.28.0"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   }
