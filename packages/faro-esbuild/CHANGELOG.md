@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.4.1...faro-esbuild-plugin-v0.4.2) (2026-04-08)
+
+
+### Bug Fixes
+
+* **faro-esbuild-plugin:** remove experimental warning from README ([#515](https://github.com/grafana/faro-javascript-bundler-plugins/issues/515)) ([56798fe](https://github.com/grafana/faro-javascript-bundler-plugins/commit/56798fec05953d5c45799be155e29cba75e571a6))
+
 ## [0.4.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.4.0...faro-esbuild-plugin-v0.4.1) (2026-04-08)
 
 
