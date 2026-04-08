@@ -37,6 +37,12 @@
     "jest": "30.3.0",
     "ts-jest": "29.4.9"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   }

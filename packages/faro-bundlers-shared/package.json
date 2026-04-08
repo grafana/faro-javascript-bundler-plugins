@@ -22,6 +22,12 @@
     "ansis": "^4.0.0",
     "tar": "^7.1.0"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "publishConfig": {
     "access": "public"
   }
