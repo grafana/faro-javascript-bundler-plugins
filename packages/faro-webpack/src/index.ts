@@ -13,6 +13,8 @@ import {
   exportBundleIdToFile,
   shouldProcessFile,
   normalizePrefix,
+  detectGitCommitHash,
+  exportGitCommitHashToFile,
 } from "@grafana/faro-bundlers-shared";
 import { sources } from "webpack";
 import path from "path";
@@ -85,6 +87,7 @@ export default class FaroSourceMapUploaderPlugin
   private stackId: string;
   private endpoint: string;
   private bundleId: string;
+  private gitCommitHash?: string;
   private outputPathOverride?: string;
   private outputFiles?: string[] | RegExp;
   private recursive?: boolean;
@@ -107,6 +110,7 @@ export default class FaroSourceMapUploaderPlugin
     this.outputFiles = options.outputFiles;
     this.recursive = options.recursive;
     this.bundleId = options.bundleId ?? String(Date.now() + randomString(5));
+    this.gitCommitHash = options.gitCommitHash ?? detectGitCommitHash(this.verbose);
     this.keepSourcemaps = options.keepSourcemaps;
     this.gzipContents = options.gzipContents;
     this.verbose = options.verbose;
@@ -123,6 +127,9 @@ export default class FaroSourceMapUploaderPlugin
     // Export bundleId to environment variable if skipUpload is true
     if (this.skipUpload) {
       exportBundleIdToFile(this.bundleId, this.appName, this.verbose);
+      if (this.gitCommitHash) {
+        exportGitCommitHashToFile(this.gitCommitHash, this.appName, this.verbose);
+      }
     }
   }
 
@@ -140,7 +147,7 @@ export default class FaroSourceMapUploaderPlugin
         raw: true,
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
         banner: (options: BannerPluginOptions) => {
-          return faroBundleIdSnippet(this.bundleId, this.appName);
+          return faroBundleIdSnippet(this.bundleId, this.appName, this.gitCommitHash);
         },
       })
     );
