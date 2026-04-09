@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
 import { execSync } from 'child_process';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
@@ -626,6 +626,9 @@ export const uploadSourceMaps = async (
     }
 
     verbose && consoleInfoOrange(`Found ${sourcemapFiles.length} sourcemap files in ${outputPath}`);
+
+    // Ensure source map file properties are correct (handles Turbopack mismatched hashes)
+    ensureSourceMapFileProperties(outputPath, verbose, recursive);
 
     // Check for oversized files first
     const oversizedFiles: string[] = [];
