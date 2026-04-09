@@ -179,7 +179,8 @@ describe('Faro Esbuild Plugin', () => {
     // verify HttpsProxyAgent was used via the fetch dispatcher
     if (mockFetch.mock.calls.length > 0) {
       const fetchOptions = mockFetch.mock.calls[0][1] as any;
-      expect(fetchOptions?.dispatcher).toBeDefined();
+      expect(fetchOptions.dispatcher).toBeInstanceOf(mockHttpsProxyAgent);
+      expect(mockHttpsProxyAgent).toHaveBeenCalledWith(mockProxyUrl);
     } else {
       // if no uploads occurred, at least verify authenticated proxy URL is accepted
       expect(mockProxyUrl).toBeDefined();
