@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.11.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.10.1...faro-webpack-plugin-v0.11.0) (2026-04-09)
+
+
+### Features
+
+* add ensureSourceMapFileProperties for turbopack compat ([#512](https://github.com/grafana/faro-javascript-bundler-plugins/issues/512)) ([63da440](https://github.com/grafana/faro-javascript-bundler-plugins/commit/63da44092b148e19292023a35084eb05b6530f4f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.9.1 to ^0.10.0
+
 ## [0.10.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.10.0...faro-webpack-plugin-v0.10.1) (2026-04-08)
 
 
