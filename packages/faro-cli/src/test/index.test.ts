@@ -4,7 +4,7 @@ import * as tar from 'tar';
 import { execSync } from 'child_process';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
 import { jest } from '@jest/globals';
 
 import {
@@ -245,6 +245,42 @@ describe('faro-cli', () => {
       );
 
       expect(result).toBe(false);
+    });
+
+    it('should call ensureSourceMapFileProperties before uploading', async () => {
+      const makeDirent = (name: string) => ({
+        name,
+        isFile: () => true,
+        isDirectory: () => false,
+        isBlockDevice: () => false,
+        isCharacterDevice: () => false,
+        isSymbolicLink: () => false,
+        isFIFO: () => false,
+        isSocket: () => false,
+        parentPath: mockOutputPath,
+        path: mockOutputPath,
+      });
+
+      (fs.readdirSync as jest.Mock).mockReturnValue([
+        makeDirent('a.js.map'),
+      ]);
+      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 } as fs.Stats);
+
+      await uploadSourceMaps(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        mockOutputPath,
+        { verbose: true, recursive: true }
+      );
+
+      expect(ensureSourceMapFileProperties).toHaveBeenCalledWith(
+        mockOutputPath,
+        true,
+        true
+      );
     });
 
     it('should handle oversized files', async () => {

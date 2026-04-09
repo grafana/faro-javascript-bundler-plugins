@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.5.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.4.2...faro-esbuild-plugin-v0.5.0) (2026-04-09)
+
+
+### Features
+
+* add ensureSourceMapFileProperties for turbopack compat ([#512](https://github.com/grafana/faro-javascript-bundler-plugins/issues/512)) ([63da440](https://github.com/grafana/faro-javascript-bundler-plugins/commit/63da44092b148e19292023a35084eb05b6530f4f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.9.1 to ^0.10.0
+
+## [0.4.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.4.1...faro-esbuild-plugin-v0.4.2) (2026-04-08)
+
+
+### Bug Fixes
+
+* **faro-esbuild-plugin:** remove experimental warning from README ([#515](https://github.com/grafana/faro-javascript-bundler-plugins/issues/515)) ([56798fe](https://github.com/grafana/faro-javascript-bundler-plugins/commit/56798fec05953d5c45799be155e29cba75e571a6))
+
+## [0.4.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.4.0...faro-esbuild-plugin-v0.4.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* add files field to all packages to ensure dist is included in npm publish ([#513](https://github.com/grafana/faro-javascript-bundler-plugins/issues/513)) ([0e494d8](https://github.com/grafana/faro-javascript-bundler-plugins/commit/0e494d82a3e46e84a96b0709a304457cde84b224))
+* **deps:** update dependency esbuild to ^0.28.0 ([#509](https://github.com/grafana/faro-javascript-bundler-plugins/issues/509)) ([a4afc2e](https://github.com/grafana/faro-javascript-bundler-plugins/commit/a4afc2e1bd8dcdd8afed88896d85316586bceee6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.9.0 to ^0.9.1
+
 ## [0.4.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.3.2...faro-esbuild-plugin-v0.4.0) (2026-03-04)
 
 

@@ -1,8 +1,5 @@
 # Faro source map upload plugin - esbuild
 
-> [!WARNING]
-> This package is currently **experimental**. While it provides feature parity with the rollup and webpack plugins, it may have issues or limitations. Please report any problems you encounter.
-
 This plugin uploads source maps to the Faro collector to enable de-obfuscation of stack traces in the Grafana Cloud Frontend Observability UI.
 
 > [!NOTE]

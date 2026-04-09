@@ -322,7 +322,7 @@ export const ensureSourceMapFileProperty = (
       // remove .map extension to get the js file name
       const jsFileName = mapFileName.replace(/\.map$/, "");
       sourceMap.file = jsFileName;
-      fs.writeFileSync(filePath, JSON.stringify(sourceMap, null, 2));
+      fs.writeFileSync(filePath, JSON.stringify(sourceMap));
       verbose &&
         consoleInfoOrange(
           `Added file property to source map: ${mapFileName} -> file: ${jsFileName}`
@@ -331,6 +331,107 @@ export const ensureSourceMapFileProperty = (
   } catch (error) {
     console.error(
       `Error ensuring source map file property ${filePath}:`,
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+};
+
+/**
+ * Ensures all source maps in a directory have a file property when it is missing
+ * by scanning JS files for sourceMappingURL comments. This handles bundlers like
+ * Turbopack that use different hashes for JS files and their corresponding source
+ * map files. Falls back to deriving the file property from the map filename if no
+ * JS file references the map. Existing sourceMap.file values are preserved and are
+ * not overwritten.
+ * @param outputDir Directory containing JS and source map files
+ * @param verbose Whether to log verbose messages
+ * @param recursive Whether to recursively search subdirectories
+ */
+export const ensureSourceMapFileProperties = (
+  outputDir: string,
+  verbose?: boolean,
+  recursive?: boolean
+): void => {
+  const walk = (dir: string): string[] => {
+    const results: string[] = [];
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory() && recursive) {
+        results.push(...walk(fullPath));
+      } else if (entry.isFile()) {
+        results.push(fullPath);
+      }
+    }
+    return results;
+  };
+
+  try {
+    const allFiles = walk(outputDir);
+
+    // Build mapping from map basename → JS basename by scanning sourceMappingURL in JS files
+    const mapToJsName = new Map<string, string>();
+    for (const filePath of allFiles) {
+      if (!/\.(js|mjs|cjs)$/.test(filePath)) continue;
+      // Only read the tail of each file — sourceMappingURL is always near the end
+      const fd = fs.openSync(filePath, "r");
+      try {
+        const stat = fs.fstatSync(fd);
+        const tailSize = Math.min(512, stat.size);
+        const buffer = Buffer.alloc(tailSize);
+        fs.readSync(fd, buffer, 0, tailSize, stat.size - tailSize);
+        const tail = buffer.toString("utf-8");
+        const match = tail.match(/\/\/[#@]\s*sourceMappingURL=(\S+)\s*$/m);
+        if (match && !match[1].startsWith("data:")) {
+          mapToJsName.set(path.basename(match[1]), path.basename(filePath));
+        }
+      } finally {
+        fs.closeSync(fd);
+      }
+    }
+
+    // Patch file property on each source map
+    for (const filePath of allFiles) {
+      if (!JS_SOURCEMAP_PATTERN.test(filePath)) continue;
+      const mapBasename = path.basename(filePath);
+
+      try {
+        const sourceMapContent = fs.readFileSync(filePath, "utf-8");
+        const sourceMap = JSON.parse(sourceMapContent);
+        const jsName = mapToJsName.get(mapBasename);
+
+        if (sourceMap.file) {
+          // Already has a file property — don't overwrite
+          continue;
+        }
+
+        if (jsName) {
+          sourceMap.file = jsName;
+          fs.writeFileSync(filePath, JSON.stringify(sourceMap));
+          verbose &&
+            consoleInfoOrange(
+              `Set file property on source map: ${mapBasename} -> file: ${jsName}`
+            );
+        } else {
+          // Fallback: derive from map filename
+          const jsFileName = mapBasename.replace(/\.map$/, "");
+          sourceMap.file = jsFileName;
+          fs.writeFileSync(filePath, JSON.stringify(sourceMap));
+          verbose &&
+            consoleInfoOrange(
+              `Added file property to source map: ${mapBasename} -> file: ${jsFileName}`
+            );
+        }
+      } catch (error) {
+        console.error(
+          `Error processing source map ${filePath}:`,
+          error instanceof Error ? error.message : String(error)
+        );
+      }
+    }
+  } catch (error) {
+    console.error(
+      `Error ensuring source map file properties in ${outputDir}:`,
       error instanceof Error ? error.message : String(error)
     );
   }
@@ -360,7 +461,7 @@ export const modifySourceMapFileProperty = (
     if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
       const fileValue = basenameOnly ? path.basename(sourceMap.file) : sourceMap.file;
       sourceMap.file = `${normalizedPrefix}${fileValue}`;
-      fs.writeFileSync(filePath, JSON.stringify(sourceMap, null, 2));
+      fs.writeFileSync(filePath, JSON.stringify(sourceMap));
       verbose &&
         consoleInfoOrange(
           `Modified source map file property: ${path.basename(filePath)} -> ${sourceMap.file}`
