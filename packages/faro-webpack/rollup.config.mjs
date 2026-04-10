@@ -19,8 +19,7 @@ export default {
   input: "src/index.ts",
   external: [
     ...Object.keys(packageJson.dependencies),
-    "webpack",
-    "cross-fetch"
+    "webpack"
   ],
   output: [
     {
