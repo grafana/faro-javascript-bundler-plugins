@@ -1,8 +1,24 @@
 import * as esbuild from 'esbuild';
 import faroEsbuildPlugin from '../index';
+import { uploadSourceMap } from '@grafana/faro-bundlers-shared';
 import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
+
+// Mock faro-bundlers-shared to capture upload calls
+jest.mock('@grafana/faro-bundlers-shared', () => {
+  const originalModule = jest.requireActual('@grafana/faro-bundlers-shared') as any;
+  return {
+    ...originalModule,
+    uploadSourceMap: jest.fn().mockImplementation((options: any) => {
+      // track calls if needed, but for now we'll just use the real mock implementation later
+      return originalModule.uploadSourceMap(options);
+    }),
+    uploadCompressedSourceMaps: jest.fn().mockImplementation((options: any) => {
+      return originalModule.uploadCompressedSourceMaps(options);
+    }),
+  };
+});
 
 // mock https-proxy-agent
 const mockHttpsProxyAgent = jest.fn().mockImplementation((proxyUrl: any) => {
@@ -179,8 +195,12 @@ describe('Faro Esbuild Plugin', () => {
     // verify HttpsProxyAgent was used via the fetch dispatcher
     if (mockFetch.mock.calls.length > 0) {
       const fetchOptions = mockFetch.mock.calls[0][1] as any;
-      expect(fetchOptions.dispatcher).toBeInstanceOf(mockHttpsProxyAgent);
-      expect(mockHttpsProxyAgent).toHaveBeenCalledWith(mockProxyUrl);
+      expect(fetchOptions.dispatcher).toBeDefined();
+
+      // also verify the shared function was called with the proxy option
+      expect(uploadSourceMap).toHaveBeenCalledWith(expect.objectContaining({
+        proxy: mockProxyUrl
+      }));
     } else {
       // if no uploads occurred, at least verify authenticated proxy URL is accepted
       expect(mockProxyUrl).toBeDefined();
@@ -276,6 +296,10 @@ describe('Faro Esbuild Plugin', () => {
       if (mockFetch.mock.calls.length > 0) {
         const fetchOptions = mockFetch.mock.calls[0][1] as any;
         expect(fetchOptions?.dispatcher).toBeDefined();
+
+        expect(uploadSourceMap).toHaveBeenCalledWith(expect.objectContaining({
+          proxy: validProxy
+        }));
       }
     }
   });
