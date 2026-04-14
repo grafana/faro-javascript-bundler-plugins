@@ -1,53 +1,38 @@
 import * as esbuild from 'esbuild';
 import faroEsbuildPlugin from '../index';
-import { uploadSourceMap } from '@grafana/faro-bundlers-shared';
+import { ProxyAgent, RequestInit, Response } from 'undici';
 import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
+import { Mock } from 'jest-mock';
 
-// Mock faro-bundlers-shared to capture upload calls
-jest.mock('@grafana/faro-bundlers-shared', () => {
-  const originalModule = jest.requireActual('@grafana/faro-bundlers-shared') as any;
+// Mock undici fetch and ProxyAgent
+const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   return {
-    ...originalModule,
-    uploadSourceMap: jest.fn().mockImplementation((options: any) => {
-      // track calls if needed, but for now we'll just use the real mock implementation later
-      return originalModule.uploadSourceMap(options);
+    ok: true,
+    status: 200,
+    json: async () => ({ success: true }),
+    text: async () => '{}',
+  } as Response;
+});
+
+jest.mock('undici', () => {
+  const actual = jest.requireActual('undici') as object;
+  return {
+    ...actual,
+    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
+      return {
+        proxyUrl,
+        options: { proxy: proxyUrl }
+      };
     }),
-    uploadCompressedSourceMaps: jest.fn().mockImplementation((options: any) => {
-      return originalModule.uploadCompressedSourceMaps(options);
-    }),
   };
 });
-
-// mock https-proxy-agent
-const mockHttpsProxyAgent = jest.fn().mockImplementation((proxyUrl: any) => {
-  return {
-    proxyUrl,
-    // mock agent object
-    options: { proxy: proxyUrl }
-  };
-});
-
-jest.mock('https-proxy-agent', () => {
-  return {
-    HttpsProxyAgent: mockHttpsProxyAgent
-  };
-});
-
-// Mock global fetch to capture fetch calls
-const mockFetch = jest.fn() as any;
-mockFetch.mockResolvedValue({
-  ok: true,
-  status: 200,
-  json: async () => ({ success: true }),
-  text: async () => '{}',
-});
-
-global.fetch = mockFetch;
 
 // helper to run esbuild with custom config
-const runEsbuild = async (customConfig = {}, buildOptions = {}) => {
+const runEsbuild = async (customConfig: Record<string, unknown> = {}, buildOptions: Record<string, unknown> = {}) => {
   const outdir = path.resolve(process.cwd(), 'dist');
 
   // ensure outdir exists
@@ -181,7 +166,7 @@ describe('Faro Esbuild Plugin', () => {
     // clear previous calls
     jest.clearAllMocks();
     mockFetch.mockClear();
-    mockHttpsProxyAgent.mockClear();
+    (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
     await runEsbuild({
       bundleId: "proxy-auth-test",
@@ -192,15 +177,10 @@ describe('Faro Esbuild Plugin', () => {
     // wait for async uploads to complete (onEnd is async)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // verify HttpsProxyAgent was used via the fetch dispatcher
+    // verify ProxyAgent was used via the fetch dispatcher
     if (mockFetch.mock.calls.length > 0) {
-      const fetchOptions = mockFetch.mock.calls[0][1] as any;
-      expect(fetchOptions.dispatcher).toBeDefined();
-
-      // also verify the shared function was called with the proxy option
-      expect(uploadSourceMap).toHaveBeenCalledWith(expect.objectContaining({
-        proxy: mockProxyUrl
-      }));
+      const fetchOptions = mockFetch.mock.calls[0][1];
+      expect(fetchOptions?.dispatcher).toBeDefined();
     } else {
       // if no uploads occurred, at least verify authenticated proxy URL is accepted
       expect(mockProxyUrl).toBeDefined();
@@ -211,7 +191,7 @@ describe('Faro Esbuild Plugin', () => {
     // clear previous calls
     jest.clearAllMocks();
     mockFetch.mockClear();
-    mockHttpsProxyAgent.mockClear();
+    (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
     await runEsbuild({
       bundleId: "no-proxy-test",
@@ -221,13 +201,13 @@ describe('Faro Esbuild Plugin', () => {
     // wait for async uploads to complete (onEnd is async)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // verify HttpsProxyAgent was not called when proxy is not provided
-    expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
+    // verify ProxyAgent was not called when proxy is not provided
+    expect(ProxyAgent).not.toHaveBeenCalled();
 
     // if uploads occurred, verify no dispatcher was passed to fetch
     const fetchCalls = mockFetch.mock.calls;
     if (fetchCalls.length > 0) {
-      const fetchOptions = fetchCalls[0][1] as any;
+      const fetchOptions = fetchCalls[0][1];
       // when no proxy, dispatcher should be undefined
       expect(fetchOptions?.dispatcher).toBeUndefined();
     }
@@ -250,7 +230,7 @@ describe('Faro Esbuild Plugin', () => {
     for (const invalidProxy of invalidProxies) {
       consoleErrorSpy.mockClear();
       mockFetch.mockClear();
-      mockHttpsProxyAgent.mockClear();
+      (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
       await runEsbuild({
         bundleId: "proxy-validation-test",
@@ -261,8 +241,8 @@ describe('Faro Esbuild Plugin', () => {
       // wait for async uploads to complete
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // verify that HttpsProxyAgent was not called with invalid proxy
-      expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
+      // verify that ProxyAgent was not called with invalid proxy
+      expect(ProxyAgent).not.toHaveBeenCalled();
     }
 
     consoleErrorSpy.mockRestore();
@@ -281,7 +261,7 @@ describe('Faro Esbuild Plugin', () => {
     for (const validProxy of validProxies) {
       jest.clearAllMocks();
       mockFetch.mockClear();
-      mockHttpsProxyAgent.mockClear();
+      (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
       await runEsbuild({
         bundleId: "proxy-validation-valid-test",
@@ -294,12 +274,8 @@ describe('Faro Esbuild Plugin', () => {
 
       // verify that a dispatcher was used for valid proxy if uploads occurred
       if (mockFetch.mock.calls.length > 0) {
-        const fetchOptions = mockFetch.mock.calls[0][1] as any;
+        const fetchOptions = mockFetch.mock.calls[0][1];
         expect(fetchOptions?.dispatcher).toBeDefined();
-
-        expect(uploadSourceMap).toHaveBeenCalledWith(expect.objectContaining({
-          proxy: validProxy
-        }));
       }
     }
   });

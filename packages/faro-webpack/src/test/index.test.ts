@@ -8,38 +8,58 @@ import {
   test,
   jest,
 } from "@jest/globals";
+import { Mock } from 'jest-mock';
 import fs from "fs/promises";
 import { http, HttpResponse, PathParams } from "msw";
 import { setupServer } from "msw/node";
 import os from "os";
 import path from "path";
+import { ProxyAgent, RequestInit, Response } from "undici";
 import webpack, { Configuration, Stats } from "webpack";
 
-// Mock https-proxy-agent
-const mockHttpsProxyAgent = jest.fn().mockImplementation((proxyUrl: any) => {
+// Mock undici fetch and ProxyAgent
+const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
+  const headers = options?.headers as Record<string, string> | undefined;
+  const contentType = headers?.["Content-Type"] || headers?.["content-type"];
+
+  if (contentType === "application/json") {
+    try {
+      // Body can be a Buffer from fs.readFileSync
+      const body = options?.body;
+      const content = body instanceof Buffer ? body.toString() : (body as string);
+      const sourcemap = JSON.parse(content);
+      if (sourcemap.file) {
+        uploadedFiles.push(sourcemap.file as string);
+      }
+    } catch (e) {
+      // ignore
+    }
+  } else if (contentType === "application/gzip") {
+    uploadedFiles.push("compressed-upload");
+  }
+
   return {
-    proxyUrl,
-    // Mock agent object
-    options: { proxy: proxyUrl }
+    ok: true,
+    status: 200,
+    json: async () => ({ success: true }),
+    text: async () => '{}',
+  } as Response;
+});
+
+jest.mock('undici', () => {
+  const actual = jest.requireActual('undici') as object;
+  return {
+    ...actual,
+    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
+      return {
+        proxyUrl,
+        options: { proxy: proxyUrl }
+      };
+    }),
   };
 });
-
-jest.mock('https-proxy-agent', () => {
-  return {
-    HttpsProxyAgent: mockHttpsProxyAgent
-  };
-});
-
-// Mock global fetch to capture fetch calls and verify agent usage
-const mockFetch = jest.fn() as any;
-mockFetch.mockResolvedValue({
-  ok: true,
-  status: 200,
-  json: async () => ({ success: true }),
-  text: async () => '{}',
-});
-
-global.fetch = mockFetch;
 
 const uploadedFiles: string[] = [];
 const tempDirectories: string[] = [];
@@ -470,8 +490,8 @@ describe("Faro Webpack Plugin", () => {
 
     // Clear previous calls
     jest.clearAllMocks();
-    mockHttpsProxyAgent.mockClear();
     mockFetch.mockClear();
+    (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
     await runWebpack({
       bundleId: "proxy-auth-test",
@@ -485,9 +505,9 @@ describe("Faro Webpack Plugin", () => {
     // Wait for async uploads to complete (afterEmit hook is async)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Verify HttpsProxyAgent was used via the fetch dispatcher
+    // Verify ProxyAgent was used via the fetch dispatcher
     if (mockFetch.mock.calls.length > 0) {
-      const fetchOptions = mockFetch.mock.calls[0][1] as any;
+      const fetchOptions = mockFetch.mock.calls[0][1];
       expect(fetchOptions?.dispatcher).toBeDefined();
     } else {
       // If no uploads occurred (e.g., no sourcemaps), at least verify proxy option is accepted
@@ -498,8 +518,8 @@ describe("Faro Webpack Plugin", () => {
   test("no proxy agent is used when proxy option is not provided", async () => {
     // Clear previous calls
     jest.clearAllMocks();
-    mockHttpsProxyAgent.mockClear();
     mockFetch.mockClear();
+    (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
     await runWebpack({
       bundleId: "no-proxy-test",
@@ -512,14 +532,14 @@ describe("Faro Webpack Plugin", () => {
     // Wait for async uploads to complete (afterEmit hook is async)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Verify HttpsProxyAgent was not called when proxy is not provided
-    expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
+    // Verify ProxyAgent was not called when proxy is not provided
+    expect(ProxyAgent).not.toHaveBeenCalled();
 
     // If uploads occurred, verify no dispatcher was passed to fetch
     const fetchCalls = mockFetch.mock.calls;
     if (fetchCalls.length > 0) {
-      const fetchOptions = fetchCalls[0][1] as any;
-      expect(fetchOptions).not.toHaveProperty('dispatcher');
+      const fetchOptions = fetchCalls[0][1];
+      expect(fetchOptions?.dispatcher).toBeUndefined();
     }
   });
 
@@ -540,7 +560,7 @@ describe("Faro Webpack Plugin", () => {
     for (const invalidProxy of invalidProxies) {
       consoleErrorSpy.mockClear();
       mockFetch.mockClear();
-      mockHttpsProxyAgent.mockClear();
+      (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
       await runWebpack({
         bundleId: "proxy-validation-test",
@@ -554,8 +574,8 @@ describe("Faro Webpack Plugin", () => {
       // Wait for async uploads to complete
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Verify that HttpsProxyAgent was not called with invalid proxy
-      expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
+      // Verify that ProxyAgent was not called with invalid proxy
+      expect(ProxyAgent).not.toHaveBeenCalled();
     }
 
     consoleErrorSpy.mockRestore();
@@ -574,7 +594,7 @@ describe("Faro Webpack Plugin", () => {
     for (const validProxy of validProxies) {
       jest.clearAllMocks();
       mockFetch.mockClear();
-      mockHttpsProxyAgent.mockClear();
+      (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
       await runWebpack({
         bundleId: "proxy-validation-valid-test",
@@ -590,7 +610,7 @@ describe("Faro Webpack Plugin", () => {
 
       // Verify that a dispatcher was used for valid proxy if uploads occurred
       if (mockFetch.mock.calls.length > 0) {
-        const fetchOptions = mockFetch.mock.calls[0][1] as any;
+        const fetchOptions = mockFetch.mock.calls[0][1];
         expect(fetchOptions?.dispatcher).toBeDefined();
       }
     }

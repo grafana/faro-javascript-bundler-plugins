@@ -3,7 +3,7 @@ import fs from "fs";
 import { create } from "tar";
 import ansi from "ansis";
 import path from "path";
-import { HttpsProxyAgent } from "https-proxy-agent";
+import { ProxyAgent, fetch } from "undici";
 
 export interface FaroSourceMapUploaderPluginOptions {
   endpoint: string;
@@ -116,8 +116,7 @@ export const uploadSourceMap = async (
       "Authorization": `Bearer ${stackId}:${apiKey}`,
     },
     body: fs.readFileSync(filePath),
-    // @ts-expect-error
-    dispatcher: proxy ? new HttpsProxyAgent(proxy) : undefined,
+    dispatcher: proxy ? new ProxyAgent(proxy) : undefined,
   })
     .then((res) => {
       if (res.ok) {
@@ -136,7 +135,10 @@ export const uploadSourceMap = async (
         fs.unlinkSync(filePath);
       }
     })
-    .catch((err) => console.error(err));
+    .catch((err) => {
+      success = false;
+      console.error(err);
+    });
 
   return success;
 };
@@ -175,8 +177,7 @@ export const uploadCompressedSourceMaps = async (
       "Authorization": `Bearer ${stackId}:${apiKey}`,
     },
     body: fs.readFileSync(tarball),
-    // @ts-expect-error
-    dispatcher: proxy ? new HttpsProxyAgent(proxy) : undefined,
+    dispatcher: proxy ? new ProxyAgent(proxy) : undefined,
   })
     .then((res) => {
       if (res.ok) {
@@ -215,7 +216,10 @@ export const uploadCompressedSourceMaps = async (
         }
       }
     })
-    .catch((err) => console.error(err));
+    .catch((err) => {
+      success = false;
+      console.error(err);
+    });
 
   return success;
 };
@@ -246,7 +250,7 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
   }
 
   if (Array.isArray(outputFiles) && outputFiles?.length) {
-    return outputFiles.map((o: string) => o + ".map").includes(filename);
+    return outputFiles.map((o) => o + ".map").includes(filename);
   }
 
   return false;
