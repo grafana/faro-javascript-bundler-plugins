@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.10.0",
-    "cross-fetch": "^4.0.0",
     "esbuild": "^0.28.0"
   },
   "devDependencies": {
