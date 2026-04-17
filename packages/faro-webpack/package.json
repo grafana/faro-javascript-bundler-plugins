@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@jest/globals": "30.3.0",
-    "@rollup/plugin-babel": "6.1.0",
+    "@rollup/plugin-babel": "7.0.0",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@types/jest": "30.0.0",
     "@types/node": "24.12.2",
