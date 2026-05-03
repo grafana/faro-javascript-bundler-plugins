@@ -1094,10 +1094,10 @@
   resolved "https://registry.yarnpkg.com/@gar/promise-retry/-/promise-retry-1.0.3.tgz#65e726428e794bc4453948e0a41e6de4215ce8b0"
   integrity sha512-GmzA9ckNokPypTg10pgpeHNQe7ph+iIKKmhKu3Ob9ANkswreCx7R3cKmY781K8QK3AqVL3xVh9A42JvIAbkkSA==
 
-"@grafana/tsconfig@2.0.1":
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/@grafana/tsconfig/-/tsconfig-2.0.1.tgz#231d46e996e53cd04367da850c03f1ef1170484c"
-  integrity sha512-yGNQWQDlxFfklzMfk0i8qnDqKOvIGc0Aqe62zLS4LTqptkhnyLEVsdaVmX99m3QFOcBiiFn8scREDzGeF2iNvQ==
+"@grafana/tsconfig@2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@grafana/tsconfig/-/tsconfig-2.1.0.tgz#5f0551593968b898c6f7cf5a825b06d583b0562d"
+  integrity sha512-rJxzlVeKJNAiu1owcC8GcLpzwBg+B2TlkU3egDpb7z+3PZjQQwevrksqNvFxezBB9wMJSv49Qgve3KPT56e3yQ==
 
 "@hutson/parse-repository-url@^3.0.0":
   version "3.0.2"
