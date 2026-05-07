@@ -5,6 +5,8 @@ import {
   WEBPACK_PLUGIN_NAME,
   FaroSourceMapUploaderPluginOptions,
   faroBundleIdSnippet,
+  faroGitHashSnippet,
+  resolveGitHash,
   randomString,
   uploadSourceMap,
   uploadCompressedSourceMaps,
@@ -97,6 +99,7 @@ export default class FaroSourceMapUploaderPlugin
   private proxy?: string;
   private prefixPath?: string;
   private prefixPathBasenameOnly?: boolean;
+  private gitHash?: string;
 
   constructor(options: WebpackFaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -119,6 +122,7 @@ export default class FaroSourceMapUploaderPlugin
         ? options.maxUploadSize
         : THIRTY_MB_IN_BYTES;
     this.proxy = options.proxy;
+    this.gitHash = resolveGitHash({ gitHash: options.gitHash, bundleId: this.bundleId });
 
     // Export bundleId to environment variable if skipUpload is true
     if (this.skipUpload) {
@@ -140,7 +144,8 @@ export default class FaroSourceMapUploaderPlugin
         raw: true,
         include: /\.(js|ts|jsx|tsx|mjs|cjs)$/,
         banner: (options: BannerPluginOptions) => {
-          return faroBundleIdSnippet(this.bundleId, this.appName);
+          const gitHashSnippet = this.gitHash ? faroGitHashSnippet(this.gitHash, this.appName) : '';
+          return gitHashSnippet + faroBundleIdSnippet(this.bundleId, this.appName);
         },
       })
     );

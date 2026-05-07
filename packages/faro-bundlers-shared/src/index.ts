@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { execSync } from "child_process";
 import fs from "fs";
 import { create } from "tar";
 import ansi from "ansis";
@@ -23,6 +24,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   proxy?: string; // Proxy URL to use for source map uploads (e.g., "http://proxy.example.com:8080" or "http://user:pass@proxy.example.com:8080")
   prefixPath?: string; // Prefix to prepend to the file property in source maps (e.g., "_next/" or "robo/assets/")
   prefixPathBasenameOnly?: boolean; // When true, strips the directory path from the file property before prepending prefixPath (useful for flat CDN uploads)
+  gitHash?: string;
 }
 
 interface UploadSourceMapOptions {
@@ -259,6 +261,33 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
 export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
   return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;
 };
+
+export const faroGitHashSnippet = (gitHash: string, appName: string) => {
+  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroGitHash_${appName}"]="${gitHash}"}catch(l){}})();`;
+};
+
+const GIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
+
+export function resolveGitHash(options: { gitHash?: string; bundleId: string }): string | undefined {
+  if (options.gitHash) {
+    return options.gitHash;
+  }
+
+  try {
+    const hash = execSync("git rev-parse HEAD", { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }).trim();
+    if (GIT_SHA_PATTERN.test(hash)) {
+      return hash;
+    }
+  } catch {
+    // git unavailable or not in a repo — fall through
+  }
+
+  if (GIT_SHA_PATTERN.test(options.bundleId)) {
+    return options.bundleId;
+  }
+
+  return undefined;
+}
 
 export function randomString(length?: number): string {
   return crypto.randomBytes(length ?? 10).toString("hex");

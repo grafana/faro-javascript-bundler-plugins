@@ -5,6 +5,8 @@ import {
   ESBUILD_PLUGIN_NAME,
   FaroSourceMapUploaderPluginOptions,
   faroBundleIdSnippet,
+  faroGitHashSnippet,
+  resolveGitHash,
   randomString,
   consoleInfoOrange,
   uploadSourceMap,
@@ -42,6 +44,7 @@ export default function faroEsbuildPlugin(
   const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
   const maxSize =
     maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
+  const gitHash = resolveGitHash({ gitHash: pluginOptions.gitHash, bundleId });
 
   // export bundleId to environment variable if skipUpload is true
   if (skipUpload) {
@@ -51,8 +54,9 @@ export default function faroEsbuildPlugin(
   return {
     name: ESBUILD_PLUGIN_NAME,
     setup(build) {
-      // inject bundleId snippet at the beginning of js/ts files using banner
+      // inject bundleId (and optionally gitHash) snippet at the beginning of js/ts files using banner
       const bundleIdSnippet = faroBundleIdSnippet(bundleId, appName);
+      const gitHashSnippet = gitHash ? faroGitHashSnippet(gitHash, appName) : '';
 
       // set banner for js files (esbuild banner only accepts "js" or "css" as keys)
       // the "js" banner applies to all JavaScript/TypeScript files (.js, .ts, .jsx, .tsx, .mjs, .cjs)
@@ -71,8 +75,8 @@ export default function faroEsbuildPlugin(
         existingJsBanner = build.initialOptions.banner.js || '';
       }
 
-      // prepend our bundleId snippet to any existing banner
-      build.initialOptions.banner.js = bundleIdSnippet + existingJsBanner;
+      // prepend our snippets to any existing banner
+      build.initialOptions.banner.js = gitHashSnippet + bundleIdSnippet + existingJsBanner;
 
       // register onEnd callback to modify sourcemaps and optionally upload them
       build.onEnd(async (result) => {

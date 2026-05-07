@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
 import { execSync } from 'child_process';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
@@ -790,6 +790,48 @@ export const injectBundleId = async (
         modified: false,
         error: errorMessage
       });
+    }
+  }
+
+  return results;
+};
+
+export const injectGitHash = async (
+  gitHash: string,
+  appName: string,
+  files: string[],
+  options: InjectBundleIdOptions = {}
+): Promise<InjectBundleIdResult[]> => {
+  const { verbose = false, dryRun = false } = options;
+  const results: InjectBundleIdResult[] = [];
+  const snippet = faroGitHashSnippet(gitHash, appName);
+
+  for (const file of files) {
+    try {
+      const stat = await fs.promises.stat(file);
+      if (!stat.isFile()) {
+        results.push({ file, modified: false, error: 'Not a regular file' });
+        continue;
+      }
+
+      const content = await fs.promises.readFile(file, 'utf8');
+
+      if (content.includes(`__faroGitHash_${appName}`)) {
+        verbose && consoleInfoOrange(`Skipping ${file} - git hash snippet already present`);
+        results.push({ file, modified: false });
+        continue;
+      }
+
+      if (!dryRun) {
+        await fs.promises.writeFile(file, snippet + content);
+      }
+
+      verbose && consoleInfoOrange(`${dryRun ? 'Would modify' : 'Modified'}: ${file}`);
+      results.push({ file, modified: true });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      verbose && console.error(`Error processing ${file}: ${errorMessage}`);
+      results.push({ file, modified: false, error: errorMessage });
     }
   }
 

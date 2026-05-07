@@ -4,6 +4,8 @@ import {
   ROLLUP_PLUGIN_NAME,
   FaroSourceMapUploaderPluginOptions,
   faroBundleIdSnippet,
+  faroGitHashSnippet,
+  resolveGitHash,
   randomString,
   consoleInfoOrange,
   uploadSourceMap,
@@ -41,6 +43,7 @@ export default function faroUploader(
   const maxSize = pluginOptions.maxUploadSize && pluginOptions.maxUploadSize > 0
     ? pluginOptions.maxUploadSize
     : THIRTY_MB_IN_BYTES;
+  const gitHash = resolveGitHash({ gitHash: pluginOptions.gitHash, bundleId });
 
   // Export bundleId to environment variable if skipUpload is true
   if (skipUpload) {
@@ -59,6 +62,9 @@ export default function faroUploader(
       if (chunk.fileName.match(/\.(js|ts|jsx|tsx|mjs|cjs)$/)) {
         const newCode = new MagicString(code);
 
+        if (gitHash) {
+          newCode.prepend(faroGitHashSnippet(gitHash, appName));
+        }
         newCode.prepend(faroBundleIdSnippet(bundleId, appName));
 
         const map = newCode.generateMap({
