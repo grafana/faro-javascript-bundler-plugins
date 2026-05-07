@@ -1,8 +1,6 @@
 import FaroSourceMapUploaderPlugin, { WebpackFaroSourceMapUploaderPluginOptions } from "@grafana/faro-webpack-plugin";
 import {
-  afterAll,
   afterEach,
-  beforeAll,
   describe,
   expect,
   test,
@@ -10,8 +8,6 @@ import {
 } from "@jest/globals";
 import { Mock } from 'jest-mock';
 import fs from "fs/promises";
-import { http, HttpResponse, PathParams } from "msw";
-import { setupServer } from "msw/node";
 import os from "os";
 import path from "path";
 import { ProxyAgent, RequestInit, Response } from "undici";
@@ -73,31 +69,6 @@ const cleanupTempDir = async (dirPath: string) => {
   }
 };
 
-const server = setupServer(
-  http.post(
-    "http://localhost:8000/faro/api/v1/app/1/sourcemaps/:bundleId",
-    async ({ request, params }: { request: Request; params: PathParams }) => {
-      const contentType = request.headers.get("content-type");
-
-      if (contentType === "application/json") {
-        const sourcemapContent = await request.text();
-        try {
-          const sourcemap = JSON.parse(sourcemapContent);
-          if (sourcemap.file) {
-            uploadedFiles.push(sourcemap.file);
-          }
-        } catch (e) {
-          console.error("Failed to parse sourcemap JSON:", e);
-        }
-      } else if (contentType === "application/gzip") {
-        uploadedFiles.push("compressed-upload");
-      }
-
-      return HttpResponse.json({ success: true });
-    }
-  )
-);
-
 // Helper function to run webpack with custom configuration
 const runWebpack = async (
   customConfig: Partial<WebpackFaroSourceMapUploaderPluginOptions> = {},
@@ -150,17 +121,12 @@ const runWebpack = async (
 };
 
 describe("Faro Webpack Plugin", () => {
-  beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
-
   afterEach(async () => {
-    server.resetHandlers();
     await Promise.all(tempDirectories.map(cleanupTempDir));
     uploadedFiles.length = 0;
     tempDirectories.length = 0;
     jest.clearAllMocks();
   });
-
-  afterAll(() => server.close());
 
   // Test the default bundleId injection
   test("basic bundleId injection test", async () => {
