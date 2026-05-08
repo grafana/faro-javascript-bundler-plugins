@@ -123,6 +123,9 @@ export default class FaroSourceMapUploaderPlugin
         : THIRTY_MB_IN_BYTES;
     this.proxy = options.proxy;
     this.gitHash = resolveGitHash({ gitHash: options.gitHash, bundleId: this.bundleId });
+    if (!this.gitHash) {
+      consoleInfoOrange(`Git hash could not be resolved. window.__faroGitHash_${this.appName} will not be injected.`);
+    }
 
     // Export bundleId to environment variable if skipUpload is true
     if (this.skipUpload) {

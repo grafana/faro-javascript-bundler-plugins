@@ -45,6 +45,9 @@ export default function faroEsbuildPlugin(
   const maxSize =
     maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
   const gitHash = resolveGitHash({ gitHash: pluginOptions.gitHash, bundleId });
+  if (!gitHash) {
+    consoleInfoOrange(`Git hash could not be resolved. window.__faroGitHash_${appName} will not be injected.`);
+  }
 
   // export bundleId to environment variable if skipUpload is true
   if (skipUpload) {
