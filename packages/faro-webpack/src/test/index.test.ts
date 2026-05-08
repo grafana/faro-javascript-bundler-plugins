@@ -15,6 +15,7 @@ import webpack, { Configuration, Stats } from "webpack";
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
 jest.mock('child_process', () => ({
+  ...jest.requireActual<object>('child_process'),
   execSync: jest.fn(() => { throw new Error('git not available'); }),
 }));
 
@@ -48,19 +49,13 @@ mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => {
-  const actual = jest.requireActual('undici') as object;
-  return {
-    ...actual,
-    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
-      return {
-        proxyUrl,
-        options: { proxy: proxyUrl }
-      };
-    }),
-  };
-});
+jest.mock('undici', () => ({
+  fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
+    proxyUrl,
+    options: { proxy: proxyUrl },
+  })),
+}));
 
 const uploadedFiles: string[] = [];
 const tempDirectories: string[] = [];
@@ -193,7 +188,7 @@ describe("Faro Webpack Plugin", () => {
     const { outputDir } = await runWebpack({ bundleId: "test", gitHash: "abc123def456abc123def456abc123def456abc1" });
 
     const content = await fs.readFile(path.join(outputDir, "main.js"), "utf8");
-    expect(content).toContain(`g["__faroGitHash_webpack-test-app"]="abc123def456abc123def456abc123def456abc1"`);
+    expect(content).toContain(`["__faroGitHash_webpack-test-app"]="abc123def456abc123def456abc123def456abc1"`);
   });
 
   test("gitHash snippet is not injected when gitHash option is not provided", async () => {

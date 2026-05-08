@@ -8,6 +8,7 @@ import { Mock } from 'jest-mock';
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
 jest.mock('child_process', () => ({
+  ...jest.requireActual<object>('child_process'),
   execSync: jest.fn(() => { throw new Error('git not available'); }),
 }));
 
@@ -22,19 +23,13 @@ mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => {
-  const actual = jest.requireActual('undici') as object;
-  return {
-    ...actual,
-    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
-      return {
-        proxyUrl,
-        options: { proxy: proxyUrl }
-      };
-    }),
-  };
-});
+jest.mock('undici', () => ({
+  fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
+    proxyUrl,
+    options: { proxy: proxyUrl },
+  })),
+}));
 
 // helper to run esbuild with custom config
 const runEsbuild = async (customConfig: Record<string, unknown> = {}, buildOptions: Record<string, unknown> = {}) => {
