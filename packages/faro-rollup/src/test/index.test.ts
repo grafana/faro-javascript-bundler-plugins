@@ -6,6 +6,11 @@ import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
 
+// Prevent git rev-parse from auto-injecting a hash in test environments
+jest.mock('child_process', () => ({
+  execSync: jest.fn(() => { throw new Error('git not available'); }),
+}));
+
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
 mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
@@ -60,7 +65,7 @@ describe('Faro Rollup Plugin', () => {
   test('basic bundleId injection test', async () => {
     const output = await runRollup({ bundleId: 'test' });
 
-    expect(output.output[0].code.includes(`(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_rollup-test-app"]="test"`)).toBeTruthy();
+    expect(output.output[0].code.startsWith(`(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_rollup-test-app"]="test"`)).toBeTruthy();
   });
 
   test('custom bundleId is correctly injected', async () => {
@@ -96,7 +101,7 @@ describe('Faro Rollup Plugin', () => {
     const output = await runRollup({ bundleId: 'test' });
 
     // Create a simple regex to check code starts with the bundle ID snippet
-    const bundleIdRegex = /\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_rollup-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
+    const bundleIdRegex = /^\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_rollup-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
 
     expect(output.output[0].code).toMatch(bundleIdRegex);
   });

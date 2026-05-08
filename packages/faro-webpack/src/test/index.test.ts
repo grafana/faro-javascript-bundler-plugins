@@ -13,6 +13,11 @@ import path from "path";
 import { ProxyAgent, RequestInit, Response } from "undici";
 import webpack, { Configuration, Stats } from "webpack";
 
+// Prevent git rev-parse from auto-injecting a hash in test environments
+jest.mock('child_process', () => ({
+  execSync: jest.fn(() => { throw new Error('git not available'); }),
+}));
+
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
 mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
@@ -181,7 +186,7 @@ describe("Faro Webpack Plugin", () => {
     // Check if the bundle starts with the injection code
     // Note: Webpack's exact output format might differ, so we check if it occurs near the beginning
     const firstCharsPos = content.indexOf("__faroBundleId_webpack-test-app");
-    expect(firstCharsPos).toBeLessThan(500);
+    expect(firstCharsPos).toBeLessThan(200);
   });
 
   test("nested source maps in output directory are not uploaded when recursive is false", async () => {

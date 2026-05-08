@@ -6,6 +6,11 @@ import fs from 'fs';
 import { jest } from '@jest/globals';
 import { Mock } from 'jest-mock';
 
+// Prevent git rev-parse from auto-injecting a hash in test environments
+jest.mock('child_process', () => ({
+  execSync: jest.fn(() => { throw new Error('git not available'); }),
+}));
+
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
 mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
@@ -81,7 +86,7 @@ describe('Faro Esbuild Plugin', () => {
   test('basic bundleId injection test', async () => {
     const { code } = await runEsbuild({ bundleId: 'test' });
 
-    expect(code.includes(`(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_esbuild-test-app"]="test"`)).toBeTruthy();
+    expect(code.startsWith(`(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_esbuild-test-app"]="test"`)).toBeTruthy();
   });
 
   test('custom bundleId is correctly injected', async () => {
@@ -117,7 +122,7 @@ describe('Faro Esbuild Plugin', () => {
     const { code } = await runEsbuild({ bundleId: 'test' });
 
     // create a simple regex to check code starts with the bundle ID snippet
-    const bundleIdRegex = /\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_esbuild-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
+    const bundleIdRegex = /^\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_esbuild-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
 
     expect(code).toMatch(bundleIdRegex);
   });
