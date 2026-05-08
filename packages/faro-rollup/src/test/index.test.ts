@@ -106,6 +106,30 @@ describe('Faro Rollup Plugin', () => {
     expect(output.output[0].code).toMatch(bundleIdRegex);
   });
 
+  test('gitHash snippet is injected when gitHash option is provided', async () => {
+    const output = await runRollup({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+
+    expect(output.output[0].code).toContain(`g["__faroGitHash_rollup-test-app"]="abc123def456abc123def456abc123def456abc1"`);
+  });
+
+  test('gitHash snippet is not injected when gitHash option is not provided', async () => {
+    const output = await runRollup({ bundleId: 'test' });
+
+    expect(output.output[0].code).not.toContain('__faroGitHash_rollup-test-app');
+  });
+
+  test('gitHash snippet is prepended before bundleId snippet', async () => {
+    const output = await runRollup({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+    const code = output.output[0].code;
+
+    const gitHashIndex = code.indexOf('__faroGitHash_rollup-test-app');
+    const bundleIdIndex = code.indexOf('__faroBundleId_rollup-test-app');
+
+    expect(gitHashIndex).toBeGreaterThan(-1);
+    expect(bundleIdIndex).toBeGreaterThan(-1);
+    expect(gitHashIndex).toBeLessThan(bundleIdIndex);
+  });
+
   test('proxy option with authentication is passed correctly', async () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 

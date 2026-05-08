@@ -189,6 +189,33 @@ describe("Faro Webpack Plugin", () => {
     expect(firstCharsPos).toBeLessThan(200);
   });
 
+  test("gitHash snippet is injected when gitHash option is provided", async () => {
+    const { outputDir } = await runWebpack({ bundleId: "test", gitHash: "abc123def456abc123def456abc123def456abc1" });
+
+    const content = await fs.readFile(path.join(outputDir, "main.js"), "utf8");
+    expect(content).toContain(`g["__faroGitHash_webpack-test-app"]="abc123def456abc123def456abc123def456abc1"`);
+  });
+
+  test("gitHash snippet is not injected when gitHash option is not provided", async () => {
+    const { outputDir } = await runWebpack({ bundleId: "test" });
+
+    const content = await fs.readFile(path.join(outputDir, "main.js"), "utf8");
+    expect(content).not.toContain("__faroGitHash_webpack-test-app");
+  });
+
+  test("gitHash snippet is prepended before bundleId snippet", async () => {
+    const { outputDir } = await runWebpack({ bundleId: "test", gitHash: "abc123def456abc123def456abc123def456abc1" });
+
+    const content = await fs.readFile(path.join(outputDir, "main.js"), "utf8");
+
+    const gitHashIndex = content.indexOf("__faroGitHash_webpack-test-app");
+    const bundleIdIndex = content.indexOf("__faroBundleId_webpack-test-app");
+
+    expect(gitHashIndex).toBeGreaterThan(-1);
+    expect(bundleIdIndex).toBeGreaterThan(-1);
+    expect(gitHashIndex).toBeLessThan(bundleIdIndex);
+  });
+
   test("nested source maps in output directory are not uploaded when recursive is false", async () => {
     const testOutputDir = await fs.mkdtemp(
       path.join(os.tmpdir(), "webpack-nested-test-")

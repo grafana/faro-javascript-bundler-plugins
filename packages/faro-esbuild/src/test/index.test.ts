@@ -127,6 +127,29 @@ describe('Faro Esbuild Plugin', () => {
     expect(code).toMatch(bundleIdRegex);
   });
 
+  test('gitHash snippet is injected when gitHash option is provided', async () => {
+    const { code } = await runEsbuild({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+
+    expect(code).toContain(`g["__faroGitHash_esbuild-test-app"]="abc123def456abc123def456abc123def456abc1"`);
+  });
+
+  test('gitHash snippet is not injected when gitHash option is not provided', async () => {
+    const { code } = await runEsbuild({ bundleId: 'test' });
+
+    expect(code).not.toContain('__faroGitHash_esbuild-test-app');
+  });
+
+  test('gitHash snippet is prepended before bundleId snippet', async () => {
+    const { code } = await runEsbuild({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+
+    const gitHashIndex = code.indexOf('__faroGitHash_esbuild-test-app');
+    const bundleIdIndex = code.indexOf('__faroBundleId_esbuild-test-app');
+
+    expect(gitHashIndex).toBeGreaterThan(-1);
+    expect(bundleIdIndex).toBeGreaterThan(-1);
+    expect(gitHashIndex).toBeLessThan(bundleIdIndex);
+  });
+
   test('banner string is preserved and bundleId snippet is prepended', async () => {
     const existingBanner = '/* custom banner */';
     const { code } = await runEsbuild(
