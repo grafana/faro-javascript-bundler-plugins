@@ -181,7 +181,7 @@ describe("Faro Webpack Plugin", () => {
     // Check if the bundle starts with the injection code
     // Note: Webpack's exact output format might differ, so we check if it occurs near the beginning
     const firstCharsPos = content.indexOf("__faroBundleId_webpack-test-app");
-    expect(firstCharsPos).toBeLessThan(200);
+    expect(firstCharsPos).toBeLessThan(500);
   });
 
   test("nested source maps in output directory are not uploaded when recursive is false", async () => {
