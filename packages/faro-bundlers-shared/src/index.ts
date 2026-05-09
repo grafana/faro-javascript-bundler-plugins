@@ -263,7 +263,9 @@ export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
 };
 
 export const faroGitHashSnippet = (gitHash: string, appName: string) => {
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroGitHash_${appName}"]="${gitHash}"}catch(l){}})();`;
+  const key = JSON.stringify(`__faroGitHash_${appName}`);
+  const value = JSON.stringify(gitHash);
+  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
 };
 
 const GIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
@@ -274,7 +276,11 @@ export function resolveGitHash(options: { gitHash?: string; bundleId: string }):
   }
 
   try {
-    const hash = execSync("git rev-parse HEAD", { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }).trim();
+    const hash = execSync("git rev-parse HEAD", {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    }).trim();
     if (GIT_SHA_PATTERN.test(hash)) {
       return hash;
     }
