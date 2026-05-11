@@ -21,12 +21,12 @@
     "webpack": "^5.89.0"
   },
   "devDependencies": {
-    "@jest/globals": "30.4.0",
+    "@jest/globals": "30.4.1",
     "@rollup/plugin-babel": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@types/jest": "30.0.0",
     "@types/node": "24.12.3",
-    "jest": "30.4.0",
+    "jest": "30.4.1",
     "ts-jest": "29.4.9"
   },
   "files": [
