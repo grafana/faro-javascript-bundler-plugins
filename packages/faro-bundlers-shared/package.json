@@ -18,7 +18,7 @@
   "devDependencies": {
     "@rollup/plugin-typescript": "11.1.6",
     "@types/tar": "7.0.87",
-    "undici-types": "^8.1.0"
+    "undici-types": "8.1.0"
   },
   "dependencies": {
     "ansis": "^4.0.0",

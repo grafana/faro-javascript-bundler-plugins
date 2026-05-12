@@ -6794,7 +6794,7 @@ uglify-js@^3.1.4:
   resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.19.3.tgz#82315e9bbc6f2b25888858acd1fff8441035b77f"
   integrity sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==
 
-undici-types@^8.1.0:
+undici-types@8.1.0:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-8.1.0.tgz#ccb00037a0700087055c106f12b469cbddaf32bd"
   integrity sha512-JlLXdMmH4kxyn2JPtGK/cajzKY7F15OKYG8sO5HfkIC1AC09sLUeptGFKjnMWnprDQ2EwzYDO3kgzkK3aaoHCA==
