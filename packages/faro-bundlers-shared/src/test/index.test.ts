@@ -63,6 +63,8 @@ describe('Bundlers Shared Utilities', () => {
     expect(shouldProcessFile('main.tsx.map', undefined)).toBeTruthy();
     expect(shouldProcessFile('module.mjs.map', undefined)).toBeTruthy();
     expect(shouldProcessFile('lib.cjs.map', undefined)).toBeTruthy();
+    expect(shouldProcessFile('index.android.bundle.map', undefined)).toBeTruthy();
+    expect(shouldProcessFile('main.jsbundle.map', undefined)).toBeTruthy();
 
     // Non-sourcemap files
     expect(shouldProcessFile('styles.css.map', undefined)).toBeFalsy();

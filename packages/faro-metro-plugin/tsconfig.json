@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@grafana/tsconfig",
+  "include": ["./**/*"],
+  "compilerOptions": {
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "module": "Node18",
+    "moduleResolution": "Node16"
+  }
+}
