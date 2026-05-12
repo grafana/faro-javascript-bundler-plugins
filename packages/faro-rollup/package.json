@@ -1,5 +1,6 @@
 {
   "name": "@grafana/faro-rollup-plugin",
+  "packageManager": "yarn@1.22.22",
   "version": "0.10.0",
   "description": "Upload a source map to the Faro source map API from a Rollup build pipeline",
   "main": "dist/cjs/index.js",
