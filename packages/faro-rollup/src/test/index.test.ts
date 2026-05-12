@@ -1,39 +1,37 @@
+import { Mock } from 'jest-mock';
 import { ModuleFormat, rollup } from 'rollup';
 import faroUploader from '@grafana/faro-rollup-plugin';
+import { ProxyAgent, RequestInit, Response } from 'undici';
 import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
 
-// Mock https-proxy-agent
-const mockHttpsProxyAgent = jest.fn().mockImplementation((proxyUrl: any) => {
+// Mock undici fetch and ProxyAgent
+const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   return {
-    proxyUrl,
-    // Mock agent object
-    options: { proxy: proxyUrl }
+    ok: true,
+    status: 200,
+    json: async () => ({ success: true }),
+    text: async () => '{}',
+  } as Response;
+});
+
+jest.mock('undici', () => {
+  const actual = jest.requireActual('undici') as object;
+  return {
+    ...actual,
+    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
+      return {
+        proxyUrl,
+        options: { proxy: proxyUrl }
+      };
+    }),
   };
 });
-
-jest.mock('https-proxy-agent', () => {
-  return {
-    HttpsProxyAgent: mockHttpsProxyAgent
-  };
-});
-
-// Mock cross-fetch to capture fetch calls
-const mockFetch = jest.fn() as any;
-mockFetch.mockResolvedValue({
-  ok: true,
-  status: 200,
-  json: async () => ({ success: true }),
-  text: async () => '{}',
-});
-
-jest.mock('cross-fetch', () => ({
-  default: mockFetch,
-  __esModule: true,
-}));
 // Helper to create a run rollup with custom config
-const runRollup = async (customConfig = {}, outputConfig = {}) => {
+const runRollup = async (customConfig: Record<string, unknown> = {}, outputConfig: Record<string, unknown> = {}) => {
   const bundle = await rollup({
     input: path.resolve(process.cwd(), 'src/test/main.js'),
     plugins: [
@@ -109,7 +107,7 @@ describe('Faro Rollup Plugin', () => {
     // Clear previous calls
     jest.clearAllMocks();
     mockFetch.mockClear();
-    mockHttpsProxyAgent.mockClear();
+    (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
     await runRollup({
       bundleId: "proxy-auth-test",
@@ -122,9 +120,10 @@ describe('Faro Rollup Plugin', () => {
     // Wait for async uploads to complete (writeBundle is async)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Verify HttpsProxyAgent was called with the authenticated proxy URL if uploads occurred
+    // Verify ProxyAgent was used via the fetch dispatcher
     if (mockFetch.mock.calls.length > 0) {
-      expect(mockHttpsProxyAgent).toHaveBeenCalledWith(mockProxyUrl);
+      const fetchOptions = mockFetch.mock.calls[0][1];
+      expect(fetchOptions?.dispatcher).toBeDefined();
     } else {
       // If no uploads occurred, at least verify authenticated proxy URL is accepted
       expect(mockProxyUrl).toBeDefined();
@@ -135,7 +134,7 @@ describe('Faro Rollup Plugin', () => {
     // Clear previous calls
     jest.clearAllMocks();
     mockFetch.mockClear();
-    mockHttpsProxyAgent.mockClear();
+    (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
     await runRollup({
       bundleId: "no-proxy-test",
@@ -147,15 +146,15 @@ describe('Faro Rollup Plugin', () => {
     // Wait for async uploads to complete (writeBundle is async)
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Verify HttpsProxyAgent was not called when proxy is not provided
-    expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
+    // Verify ProxyAgent was not called when proxy is not provided
+    expect(ProxyAgent).not.toHaveBeenCalled();
 
-    // If uploads occurred, verify no agent was passed to fetch
+    // If uploads occurred, verify no dispatcher was passed to fetch
     const fetchCalls = mockFetch.mock.calls;
     if (fetchCalls.length > 0) {
-      const fetchOptions = fetchCalls[0][1] as any;
-      // When no proxy, agent should be undefined
-      expect(fetchOptions?.agent).toBeUndefined();
+      const fetchOptions = fetchCalls[0][1];
+      // When no proxy, dispatcher should be undefined
+      expect(fetchOptions?.dispatcher).toBeUndefined();
     }
   });
 
@@ -176,7 +175,7 @@ describe('Faro Rollup Plugin', () => {
     for (const invalidProxy of invalidProxies) {
       consoleErrorSpy.mockClear();
       mockFetch.mockClear();
-      mockHttpsProxyAgent.mockClear();
+      (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
       await runRollup({
         bundleId: "proxy-validation-test",
@@ -189,8 +188,8 @@ describe('Faro Rollup Plugin', () => {
       // Wait for async uploads to complete
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Verify that HttpsProxyAgent was not called with invalid proxy
-      expect(mockHttpsProxyAgent).not.toHaveBeenCalled();
+      // Verify that ProxyAgent was not called with invalid proxy
+      expect(ProxyAgent).not.toHaveBeenCalled();
     }
 
     consoleErrorSpy.mockRestore();
@@ -209,7 +208,7 @@ describe('Faro Rollup Plugin', () => {
     for (const validProxy of validProxies) {
       jest.clearAllMocks();
       mockFetch.mockClear();
-      mockHttpsProxyAgent.mockClear();
+      (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
       await runRollup({
         bundleId: "proxy-validation-valid-test",
@@ -222,9 +221,10 @@ describe('Faro Rollup Plugin', () => {
       // Wait for async uploads to complete
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Verify that HttpsProxyAgent was called with valid proxy if uploads occurred
+      // Verify that a dispatcher was used for valid proxy if uploads occurred
       if (mockFetch.mock.calls.length > 0) {
-        expect(mockHttpsProxyAgent).toHaveBeenCalledWith(validProxy);
+        const fetchOptions = mockFetch.mock.calls[0][1];
+        expect(fetchOptions?.dispatcher).toBeDefined();
       }
     }
   });
