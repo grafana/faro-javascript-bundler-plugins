@@ -14,6 +14,7 @@ import {
   type FaroSourceMapUploaderPluginOptions,
 } from '@grafana/faro-bundlers-shared';
 import { shiftGeneratedLineNumbers } from './shiftSourceMap';
+import { flattenMapForHermes } from './flattenMapForHermes';
 import { resolveBundleId } from './resolveBundleId';
 import { loadMetroDeps } from './metroDeps';
 
@@ -26,6 +27,15 @@ export type FaroMetroPluginOptions = FaroSourceMapUploaderPluginOptions & {
    * Defaults from the temporary map basename. Align with `releaseBundleFilename` in `@grafana/faro-react-native` if you change it.
    */
   sourceMapFile?: string;
+  /**
+   * Emit a Hermes-compatible "flat" source map where every mapping lives on generated
+   * line 1 with `column` set to the absolute byte offset in the JS bundle. Hermes stack
+   * frames always report `line=1, column=<byte offset>`, so a normal multi-line generated
+   * map can't be looked up by the receiver. Defaults to `true` (Hermes is the default
+   * runtime in modern React Native). Set `false` for JSC-only builds, which will fall
+   * back to the legacy `+1` line shift.
+   */
+  hermes?: boolean;
 };
 
 export type MetroCustomSerializer = (
@@ -206,12 +216,15 @@ export function createFaroMetroCustomSerializer(
     const newCode = `${snippet}\n${code}`;
 
     const mapObj = JSON.parse(map) as Record<string, unknown>;
-    const shifted = await shiftGeneratedLineNumbers(mapObj, 1);
+    const useHermes = pluginOptions.hermes !== false;
+    const rewritten = useHermes
+      ? await flattenMapForHermes(mapObj, newCode, 1)
+      : await shiftGeneratedLineNumbers(mapObj, 1);
     const mapFileBase = (pluginOptions.sourceMapFile ?? 'bundle.js').replace(/\.map$/i, '');
-    if (shifted.file == null || shifted.file === '') {
-      shifted.file = mapFileBase;
+    if (rewritten.file == null || rewritten.file === '') {
+      rewritten.file = mapFileBase;
     }
-    const mapOut = JSON.stringify(shifted);
+    const mapOut = JSON.stringify(rewritten);
 
     if (!skip && !bundleDev) {
       await maybeUploadMap(mapOut, bundleId, pluginOptions, bundleDev);
