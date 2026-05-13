@@ -33,4 +33,5 @@ export default function withFaroConfig(
 
 export { createFaroMetroCustomSerializer, computeSkipUpload, getSortedModules } from './serialize';
 export { shiftGeneratedLineNumbers } from './shiftSourceMap';
+export { flattenMapForHermes } from './flattenMapForHermes';
 export { normalizeBundleIdLength, resolveBundleId } from './resolveBundleId';
