@@ -44,7 +44,7 @@ export default function faroEsbuildPlugin(
   const uploadEndpoint = `${endpoint}/app/${appId}/sourcemaps/`;
   const maxSize =
     maxUploadSize && maxUploadSize > 0 ? maxUploadSize : THIRTY_MB_IN_BYTES;
-  const gitHash = resolveGitHash({ gitHash: pluginOptions.gitHash, bundleId });
+  const gitHash = resolveGitHash({ gitHash: pluginOptions.gitHash });
   if (!gitHash) {
     consoleInfoOrange(`Git hash could not be resolved. window.__faroGitHash_${appName} will not be injected.`);
   }

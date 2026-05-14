@@ -270,13 +270,9 @@ export const faroGitHashSnippet = (gitHash: string, appName: string) => {
 
 const GIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
 
-export function resolveGitHash(options: { gitHash?: string; bundleId: string }): string | undefined {
+export function resolveGitHash(options: { gitHash?: string }): string | undefined {
   if (options.gitHash) {
     return options.gitHash;
-  }
-
-  if (GIT_SHA_PATTERN.test(options.bundleId)) {
-    return options.bundleId;
   }
 
   try {
