@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import { uploadSourceMaps, generateCurlCommand, injectBundleId, injectGitHash } from './index';
-import { consoleInfoOrange, exportBundleIdToFile, JS_SOURCEMAP_PATTERN, randomString, cleanAppName } from '@grafana/faro-bundlers-shared';
-import { execSync } from 'child_process';
+import { consoleInfoOrange, exportBundleIdToFile, JS_SOURCEMAP_PATTERN, randomString, cleanAppName, resolveGitHash } from '@grafana/faro-bundlers-shared';
 import path from 'path';
 import fs from 'fs';
 import { glob } from 'glob';
@@ -294,16 +293,11 @@ Example:
     dryRun: boolean;
   }) => {
     try {
-      let { gitHash } = options;
+      const gitHash = resolveGitHash(options.gitHash);
 
       if (!gitHash) {
-        try {
-          gitHash = execSync('git rev-parse HEAD', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
-          options.verbose && consoleInfoOrange(`Auto-detected git hash: ${gitHash}`);
-        } catch {
-          console.error('Error: Could not auto-detect git hash. Provide it explicitly with --git-hash.');
-          process.exit(1);
-        }
+        console.error('Error: Could not resolve git hash. Provide it explicitly with --git-hash.');
+        process.exit(1);
       }
 
       const matchedFiles: string[] = [];
