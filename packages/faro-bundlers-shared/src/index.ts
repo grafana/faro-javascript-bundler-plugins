@@ -275,6 +275,10 @@ export function resolveGitHash(options: { gitHash?: string; bundleId: string }):
     return options.gitHash;
   }
 
+  if (GIT_SHA_PATTERN.test(options.bundleId)) {
+    return options.bundleId;
+  }
+
   try {
     const hash = execSync("git rev-parse HEAD", {
       encoding: "utf8",
@@ -286,10 +290,6 @@ export function resolveGitHash(options: { gitHash?: string; bundleId: string }):
     }
   } catch {
     // git unavailable or not in a repo — fall through
-  }
-
-  if (GIT_SHA_PATTERN.test(options.bundleId)) {
-    return options.bundleId;
   }
 
   return undefined;
