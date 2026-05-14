@@ -122,7 +122,7 @@ export default class FaroSourceMapUploaderPlugin
         ? options.maxUploadSize
         : THIRTY_MB_IN_BYTES;
     this.proxy = options.proxy;
-    this.gitHash = resolveGitHash({ gitHash: options.gitHash });
+    this.gitHash = resolveGitHash(options.gitHash);
     if (!this.gitHash) {
       consoleInfoOrange(`Git hash could not be resolved. window.__faroGitHash_${this.appName} will not be injected.`);
     }

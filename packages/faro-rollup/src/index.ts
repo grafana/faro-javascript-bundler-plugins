@@ -43,7 +43,7 @@ export default function faroUploader(
   const maxSize = pluginOptions.maxUploadSize && pluginOptions.maxUploadSize > 0
     ? pluginOptions.maxUploadSize
     : THIRTY_MB_IN_BYTES;
-  const gitHash = resolveGitHash({ gitHash: pluginOptions.gitHash });
+  const gitHash = resolveGitHash(pluginOptions.gitHash);
   if (!gitHash) {
     consoleInfoOrange(`Git hash could not be resolved. window.__faroGitHash_${appName} will not be injected.`);
   }
