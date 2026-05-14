@@ -9,7 +9,4 @@ module.exports = {
       tsconfig: 'tsconfig.json',
     }],
   },
-  moduleNameMapper: {
-    '^undici$': '<rootDir>/src/test/__mocks__/undici.js',
-  },
 };
