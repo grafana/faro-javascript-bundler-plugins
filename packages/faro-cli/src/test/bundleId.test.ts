@@ -76,6 +76,36 @@ describe('injectBundleId', () => {
     expect(content).not.toContain(bundleId);
   });
 
+  it('does not skip files that only contain the key name without a string assignment', async () => {
+    // A file that mentions the key in a comment but has no real assignment should still be injected
+    const bundleId = 'new-bundle-id';
+    const appName = 'testapp';
+    const commentOnlyFile = path.join(testDir, 'comment-only.js');
+    fs.writeFileSync(commentOnlyFile, '// __faroBundleId_testapp is used here\nconsole.log("hi");');
+    testFiles.push(commentOnlyFile);
+
+    const results = await injectBundleId(bundleId, appName, [commentOnlyFile]);
+
+    expect(results[0].modified).toBe(true);
+  });
+
+  it('does not skip injection when appName contains regex special characters', async () => {
+    // Without escapeRegExp, an appName like "my.app" would turn "." into a wildcard,
+    // causing false positives. e.g. "__faroBundleId_myXapp" would match "__faroBundleId_my.app".
+    const bundleId = 'some-bundle-id';
+    const dotAppName = 'my.app';
+    const similarAppName = 'myXapp'; // "." as wildcard would match this
+
+    const dotAppFile = path.join(testDir, 'dot-app.js');
+    // Inject for similarAppName — should NOT be treated as already-injected for dotAppName
+    fs.writeFileSync(dotAppFile, faroBundleIdSnippet(bundleId, similarAppName) + 'console.log("hi");');
+    testFiles.push(dotAppFile);
+
+    const results = await injectBundleId(bundleId, dotAppName, [dotAppFile]);
+
+    expect(results[0].modified).toBe(true);
+  });
+
   it('respects dry run mode', async () => {
     const bundleId = 'dry-run-test-id';
     const appName = 'testapp';
