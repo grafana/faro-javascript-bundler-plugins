@@ -323,11 +323,17 @@ Example:
       });
 
       const modifiedCount = results.filter((r) => r.modified).length;
+      const errorCount = results.filter((r) => r.error).length;
 
       if (options.dryRun) {
         consoleInfoOrange(`Would modify ${modifiedCount} of ${matchedFiles.length} files`);
       } else {
         consoleInfoOrange(`Modified ${modifiedCount} of ${matchedFiles.length} files`);
+      }
+
+      if (errorCount > 0) {
+        console.error(`Error: ${errorCount} file(s) failed to inject git hash`);
+        process.exit(1);
       }
     } catch (err) {
       console.error('Error:', err);
