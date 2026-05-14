@@ -1,7 +1,7 @@
 {
   "name": "@grafana/faro-bundlers-shared",
   "packageManager": "yarn@1.22.22",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
   "module": "dist/esm/index.mjs",

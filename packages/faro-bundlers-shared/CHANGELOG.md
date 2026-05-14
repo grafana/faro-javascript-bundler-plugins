@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.10.0...faro-bundlers-shared-v0.10.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* **bundlers-shared:** send X-Scope-OrgID for local source-map endpoints ([#547](https://github.com/grafana/faro-javascript-bundler-plugins/issues/547)) ([1e94739](https://github.com/grafana/faro-javascript-bundler-plugins/commit/1e947397684b1a31f49f2601615b56adce85e214))
+* pin package manager and disable npm/yarn scripts ([#540](https://github.com/grafana/faro-javascript-bundler-plugins/issues/540)) ([6324daa](https://github.com/grafana/faro-javascript-bundler-plugins/commit/6324daaad4a4f79619a0ff20171546c998be7c64))
+
 ## [0.10.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.9.1...faro-bundlers-shared-v0.10.0) (2026-04-09)
 
 
