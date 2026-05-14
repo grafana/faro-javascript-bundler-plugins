@@ -6,7 +6,6 @@ import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHash
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export interface UploadSourceMapOptions {
   endpoint: string;
@@ -762,7 +761,7 @@ export const injectBundleId = async (
       let content = await fs.promises.readFile(file, 'utf8');
 
       // Check if bundle ID snippet is already present
-      if (new RegExp(`"__faroBundleId_${escapeRegExp(appName)}"\\]="[^"]+"`).test(content)) {
+      if (content.includes(`[${JSON.stringify(`__faroBundleId_${appName}`)}]=${JSON.stringify(bundleId)}`)) {
         verbose && consoleInfoOrange(`Skipping ${file} - bundle ID snippet already present`);
         results.push({
           file,
@@ -818,7 +817,7 @@ export const injectGitHash = async (
 
       const content = await fs.promises.readFile(file, 'utf8');
 
-      if (new RegExp(`"__faroGitHash_${escapeRegExp(appName)}"\\]="[^"]+"`).test(content)) {
+      if (content.includes(`[${JSON.stringify(`__faroGitHash_${appName}`)}]=${JSON.stringify(gitHash)}`)) {
         verbose && consoleInfoOrange(`Skipping ${file} - git hash snippet already present`);
         results.push({ file, modified: false });
         continue;

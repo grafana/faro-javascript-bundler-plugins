@@ -259,7 +259,9 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
 }
 
 export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;
+  const key = JSON.stringify(`__faroBundleId_${appName}`);
+  const value = JSON.stringify(bundleId);
+  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
 };
 
 export const faroGitHashSnippet = (gitHash: string, appName: string) => {

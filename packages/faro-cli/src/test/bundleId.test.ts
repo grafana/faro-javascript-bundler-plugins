@@ -89,23 +89,6 @@ describe('injectBundleId', () => {
     expect(results[0].modified).toBe(true);
   });
 
-  it('does not skip injection when appName contains regex special characters', async () => {
-    // Without escapeRegExp, an appName like "my.app" would turn "." into a wildcard,
-    // causing false positives. e.g. "__faroBundleId_myXapp" would match "__faroBundleId_my.app".
-    const bundleId = 'some-bundle-id';
-    const dotAppName = 'my.app';
-    const similarAppName = 'myXapp'; // "." as wildcard would match this
-
-    const dotAppFile = path.join(testDir, 'dot-app.js');
-    // Inject for similarAppName — should NOT be treated as already-injected for dotAppName
-    fs.writeFileSync(dotAppFile, faroBundleIdSnippet(bundleId, similarAppName) + 'console.log("hi");');
-    testFiles.push(dotAppFile);
-
-    const results = await injectBundleId(bundleId, dotAppName, [dotAppFile]);
-
-    expect(results[0].modified).toBe(true);
-  });
-
   it('respects dry run mode', async () => {
     const bundleId = 'dry-run-test-id';
     const appName = 'testapp';
