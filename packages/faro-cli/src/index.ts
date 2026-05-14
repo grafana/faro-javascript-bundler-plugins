@@ -761,7 +761,7 @@ export const injectBundleId = async (
       let content = await fs.promises.readFile(file, 'utf8');
 
       // Check if bundle ID snippet is already present
-      if (content.includes(`[${JSON.stringify(`__faroBundleId_${appName}`)}]=${JSON.stringify(bundleId)}`)) {
+      if (content.includes(`[${JSON.stringify(`__faroBundleId_${appName}`)}]=`)) {
         verbose && consoleInfoOrange(`Skipping ${file} - bundle ID snippet already present`);
         results.push({
           file,
@@ -817,7 +817,7 @@ export const injectGitHash = async (
 
       const content = await fs.promises.readFile(file, 'utf8');
 
-      if (content.includes(`[${JSON.stringify(`__faroGitHash_${appName}`)}]=${JSON.stringify(gitHash)}`)) {
+      if (content.includes(`[${JSON.stringify(`__faroGitHash_${appName}`)}]=`)) {
         verbose && consoleInfoOrange(`Skipping ${file} - git hash snippet already present`);
         results.push({ file, modified: false });
         continue;
