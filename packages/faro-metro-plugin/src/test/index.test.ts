@@ -1,5 +1,4 @@
-import { describe, expect, test, afterEach, beforeEach } from '@jest/globals';
-import { jest as jestGlobal } from '@jest/globals';
+import { describe, expect, test, afterEach } from '@jest/globals';
 import defaultWithFaroConfig, {
   createFaroMetroCustomSerializer,
   computeSkipUpload,
@@ -7,22 +6,6 @@ import defaultWithFaroConfig, {
   normalizeBundleIdLength,
   resolveBundleId,
 } from '../index';
-import {
-  uploadCompressedSourceMaps,
-  uploadSourceMap,
-} from '@grafana/faro-bundlers-shared';
-
-jestGlobal.mock('@grafana/faro-bundlers-shared', () => {
-  const actual = jestGlobal.requireActual('@grafana/faro-bundlers-shared') as Record<string, unknown>;
-  return {
-    ...actual,
-    uploadCompressedSourceMaps: jestGlobal.fn(),
-    uploadSourceMap: jestGlobal.fn(),
-  };
-});
-
-const mockUploadCompressed = jestGlobal.mocked(uploadCompressedSourceMaps);
-const mockUploadPlain = jestGlobal.mocked(uploadSourceMap);
 
 describe('@grafana/faro-metro-plugin', () => {
   test('withFaroConfig attaches customSerializer', () => {
@@ -141,8 +124,6 @@ describe('@grafana/faro-metro-plugin', () => {
     afterEach(() => {
       delete process.env.FARO_BUNDLE_ID;
       delete process.env.FARO_SKIP_SOURCEMAP_UPLOAD;
-      mockUploadCompressed.mockClear();
-      mockUploadPlain.mockClear();
     });
 
     test('prepends faro bundle id snippet (release bundle)', async () => {
@@ -176,130 +157,6 @@ describe('@grafana/faro-metro-plugin', () => {
       const opts = { ...baseOptions(), dev: true };
       const out = await serializer('/app/index.js', [], graph, opts);
       expect(out.code).toMatch(/dev-[a-f0-9]+/);
-    });
-
-    describe('release upload to source map API', () => {
-      let prevNodeEnv: string | undefined;
-
-      beforeEach(() => {
-        prevNodeEnv = process.env.NODE_ENV;
-        process.env.NODE_ENV = 'production';
-        mockUploadCompressed.mockResolvedValue(true);
-        mockUploadPlain.mockResolvedValue(true);
-      });
-
-      afterEach(() => {
-        if (prevNodeEnv === undefined) {
-          delete process.env.NODE_ENV;
-        } else {
-          process.env.NODE_ENV = prevNodeEnv;
-        }
-      });
-
-      test('POST …/app/{appId}/sourcemaps/{bundleId} with gzip tarball (201)', async () => {
-        process.env.FARO_BUNDLE_ID = 'rel-201-test';
-        const serializer = createFaroMetroCustomSerializer(null, {
-          appName: 'rn-app',
-          endpoint: 'https://kwl.example.com/api/v1/',
-          appId: 'app-42',
-          stackId: 'stackZ',
-          apiKey: 'secret',
-          skipUpload: false,
-          gzipContents: true,
-        });
-        const graph = { dependencies: new Map() };
-        await serializer('/app/index.js', [], graph, baseOptions());
-
-        expect(mockUploadCompressed).toHaveBeenCalledTimes(1);
-        expect(mockUploadPlain).not.toHaveBeenCalled();
-        expect(mockUploadCompressed).toHaveBeenCalledWith(
-          expect.objectContaining({
-            sourcemapEndpoint:
-              'https://kwl.example.com/api/v1/app/app-42/sourcemaps/rel-201-test',
-            apiKey: 'secret',
-            stackId: 'stackZ',
-          })
-        );
-        const call = mockUploadCompressed.mock.calls[0][0];
-        expect(Array.isArray(call.files)).toBe(true);
-        expect(call.files?.length).toBe(1);
-        expect(String(call.files?.[0] ?? '')).toMatch(/bundle\.js\.map$/);
-      });
-
-      test('POST uses same bundleId segment when FARO_BUNDLE_ID is over max length (hashed)', async () => {
-        const longId = 'b'.repeat(600);
-        process.env.FARO_BUNDLE_ID = longId;
-        const expectedSegment = normalizeBundleIdLength(longId);
-
-        const serializer = createFaroMetroCustomSerializer(null, {
-          appName: 'rn-app',
-          endpoint: 'http://localhost:8000/api/v1',
-          appId: '7',
-          stackId: 's',
-          apiKey: 'k',
-          skipUpload: false,
-        });
-        const graph = { dependencies: new Map() };
-        await serializer('/app/index.js', [], graph, baseOptions());
-
-        expect(mockUploadCompressed).toHaveBeenCalledWith(
-          expect.objectContaining({
-            sourcemapEndpoint: `http://localhost:8000/api/v1/app/7/sourcemaps/${expectedSegment}`,
-          })
-        );
-        expect(expectedSegment).toMatch(/^[a-f0-9]{32}$/);
-      });
-
-      test('gzipContents false uses uploadSourceMap with same sourcemapEndpoint', async () => {
-        process.env.FARO_BUNDLE_ID = 'plain-upload';
-        const serializer = createFaroMetroCustomSerializer(null, {
-          appName: 'rn-app',
-          endpoint: 'http://localhost:8000/api/v1',
-          appId: '1',
-          stackId: 'st',
-          apiKey: 'key',
-          skipUpload: false,
-          gzipContents: false,
-        });
-        const graph = { dependencies: new Map() };
-        await serializer('/app/index.js', [], graph, baseOptions());
-
-        expect(mockUploadPlain).toHaveBeenCalledTimes(1);
-        expect(mockUploadCompressed).not.toHaveBeenCalled();
-        expect(mockUploadPlain).toHaveBeenCalledWith(
-          expect.objectContaining({
-            sourcemapEndpoint:
-              'http://localhost:8000/api/v1/app/1/sourcemaps/plain-upload',
-            apiKey: 'key',
-            stackId: 'st',
-          })
-        );
-        const plainCall = mockUploadPlain.mock.calls[0][0];
-        expect(String(plainCall.filePath ?? '')).toMatch(/bundle\.js\.map$/);
-      });
-
-      test('does not throw when uploadCompressedSourceMaps returns false (API error path)', async () => {
-        process.env.FARO_BUNDLE_ID = 'err-path';
-        mockUploadCompressed.mockResolvedValueOnce(false);
-        const serializer = createFaroMetroCustomSerializer(null, {
-          appName: 'rn-app',
-          endpoint: 'http://localhost:8000/api/v1',
-          appId: '9',
-          stackId: 's',
-          apiKey: 'k',
-          skipUpload: false,
-        });
-        const graph = { dependencies: new Map() };
-        await expect(
-          serializer('/app/index.js', [], graph, baseOptions())
-        ).resolves.toMatchObject({ code: expect.stringContaining('__faroBundleId_rn-app') });
-
-        expect(mockUploadCompressed).toHaveBeenCalledWith(
-          expect.objectContaining({
-            sourcemapEndpoint: 'http://localhost:8000/api/v1/app/9/sourcemaps/err-path',
-          })
-        );
-      });
     });
   });
 });

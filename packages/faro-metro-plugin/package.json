@@ -5,6 +5,9 @@
   "main": "dist/cjs/index.js",
   "types": "dist/cjs/index.d.ts",
   "module": "dist/esm/index.mjs",
+  "bin": {
+    "faro-upload-source-map": "bin/faro-upload-source-map.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
@@ -18,6 +21,7 @@
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.10.0",
+    "@grafana/faro-cli": "^0.10.0",
     "cross-fetch": "^4.0.0",
     "source-map": "^0.7.4"
   },
@@ -39,6 +43,8 @@
     "metro": ">=0.81.0"
   },
   "files": [
+    "android",
+    "bin",
     "dist",
     "README.md",
     "CHANGELOG.md",

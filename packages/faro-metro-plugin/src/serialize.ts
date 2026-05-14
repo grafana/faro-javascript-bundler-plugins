@@ -1,15 +1,5 @@
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
 import {
   faroBundleIdSnippet,
-  consoleInfoOrange,
-  uploadCompressedSourceMaps,
-  uploadSourceMap,
-  THIRTY_MB_IN_BYTES,
-  ensureSourceMapFileProperty,
-  modifySourceMapFileProperty,
-  shouldProcessFile,
   isTruthyEnvVar,
   type FaroSourceMapUploaderPluginOptions,
 } from '@grafana/faro-bundlers-shared';
@@ -37,6 +27,53 @@ export type FaroMetroPluginOptions = FaroSourceMapUploaderPluginOptions & {
    */
   hermes?: boolean;
 };
+
+/**
+ * Internal description of how this Metro invocation should treat the source map.
+ *
+ * `precompiled` means a downstream Hermes step will run after Metro and produce the
+ * final composed map (Android/iOS release builds via Gradle/Xcode). In that case we
+ * MUST keep the packager map in its multi-line shape so `compose-source-maps.js` can
+ * consume it. Upload that composed map after the native build (`faro-upload-source-map`
+ * shim → `faro-cli metro upload`, or the Gradle/Xcode hooks).
+ *
+ * `runtime` means Hermes runs as an interpreter on the JS bundle (no precompile, e.g.
+ * dev mode or non-precompiled setups). Stack frames report `line=1, column=<byte>`
+ * so we flatten the map for Hermes bytecode symbolication upstream.
+ *
+ * `jsc` means classic JSC: standard `(line, col)` stacks, line-shift only.
+ */
+type HermesMode = 'precompiled' | 'runtime' | 'jsc';
+
+/**
+ * Autodetect how Metro is being invoked so the plugin produces the right map shape
+ * for Hermes precompile (`compose-source-maps.js`), Hermes interpreter, or JSC.
+ *
+ * Detection rules (most specific first):
+ *   - `pluginOptions.hermes === false` → `jsc`.
+ *   - `bundleOptions.dev === true` → `runtime` (dev server, Hermes interpreter).
+ *   - `FARO_DISABLE_HERMES_PRECOMPILE` truthy → `runtime` (escape hatch for users
+ *     who run Hermes without the precompile step in release).
+ *   - otherwise (`dev: false`, `hermes !== false`) → `precompiled`. This is the
+ *     default for `react-native run-android --variant=release` and Xcode "Release",
+ *     because the React Native Gradle/Xcode scripts run `hermesc` + `compose-source-maps.js`
+ *     after Metro.
+ */
+export function detectHermesMode(
+  pluginOptions: FaroMetroPluginOptions,
+  bundleOptions: Record<string, unknown>
+): HermesMode {
+  if (pluginOptions.hermes === false) {
+    return 'jsc';
+  }
+  if (Boolean(bundleOptions.dev)) {
+    return 'runtime';
+  }
+  if (isTruthyEnvVar(process.env.FARO_DISABLE_HERMES_PRECOMPILE)) {
+    return 'runtime';
+  }
+  return 'precompiled';
+}
 
 export type MetroCustomSerializer = (
   entryPoint: string,
@@ -113,85 +150,6 @@ async function toCodeAndMap(
   return raw;
 }
 
-async function maybeUploadMap(
-  mapJsonString: string,
-  bundleId: string,
-  pluginOptions: FaroMetroPluginOptions,
-  bundleDev: boolean
-): Promise<void> {
-  const skip = computeSkipUpload(pluginOptions);
-  if (skip || bundleDev) {
-    return;
-  }
-  const { apiKey } = pluginOptions;
-
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-metro-'));
-  const mapBase = (pluginOptions.sourceMapFile ?? 'bundle.js').replace(/\.map$/i, '');
-  const mapPath = path.join(tmpDir, `${mapBase}.map`);
-  try {
-    fs.writeFileSync(mapPath, mapJsonString, 'utf8');
-    ensureSourceMapFileProperty(mapPath, pluginOptions.verbose);
-    if (pluginOptions.prefixPath) {
-      modifySourceMapFileProperty(
-        mapPath,
-        pluginOptions.prefixPath,
-        pluginOptions.verbose,
-        pluginOptions.prefixPathBasenameOnly
-      );
-    }
-
-    const endpointBase = `${pluginOptions.endpoint.replace(/\/$/, '')}/app/${pluginOptions.appId}/sourcemaps/`;
-    const sourcemapEndpoint = `${endpointBase}${bundleId}`;
-    const gzipContents = pluginOptions.gzipContents !== false;
-    const keepSourcemaps = false;
-    const maxSize =
-      pluginOptions.maxUploadSize && pluginOptions.maxUploadSize > 0
-        ? pluginOptions.maxUploadSize
-        : THIRTY_MB_IN_BYTES;
-    const stats = fs.statSync(mapPath);
-    if (stats.size > maxSize) {
-      consoleInfoOrange(
-        `Source map exceeds maxUploadSize (${String(maxSize)} bytes); skipping upload`
-      );
-      return;
-    }
-
-    if (!shouldProcessFile(path.basename(mapPath), pluginOptions.outputFiles)) {
-      pluginOptions.verbose &&
-        consoleInfoOrange(
-          `Skipping source map upload: ${path.basename(mapPath)} does not match JS source map name pattern (e.g. *.js.map or *.bundle.map).`
-        );
-      return;
-    }
-
-    if (gzipContents) {
-      await uploadCompressedSourceMaps({
-        sourcemapEndpoint,
-        apiKey,
-        stackId: pluginOptions.stackId,
-        outputPath: tmpDir,
-        files: [mapPath],
-        keepSourcemaps,
-        verbose: pluginOptions.verbose,
-        proxy: pluginOptions.proxy,
-      });
-    } else {
-      await uploadSourceMap({
-        sourcemapEndpoint,
-        apiKey,
-        stackId: pluginOptions.stackId,
-        filePath: mapPath,
-        filename: path.basename(mapPath),
-        keepSourcemaps,
-        verbose: pluginOptions.verbose,
-        proxy: pluginOptions.proxy,
-      });
-    }
-  } finally {
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-  }
-}
-
 export function createFaroMetroCustomSerializer(
   previousSerializer: MetroCustomSerializer | null | undefined,
   pluginOptions: FaroMetroPluginOptions
@@ -216,19 +174,24 @@ export function createFaroMetroCustomSerializer(
     const newCode = `${snippet}\n${code}`;
 
     const mapObj = JSON.parse(map) as Record<string, unknown>;
-    const useHermes = pluginOptions.hermes !== false;
-    const rewritten = useHermes
-      ? await flattenMapForHermes(mapObj, newCode, 1)
-      : await shiftGeneratedLineNumbers(mapObj, 1);
+    const hermesMode = detectHermesMode(pluginOptions, bundleOptions);
+
+    // For `precompiled`, Gradle/Xcode runs `hermesc` + `compose-source-maps.js` after Metro.
+    // `compose-source-maps.js` walks the packager map per (line, col), so we MUST keep its
+    // multi-line shape — flattening here would wipe `sources` from the final composed map.
+    // For `runtime` (Hermes interpreter), stack frames are `(line=1, col=<byte>)` so we
+    // flatten. For `jsc`, classic line/col stacks need only the +1 line shift.
+    let rewritten: Record<string, unknown>;
+    if (hermesMode === 'runtime') {
+      rewritten = await flattenMapForHermes(mapObj, newCode, 1);
+    } else {
+      rewritten = await shiftGeneratedLineNumbers(mapObj, 1);
+    }
     const mapFileBase = (pluginOptions.sourceMapFile ?? 'bundle.js').replace(/\.map$/i, '');
     if (rewritten.file == null || rewritten.file === '') {
       rewritten.file = mapFileBase;
     }
     const mapOut = JSON.stringify(rewritten);
-
-    if (!skip && !bundleDev) {
-      await maybeUploadMap(mapOut, bundleId, pluginOptions, bundleDev);
-    }
 
     return { code: newCode, map: mapOut };
   };

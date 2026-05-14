@@ -7,7 +7,9 @@ import {
 export type { FaroMetroPluginOptions, MetroCustomSerializer };
 
 /**
- * Wraps a Metro config to inject the Faro bundle id preamble, adjust source maps, and (for release bundles) upload the JS source map to the Grafana KWL source map API.
+ * Wraps a Metro config to inject the Faro bundle id preamble and adjust source maps for Hermes/JSC.
+ * Source map uploads run after `hermesc` + `compose-source-maps.js` via `faro-cli metro upload`
+ * or native hooks that invoke this package’s `bin/` scripts — not from Metro.
  *
  * When using `@sentry/react-native` Metro integration, apply **Sentry outside** and **Faro inside** so the preamble stays at the start of the bundle, for example:
  * `mergeConfig(getDefaultConfig(__dirname), withSentryConfig(withFaroConfig({}, faroOpts)))` — consult the Sentry and RN docs for your versions.
@@ -31,7 +33,12 @@ export default function withFaroConfig(
   };
 }
 
-export { createFaroMetroCustomSerializer, computeSkipUpload, getSortedModules } from './serialize';
+export {
+  createFaroMetroCustomSerializer,
+  computeSkipUpload,
+  detectHermesMode,
+  getSortedModules,
+} from './serialize';
 export { shiftGeneratedLineNumbers } from './shiftSourceMap';
 export { flattenMapForHermes } from './flattenMapForHermes';
 export { normalizeBundleIdLength, resolveBundleId } from './resolveBundleId';

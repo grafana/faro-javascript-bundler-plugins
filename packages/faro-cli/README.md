@@ -22,7 +22,9 @@ yarn add --dev @grafana/faro-cli
 
 ### Uploading Source Maps
 
-The CLI uses cURL under the hood to upload source maps to the Faro API:
+The CLI uses cURL under the hood to upload source maps to the Faro API.
+
+**Web (Webpack / Vite / Rollup / Rspack):**
 
 ```bash
 npx faro-cli upload \
@@ -35,7 +37,25 @@ npx faro-cli upload \
   --verbose
 ```
 
-The CLI will automatically find and upload all `.map` files in the specified output directory and its subdirectories. It recursively searches through all folders to find any source map files, so you don't need to specify patterns or worry about nested directory structures.
+**React Native (Metro):**
+
+```bash
+npx faro-cli metro upload \
+  --map "path/to/your.map" \
+  --endpoint "$FARO_SOURCEMAP_ENDPOINT" \
+  --app-id   "$FARO_SOURCEMAP_APP_ID" \
+  --stack-id "$FARO_SOURCEMAP_STACK_ID" \
+  --api-key  "$FARO_SOURCEMAP_API_KEY" \
+  --bundle-id "$FARO_BUNDLE_ID" \
+  --verbose
+```
+
+The two commands differ only in **how they discover the map(s) to upload**:
+
+- `upload` (web) takes a directory via `--output-path` and recursively scans it for every `.map` file. You don't enumerate paths or worry about nested folders.
+- `metro upload` (React Native) takes one `.map` path via `--map`. The CLI never derives this path itself — the caller (Gradle hook, Xcode post-build script, manual invocation) is responsible for pointing at the right file. `--bundle-id` (or `FARO_BUNDLE_ID`) must match whatever id `@grafana/faro-metro-plugin` baked into the shipped JS bundle so the uploaded map keys onto Faro's runtime telemetry. See the [`@grafana/faro-metro-plugin` README](../faro-metro-plugin/README.md) for which map to pass on which platform.
+
+Both commands do the same lightweight pre-flight on each `.map` before uploading: parse it as JSON, verify it is a v3 source map, and (for compatibility with downstream symbolication) write back the `file` property if it is missing. They never touch the `mappings`, `sources`, or `sourcesContent` fields. See [Connection settings precedence](#connection-settings-precedence) and [Validation and exit codes](#validation-and-exit-codes) for the full contract.
 
 #### File Size Limits
 
@@ -91,6 +111,8 @@ npx faro-cli upload \
   --verbose
 ```
 
+For `metro upload`, gzipping is **on by default** (the `.map` is POSTed as a gzipped tarball). Pass `--no-gzip` to POST the raw `.map` JSON instead — useful when debugging an upload against a proxy that mangles `Content-Encoding`.
+
 #### Using a Proxy
 
 If you need to route requests through a proxy server, you can use the `--proxy` option:
@@ -108,7 +130,7 @@ npx faro-cli upload \
   --verbose
 ```
 
-The proxy URL will be passed to cURL using the `--proxy` parameter. If your proxy requires authentication, you can use the `--proxy-user` option (or `-U`) to provide credentials in the format `username:password`.
+The proxy URL will be passed to cURL using the `--proxy` parameter. If your proxy requires authentication, you can use the `--proxy-user` option (or `-U`) to provide credentials in the format `username:password`. The same `--proxy` and `--proxy-user` flags work identically on `metro upload`.
 
 ### Injecting Bundle ID into JavaScript Files
 
@@ -157,6 +179,8 @@ npx faro-cli inject-bundle-id \
   --dry-run \
   --verbose
 ```
+
+> **Web only.** This command is for already-built JavaScript bundles produced by web bundlers that don't already integrate the Faro plugin. The React Native (Metro) flow injects the bundle id at Metro time via `@grafana/faro-metro-plugin`'s preamble, so you don't run `inject-bundle-id` on RN bundles.
 
 ### Using with Bundler Plugins
 
@@ -225,9 +249,48 @@ module.exports = {
 };
 ```
 
+#### Metro Example (React Native)
+
+`@grafana/faro-metro-plugin` is the equivalent of the Webpack/Rollup plugins for React Native. It supports the same `skipUpload` option, with the same meaning: when `true`, the plugin won't upload it.
+
+```js
+// metro.config.js
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const withFaroConfig = require('@grafana/faro-metro-plugin').default;
+
+const faroOpts = {
+  appName: 'MyApp',
+  endpoint: 'https://faro-api-prod-us-east-0.grafana.net/faro/api/v1',
+  appId: 'your-app-id',
+  stackId: 'your-stack-id',
+  apiKey: process.env.FARO_SOURCEMAP_API_KEY,
+  bundleId: process.env.FARO_BUNDLE_ID,
+  verbose: true,
+};
+
+module.exports = mergeConfig(
+  getDefaultConfig(__dirname),
+  withFaroConfig({}, faroOpts),
+);
+```
+
+Manual invocation has the same shape on every platform:
+
+```bash
+npx faro-cli metro upload \
+  --map "path/to/your.map" \
+  --endpoint "$FARO_SOURCEMAP_ENDPOINT" \
+  --app-id   "$FARO_SOURCEMAP_APP_ID" \
+  --stack-id "$FARO_SOURCEMAP_STACK_ID" \
+  --api-key  "$FARO_SOURCEMAP_API_KEY" \
+  --bundle-id "$FARO_BUNDLE_ID"
+```
+
+Each connection setting (and `--bundle-id`) also accepts the matching `FARO_*` env var as a fallback if the flag is omitted, so a step that already exports the full `FARO_*` set can call `faro-cli metro upload --map …` and nothing else.
+
 ### Generating a curl Command
 
-If you prefer to use curl directly, you can generate a curl command:
+If you prefer to use curl directly, you can generate a curl command. Web example:
 
 ```bash
 npx faro-cli curl \
@@ -237,6 +300,18 @@ npx faro-cli curl \
   --stack-id "your-stack-id" \
   --bundle-id "your-bundle-id" \
   --file "./dist/main.js.map"
+```
+
+React Native (Metro) — same `curl` subcommand, just point `--file` at the `.map` you want to upload and pass the bundle id that matches your shipped JS:
+
+```bash
+npx faro-cli curl \
+  --endpoint "$FARO_SOURCEMAP_ENDPOINT" \
+  --app-id   "$FARO_SOURCEMAP_APP_ID" \
+  --api-key  "$FARO_SOURCEMAP_API_KEY" \
+  --stack-id "$FARO_SOURCEMAP_STACK_ID" \
+  --bundle-id "$FARO_BUNDLE_ID" \
+  --file     "path/to/your.map"
 ```
 
 You can also generate a curl command that uses gzip compression:
@@ -301,6 +376,50 @@ This will output a curl command that you can copy and run manually.
 - `-z, --gzip-payload`: Generate a command that gzips the payload (default: false)
 - `-x, --proxy <url>`: Proxy URL to use for cURL requests (optional)
 - `-U, --proxy-user <user:password>`: Username and password for proxy authentication (optional)
+
+### Metro Upload Command (`metro upload`)
+
+- `--map <path>` (required): Path to the `.map` file to upload. The CLI does
+  not derive or autodetect this path — the caller picks the file.
+- `-e, --endpoint <url>`: Faro source map API base URL. Falls back to
+  `FARO_SOURCEMAP_ENDPOINT`.
+- `-a, --app-id <id>`: Faro app id. Falls back to `FARO_SOURCEMAP_APP_ID`.
+- `-s, --stack-id <id>`: Grafana Cloud stack id. Falls back to
+  `FARO_SOURCEMAP_STACK_ID`.
+- `-k, --api-key <key>`: Bearer API key. Falls back to
+  `FARO_SOURCEMAP_API_KEY`.
+- `-b, --bundle-id <id>`: Bundle id that matches the shipped JS bundle.
+  Falls back to `FARO_BUNDLE_ID`.
+- `--no-gzip`: POST the raw `.map` JSON instead of a gzipped tarball.
+- `-v, --verbose`: Verbose logging.
+- `--dry-run`: Show what would be uploaded and exit.
+- `-i, --max-upload-size <size>`: Maximum upload size in bytes (default: 30MB).
+- `-x, --proxy <url>`, `-U, --proxy-user <user:password>`: Same as the other subcommands.
+
+#### Connection settings precedence
+
+For each connection setting and the bundle id, resolution is "first non-empty wins": **CLI flag > matching env var**.
+
+| Setting          | CLI flag       | Env fallback              |
+| ---------------- | -------------- | ------------------------- |
+| Endpoint base    | `--endpoint`   | `FARO_SOURCEMAP_ENDPOINT` |
+| App id           | `--app-id`     | `FARO_SOURCEMAP_APP_ID`   |
+| Stack id         | `--stack-id`   | `FARO_SOURCEMAP_STACK_ID` |
+| API key          | `--api-key`    | `FARO_SOURCEMAP_API_KEY`  |
+| Bundle id        | `--bundle-id`  | `FARO_BUNDLE_ID`          |
+
+The map path (`--map`) is **required** and has no env fallback or autodetect.
+
+#### Validation and exit codes
+
+The `.map` is parsed and structurally validated before any upload attempt. The CLI never inspects or rewrites `mappings`, `sources`, or `sourcesContent`; if the `file` property is missing, it is set from the map filename so downstream symbolication can key onto it.
+
+| Exit code | Meaning |
+| --------- | ------- |
+| `0`       | Upload succeeded (or `--dry-run` finished). |
+| `1`       | Upload was attempted and the API rejected it (re-run with `--verbose`). |
+| `2`       | Pre-flight failed: missing required setting, missing/unparseable map, non-v3 map, or map exceeds the size limit. |
+| `3`       | The map parsed as v3 but its `sources` array is empty. Whatever produced the file emitted a structurally valid but useless map; investigate upstream of the CLI. Wire CI alarms onto this code separately. |
 
 ## License
 

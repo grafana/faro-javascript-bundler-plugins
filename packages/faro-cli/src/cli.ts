@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import { uploadSourceMaps, generateCurlCommand, injectBundleId } from './index';
+import { runMetroUpload } from './metro';
 import { consoleInfoOrange, exportBundleIdToFile, JS_SOURCEMAP_PATTERN, randomString, cleanAppName } from '@grafana/faro-bundlers-shared';
 import path from 'path';
 import fs from 'fs';
@@ -263,6 +264,83 @@ Example:
       }
     } catch (err) {
       console.error('Error:', err);
+      process.exit(1);
+    }
+  });
+
+const metro = program
+  .command('metro')
+  .description('Metro (React Native) source map commands');
+
+metro
+  .command('upload')
+  .description('Upload a source map to the Faro source map API')
+  .requiredOption('--map <path>', 'Path to the .map file to upload')
+  .option('-e, --endpoint <url>', 'Faro source map API base URL (env: FARO_SOURCEMAP_ENDPOINT)')
+  .option('-a, --app-id <id>', 'Faro app id (env: FARO_SOURCEMAP_APP_ID)')
+  .option('-s, --stack-id <id>', 'Grafana Cloud stack id (env: FARO_SOURCEMAP_STACK_ID)')
+  .option('-k, --api-key <key>', 'Bearer API key (env: FARO_SOURCEMAP_API_KEY)')
+  .option('-b, --bundle-id <id>', 'Bundle id matching the shipped JS bundle (env: FARO_BUNDLE_ID)')
+  .option('--no-gzip', 'POST the raw .map JSON instead of a gzipped tarball')
+  .option('-v, --verbose', 'Verbose logging', false)
+  .option('--dry-run', 'Show what would be uploaded and exit', false)
+  .option('-i, --max-upload-size <size>', 'Maximum upload size in bytes (default: 30MB)', (value) => parseInt(value, 10))
+  .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
+  .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
+  .addHelpText('after', `
+Examples:
+  # Fully explicit
+  $ faro-cli metro upload \\
+      --map path/to/your.map \\
+      --endpoint "$FARO_SOURCEMAP_ENDPOINT" \\
+      --app-id   "$FARO_SOURCEMAP_APP_ID" \\
+      --stack-id "$FARO_SOURCEMAP_STACK_ID" \\
+      --api-key  "$FARO_SOURCEMAP_API_KEY" \\
+      --bundle-id "$FARO_BUNDLE_ID"
+
+  # Env fallbacks (when the surrounding shell already exports FARO_*)
+  $ FARO_SOURCEMAP_ENDPOINT=… FARO_SOURCEMAP_APP_ID=… FARO_SOURCEMAP_STACK_ID=… \\
+    FARO_SOURCEMAP_API_KEY=…   FARO_BUNDLE_ID=$(git rev-parse HEAD) \\
+    faro-cli metro upload --map path/to/your.map
+
+Resolution: each connection setting and the bundle id come from the matching
+CLI flag (preferred) or the FARO_* env var (fallback). The path to the map
+is required (--map); this command never tries to construct it.`)
+  .action(async (options: {
+    map: string;
+    endpoint?: string;
+    appId?: string;
+    stackId?: string;
+    apiKey?: string;
+    bundleId?: string;
+    gzip: boolean;
+    verbose: boolean;
+    dryRun: boolean;
+    maxUploadSize?: number;
+    proxy?: string;
+    proxyUser?: string;
+  }) => {
+    try {
+      const code = await runMetroUpload({
+        map: options.map,
+        endpoint: options.endpoint,
+        appId: options.appId,
+        stackId: options.stackId,
+        apiKey: options.apiKey,
+        bundleId: options.bundleId,
+        // Commander's --no-gzip flag flips the implicit boolean to false; default is true.
+        gzip: options.gzip !== false,
+        verbose: !!options.verbose,
+        dryRun: !!options.dryRun,
+        maxUploadSize: options.maxUploadSize,
+        proxy: options.proxy,
+        proxyUser: options.proxyUser,
+      });
+      if (code !== 0) {
+        process.exit(code);
+      }
+    } catch (err) {
+      console.error('Error:', err instanceof Error ? err.message : err);
       process.exit(1);
     }
   });
