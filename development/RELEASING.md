@@ -1,17 +1,14 @@
 # Releasing
 
-## 1. Update the changelog
+Releases are fully automated via [release-please].
 
-Update the version number in the following files:
-- `packages/faro-rollup/CHANGELOG.md`
-- `packages/faro-webpack/CHANGELOG.md`
-- `packages/faro-bundlers-shared/CHANGELOG.md`
-- `packages/faro-cli/CHANGELOG.md`
+1. Land your change on `main` using a Conventional Commit prefix
+   (`fix:`, `feat:`, `feat!:` — `refactor:`/`chore:` do **not** trigger releases).
+2. release-please will open or update a PR titled `chore: release main`
+   with version bumps and CHANGELOG entries for the affected packages.
+3. Merging that PR runs `.github/workflows/release-please.yml`, which
+   tags the release and publishes the bumped packages to npm.
 
-## 2. Use lerna to release
+No manual `lerna version` / `lerna publish` is needed.
 
-Run the following:
-
-```bash
-npx lerna version --force-publish
-```
+[release-please]: https://github.com/googleapis/release-please

@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.5.0...faro-esbuild-plugin-v0.5.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* pin package manager and disable npm/yarn scripts ([#540](https://github.com/grafana/faro-javascript-bundler-plugins/issues/540)) ([6324daa](https://github.com/grafana/faro-javascript-bundler-plugins/commit/6324daaad4a4f79619a0ff20171546c998be7c64))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.10.0 to ^0.10.1
+
 ## [0.5.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.4.2...faro-esbuild-plugin-v0.5.0) (2026-04-09)
 
 
