@@ -16,23 +16,11 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
 
     steps:
-      - id: get-secrets
-        name: get secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@0a7a2fc07560de0f2fe500ed9fd1f53ec7d86d33
-        with:
-          repo_secrets: |
-            FARO_SMU_CI_APP_ID=github:app-id
-            FARO_SMU_CI_PRIVATE_KEY=github:private-key
-
-      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
-        name: get github app token
+      - name: Mint GitHub App token
         id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app-id: ${{ env.FARO_SMU_CI_APP_ID }}
-          private-key: ${{ env.FARO_SMU_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            faro-javascript-bundler-plugins
+          github_app: app-o11y-kwl-ci
 
       - uses: googleapis/release-please-action@64d83e95d898ede84e4555719aba555c3244d469
         id: release
