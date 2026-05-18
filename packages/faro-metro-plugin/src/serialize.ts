@@ -1,12 +1,12 @@
 import {
   faroBundleIdSnippet,
-  isTruthyEnvVar,
   type FaroSourceMapUploaderPluginOptions,
 } from '@grafana/faro-bundlers-shared';
 import { shiftGeneratedLineNumbers } from './shiftSourceMap';
 import { flattenMapForHermes } from './flattenMapForHermes';
 import { resolveBundleId } from './resolveBundleId';
 import { loadMetroDeps } from './metroDeps';
+import { isTruthyEnvVar } from './envFlags';
 
 /**
  * Metro plugin options extend the shared Faro uploader options with Metro-specific fields.
