@@ -36,7 +36,7 @@ export async function shiftGeneratedLineNumbers(
     });
 
     for (const source of consumer.sources) {
-      const content = consumer.sourceContentFor(source);
+      const content = consumer.sourceContentFor(source, /* nullOnMissing */ true);
       if (content !== null) {
         generator.setSourceContent(source, content);
       }
