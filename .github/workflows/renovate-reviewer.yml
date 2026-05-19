@@ -16,21 +16,11 @@ jobs:
       PR_URL: ${{github.event.pull_request.html_url}}
       COMMITS_URL: ${{ github.event.pull_request.commits_url }}
     steps:
-      - name: Get secrets
-        id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@0a7a2fc07560de0f2fe500ed9fd1f53ec7d86d33
-        with:
-          repo_secrets: |
-            FARO_SMU_CI_APP_ID=github:app-id
-            FARO_SMU_CI_PRIVATE_KEY=github:private-key
-
-      - name: Create GitHub app token
+      - name: Mint GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app-id: ${{ env.FARO_SMU_CI_APP_ID }}
-          private-key: ${{ env.FARO_SMU_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          github_app: app-o11y-kwl-ci
 
       - name: Approve security updates
         if: contains(github.event.pull_request.labels.*.name, 'automerge-security-update')
