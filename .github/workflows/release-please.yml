@@ -62,6 +62,9 @@ jobs:
           persist-credentials: false
           ref: main
 
+      - name: Enable corepack
+        run: corepack enable
+
       - name: Setup .npmrc file for NPM registry
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
@@ -69,9 +72,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        uses: borales/actions-yarn@83f6fa8b4173db031e849a91b8749229ba490e77
-        with:
-          cmd: install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run tests
         run: |
@@ -80,9 +81,7 @@ jobs:
           yarn test || yarn test || yarn test
 
       - name: Build production bundle
-        uses: borales/actions-yarn@83f6fa8b4173db031e849a91b8749229ba490e77
-        with:
-          cmd: build
+        run: yarn build
 
       - name: Publish package to NPM
         run: yarn run publish from-package --yes
