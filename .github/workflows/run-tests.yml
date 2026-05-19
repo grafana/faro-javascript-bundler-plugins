@@ -30,6 +30,14 @@ jobs:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
 
+      - name: Secret scan
+        # Scans first-party source folders (packages, development) to avoid
+        # noisy false positives from node_modules and .yarn/cache. TruffleHog
+        # flags minified webpack chunks as unverified Sentry DSN-style tokens;
+        # we do not ship Sentry auth tokens, so SentryToken is excluded.
+        # Runs before install/build to fail fast.
+        uses: ./.github/actions/secret-scan
+
       - name: Setup NPM
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
