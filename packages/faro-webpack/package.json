@@ -21,11 +21,14 @@
     "webpack": "^5.89.0"
   },
   "devDependencies": {
+    "@babel/core": "7.29.0",
+    "@babel/preset-env": "7.29.3",
     "@jest/globals": "30.4.1",
     "@rollup/plugin-babel": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.3",
     "@types/jest": "30.0.0",
     "@types/node": "24.12.4",
+    "babel-jest": "30.4.1",
     "jest": "30.4.2",
     "ts-jest": "29.4.9"
   },

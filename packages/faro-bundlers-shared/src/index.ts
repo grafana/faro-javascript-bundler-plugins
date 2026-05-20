@@ -300,8 +300,13 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
   return false;
 }
 
+/**
+ * Prepend to JS bundles so `getBundleId(appName)` in `@grafana/faro-core` can read `meta.app.bundleId`.
+ * Must resolve the **same** global as `globalObject` in faro-core (`globalThis` first). A previous
+ * `window`-first order broke React Native Hermes when `window` exists but is not `globalThis`.
+ */
 export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;
+  return `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;
 };
 
 export function randomString(length?: number): string {
@@ -317,7 +322,9 @@ export const ESBUILD_PLUGIN_NAME = "faro-esbuild-plugin";
 
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
 
-export const JS_SOURCEMAP_PATTERN = /\.(js|ts|jsx|tsx|mjs|cjs)\.map$/;
+/** JS (and React Native bundle) source maps — excludes e.g. CSS maps. */
+export const JS_SOURCEMAP_PATTERN =
+  /\.(js|ts|jsx|tsx|mjs|cjs)\.map$|\.(bundle|jsbundle)\.map$/;
 
 export const cleanAppName = (appName: string) => {
   return appName.toUpperCase().replace(/[^A-Z0-9]/g, '_');

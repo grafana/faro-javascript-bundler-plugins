@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "sources": ["../../node_modules/metro-runtime/src/polyfills/require.js", "index.js"],
+  "file": "index.android.bundle",
+  "names": [],
+  "mappings": "AAAA",
+  "sourcesContent": [null, null]
+}

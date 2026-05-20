@@ -60,7 +60,11 @@ describe('Faro Rollup Plugin', () => {
   test('basic bundleId injection test', async () => {
     const output = await runRollup({ bundleId: 'test' });
 
-    expect(output.output[0].code.startsWith(`(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_rollup-test-app"]="test"`)).toBeTruthy();
+    expect(
+      output.output[0].code.startsWith(
+        `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g["__faroBundleId_rollup-test-app"]="test"`
+      )
+    ).toBeTruthy();
   });
 
   test('custom bundleId is correctly injected', async () => {
@@ -96,7 +100,8 @@ describe('Faro Rollup Plugin', () => {
     const output = await runRollup({ bundleId: 'test' });
 
     // Create a simple regex to check code starts with the bundle ID snippet
-    const bundleIdRegex = /^\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_rollup-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
+    const bundleIdRegex =
+      /^\(function\(\)\{try\{var g=typeof globalThis!=="undefined"\?globalThis:typeof global!=="undefined"\?global:typeof window!=="undefined"\?window:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_rollup-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
 
     expect(output.output[0].code).toMatch(bundleIdRegex);
   });
