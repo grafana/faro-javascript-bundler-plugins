@@ -4,6 +4,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
@@ -29,33 +33,21 @@ jobs:
           config-file: release-please-config.json
           manifest-file: release-please-manifest.json
 
-      - name: log context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-          NEEDS_CONTEXT: ${{ toJson(needs) }}
-          STEPS_CONTEXT: ${{ toJson(steps) }}
-        run: |
-          echo "$GITHUB_CONTEXT"
-          echo "$NEEDS_CONTEXT"
-          echo "$STEPS_CONTEXT"
-
   publish:
     name: Publish to NPM
     runs-on: ubuntu-latest
     environment: npm-trusted-publishing
     needs: release-please
     permissions:
-      contents: write
+      contents: read
       id-token: write
     if: ${{ needs.release-please.outputs.releases_created }}
-    steps:
-      - id: get-secrets
-        name: get secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@0a7a2fc07560de0f2fe500ed9fd1f53ec7d86d33
-        with:
-          repo_secrets: |
-            NPM_TOKEN=npm:token
 
+    env:
+      NPM_CONFIG_ACCESS: public
+      NPM_CONFIG_PROVENANCE: true
+
+    steps:
       - name: Checkout
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
         with:
@@ -83,5 +75,8 @@ jobs:
       - name: Build production bundle
         run: yarn build
 
+      - name: Install npm latest version # needed for Trusted Publishing
+        run: npm install -g npm@latest
+
       - name: Publish package to NPM
-        run: yarn run publish from-package --yes
+        run: npm run publish -- from-package --yes
