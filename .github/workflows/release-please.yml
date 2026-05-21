@@ -65,12 +65,7 @@ jobs:
         if: ${{ steps.release.outputs.prs_created == 'true' && steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
-          node-version: lts/*
-          # Disable setup-node's automatic package-manager cache. We just
-          # checked out a release PR branch whose lockfile is untrusted from
-          # a CI perspective; if setup-node populated the yarn cache with
-          # entries keyed off that lockfile, a hostile release PR could
-          # poison the cache restored by later main-branch workflow runs.
+          node-version-file: .nvmrc
           package-manager-cache: false
 
       - name: Refresh yarn.lock on release PR
