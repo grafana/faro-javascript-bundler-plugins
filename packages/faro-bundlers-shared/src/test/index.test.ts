@@ -10,6 +10,7 @@ import {
   modifySourceMapFileProperty,
   ensureSourceMapFileProperty,
   ensureSourceMapFileProperties,
+  isLocalEndpoint,
 } from '../index';
 
 
@@ -63,6 +64,8 @@ describe('Bundlers Shared Utilities', () => {
     expect(shouldProcessFile('main.tsx.map', undefined)).toBeTruthy();
     expect(shouldProcessFile('module.mjs.map', undefined)).toBeTruthy();
     expect(shouldProcessFile('lib.cjs.map', undefined)).toBeTruthy();
+    expect(shouldProcessFile('index.android.bundle.map', undefined)).toBeTruthy();
+    expect(shouldProcessFile('main.jsbundle.map', undefined)).toBeTruthy();
 
     // Non-sourcemap files
     expect(shouldProcessFile('styles.css.map', undefined)).toBeFalsy();
@@ -357,5 +360,45 @@ describe('ensureSourceMapFileProperties', () => {
 
     const result = JSON.parse(fs.readFileSync(path.join(tempDir, 'map123.js.map'), 'utf8'));
     expect(result.file).toBe('map123.js');
+  });
+});
+
+describe('isLocalEndpoint', () => {
+  test('returns true for localhost variants', () => {
+    expect(isLocalEndpoint('http://localhost:8000/faro/api/v1')).toBe(true);
+    expect(isLocalEndpoint('http://LOCALHOST:8000')).toBe(true);
+    expect(isLocalEndpoint('http://127.0.0.1:8000/api')).toBe(true);
+    expect(isLocalEndpoint('http://[::1]:8000')).toBe(true);
+    expect(isLocalEndpoint('http://0.0.0.0:8000')).toBe(true);
+  });
+
+  test('returns true for RFC 1918 private IPv4 ranges', () => {
+    // Android emulator loopback to host
+    expect(isLocalEndpoint('http://10.0.2.2:8000/faro/api/v1')).toBe(true);
+    expect(isLocalEndpoint('http://10.255.255.255/api')).toBe(true);
+    // Docker bridge / common LAN
+    expect(isLocalEndpoint('http://172.17.0.1:8000')).toBe(true);
+    expect(isLocalEndpoint('http://172.31.255.1:8000')).toBe(true);
+    expect(isLocalEndpoint('http://192.168.1.10:8000')).toBe(true);
+  });
+
+  test('returns false for production Grafana Cloud endpoints', () => {
+    expect(isLocalEndpoint('https://faro-api-prod-us-east-0.grafana.net/faro/api/v1')).toBe(false);
+    expect(isLocalEndpoint('https://example.grafana.net/api')).toBe(false);
+    expect(isLocalEndpoint('https://my-stack.grafana.net')).toBe(false);
+  });
+
+  test('returns false for public IPv4 addresses that fall outside private ranges', () => {
+    // 172.15.x.x and 172.32.x.x are public — must NOT match the 172.16/12 block check.
+    expect(isLocalEndpoint('http://172.15.0.1:8000')).toBe(false);
+    expect(isLocalEndpoint('http://172.32.0.1:8000')).toBe(false);
+    // 11.x.x.x and 9.x.x.x are public.
+    expect(isLocalEndpoint('http://11.0.0.1:8000')).toBe(false);
+    expect(isLocalEndpoint('http://9.255.255.255:8000')).toBe(false);
+  });
+
+  test('returns false for unparseable input', () => {
+    expect(isLocalEndpoint('not a url')).toBe(false);
+    expect(isLocalEndpoint('')).toBe(false);
   });
 });

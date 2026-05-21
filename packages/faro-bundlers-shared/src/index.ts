@@ -50,6 +50,42 @@ interface UploadCompressedSourceMapsOptions {
 }
 
 
+/**
+ * Detect a source map endpoint that points at a local/development receiver — i.e. one
+ * not fronted by the Grafana Cloud gateway. Used to opt into sending an explicit
+ * `X-Scope-OrgID` header alongside the bearer auth: production gateways derive the tenant
+ * from the bearer token and overwrite client-supplied tenant headers, but a local
+ * `kwl-endpoint` reads `X-Scope-OrgID` directly via `dskit/user` (it does not parse
+ * `Authorization: Bearer x:y`). Returns `false` for any unparseable or non-local URL,
+ * so production uploads stay byte-for-byte identical.
+ */
+export function isLocalEndpoint(endpoint: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  // `URL.hostname` returns IPv6 addresses with surrounding brackets (`[::1]`); strip
+  // them so the comparison below works for both literal and bracketed forms.
+  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    host === "::1" ||
+    host === "0.0.0.0"
+  ) {
+    return true;
+  }
+  // RFC 1918 private IPv4 ranges — covers Docker bridge networks and
+  // Android emulator host loopback (10.0.2.2). Anything outside these
+  // ranges is treated as production.
+  if (/^10\./.test(host)) return true;
+  if (/^192\.168\./.test(host)) return true;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return true;
+  return false;
+}
+
 export const validateProxyUrl = (proxyUrl: string): void => {
   if (!proxyUrl || typeof proxyUrl !== 'string') {
     throw new Error('Proxy URL must be a non-empty string');
@@ -111,12 +147,16 @@ export const uploadSourceMap = async (
   }
 
   verbose && consoleInfoOrange(`Uploading ${filename} to ${sourcemapEndpoint}`);
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${stackId}:${apiKey}`,
+  };
+  if (isLocalEndpoint(sourcemapEndpoint)) {
+    headers["X-Scope-OrgID"] = String(stackId);
+  }
   await fetch(sourcemapEndpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${stackId}:${apiKey}`,
-    },
+    headers,
     body: fs.readFileSync(filePath),
     dispatcher: proxy ? new ProxyAgent(proxy) : undefined,
   })
@@ -172,12 +212,16 @@ export const uploadCompressedSourceMaps = async (
         .map((file) => file.split("/").pop())
         .join(", ")} to ${sourcemapEndpoint}`
     );
+  const gzipHeaders: Record<string, string> = {
+    "Content-Type": "application/gzip",
+    "Authorization": `Bearer ${stackId}:${apiKey}`,
+  };
+  if (isLocalEndpoint(sourcemapEndpoint)) {
+    gzipHeaders["X-Scope-OrgID"] = String(stackId);
+  }
   await fetch(sourcemapEndpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/gzip",
-      "Authorization": `Bearer ${stackId}:${apiKey}`,
-    },
+    headers: gzipHeaders,
     body: fs.readFileSync(tarball),
     dispatcher: proxy ? new ProxyAgent(proxy) : undefined,
   })
@@ -258,16 +302,21 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
   return false;
 }
 
+/**
+ * Prepend to JS bundles so `getBundleId(appName)` in `@grafana/faro-core` can read `meta.app.bundleId`.
+ * Must resolve the **same** global as `globalObject` in faro-core (`globalThis` first). A previous
+ * `window`-first order broke React Native Hermes when `window` exists but is not `globalThis`.
+ */
 export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
   const key = JSON.stringify(`__faroBundleId_${appName}`);
   const value = JSON.stringify(bundleId);
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
+  return `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
 };
 
 export const faroGitHashSnippet = (gitHash: string, appName: string) => {
   const key = JSON.stringify(`__faroGitHash_${appName}`);
   const value = JSON.stringify(gitHash);
-  return `(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
+  return `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
 };
 
 const GIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
@@ -306,7 +355,9 @@ export const ESBUILD_PLUGIN_NAME = "faro-esbuild-plugin";
 
 export const THIRTY_MB_IN_BYTES = 30 * 1024 * 1024;
 
-export const JS_SOURCEMAP_PATTERN = /\.(js|ts|jsx|tsx|mjs|cjs)\.map$/;
+/** JS (and React Native bundle) source maps — excludes e.g. CSS maps. */
+export const JS_SOURCEMAP_PATTERN =
+  /\.(js|ts|jsx|tsx|mjs|cjs)\.map$|\.(bundle|jsbundle)\.map$/;
 
 export const cleanAppName = (appName: string) => {
   return appName.toUpperCase().replace(/[^A-Z0-9]/g, '_');

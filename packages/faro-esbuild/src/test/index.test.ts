@@ -81,7 +81,11 @@ describe('Faro Esbuild Plugin', () => {
   test('basic bundleId injection test', async () => {
     const { code } = await runEsbuild({ bundleId: 'test' });
 
-    expect(code.startsWith(`(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_esbuild-test-app"]="test"`)).toBeTruthy();
+    expect(
+      code.startsWith(
+        `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g["__faroBundleId_esbuild-test-app"]="test"`
+      )
+    ).toBeTruthy();
   });
 
   test('custom bundleId is correctly injected', async () => {
@@ -117,7 +121,8 @@ describe('Faro Esbuild Plugin', () => {
     const { code } = await runEsbuild({ bundleId: 'test' });
 
     // create a simple regex to check code starts with the bundle ID snippet
-    const bundleIdRegex = /^\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_esbuild-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
+    const bundleIdRegex =
+      /^\(function\(\)\{try\{var g=typeof globalThis!=="undefined"\?globalThis:typeof global!=="undefined"\?global:typeof window!=="undefined"\?window:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_esbuild-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
 
     expect(code).toMatch(bundleIdRegex);
   });

@@ -16,23 +16,11 @@ jobs:
       releases_created: ${{ steps.release.outputs.releases_created }}
 
     steps:
-      - id: get-secrets
-        name: get secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@0a7a2fc07560de0f2fe500ed9fd1f53ec7d86d33
-        with:
-          repo_secrets: |
-            FARO_SMU_CI_APP_ID=github:app-id
-            FARO_SMU_CI_PRIVATE_KEY=github:private-key
-
-      - uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
-        name: get github app token
+      - name: Mint GitHub App token
         id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          app-id: ${{ env.FARO_SMU_CI_APP_ID }}
-          private-key: ${{ env.FARO_SMU_CI_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: |
-            faro-javascript-bundler-plugins
+          github_app: app-o11y-kwl-ci
 
       - uses: googleapis/release-please-action@64d83e95d898ede84e4555719aba555c3244d469
         id: release
@@ -74,6 +62,9 @@ jobs:
           persist-credentials: false
           ref: main
 
+      - name: Enable corepack
+        run: corepack enable
+
       - name: Setup .npmrc file for NPM registry
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
@@ -81,9 +72,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
-        uses: borales/actions-yarn@83f6fa8b4173db031e849a91b8749229ba490e77
-        with:
-          cmd: install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run tests
         run: |
@@ -92,9 +81,7 @@ jobs:
           yarn test || yarn test || yarn test
 
       - name: Build production bundle
-        uses: borales/actions-yarn@83f6fa8b4173db031e849a91b8749229ba490e77
-        with:
-          cmd: build
+        run: yarn build
 
       - name: Publish package to NPM
         run: yarn run publish from-package --yes

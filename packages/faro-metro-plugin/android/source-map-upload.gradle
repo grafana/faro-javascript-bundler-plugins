@@ -1,0 +1,138 @@
+/**
+ * @grafana/faro-metro-plugin — composed source map upload hook for React Native (Hermes).
+ *
+ * ⚠️ FALLBACK / ADVANCED PATH ⚠️
+ *
+ * If your app installs `@grafana/faro-react-native` (the recommended setup),
+ * the same hook is already wired automatically via React Native autolinking
+ * from `node_modules/@grafana/faro-react-native/android/build.gradle` — you do
+ * NOT need to apply this file and you should NOT add anything to your
+ * `android/app/build.gradle` for source-map upload.
+ *
+ * Use this file only if:
+ *   - You use `@grafana/faro-metro-plugin` without `@grafana/faro-react-native`, or
+ *   - You have a custom Android setup that disables autolinking for the SDK.
+ *
+ * Then, in your app's `android/app/build.gradle`, add:
+ *
+ *   apply from: file("../../node_modules/@grafana/faro-metro-plugin/android/source-map-upload.gradle")
+ *
+ * After that, no other Android-side configuration is required. Any Gradle task that
+ * triggers `:app:bundleReleaseJsAndAssets` (for example `installRelease`,
+ * `assembleRelease`, `bundleRelease`, or `react-native run-android --mode=release`)
+ * will:
+ *
+ *   1. Run Metro (`@grafana/faro-metro-plugin` skips its own upload in this mode).
+ *   2. Run `hermesc` and `compose-source-maps.js` → produces the composed map at
+ *      `app/build/generated/sourcemaps/react/release/index.android.bundle.map`.
+ *   3. Finalise the bundle task with:
+ *        node node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.js \
+ *          --verbose \
+ *          --map        <composed map path> \
+ *          --endpoint   "$FARO_SOURCEMAP_ENDPOINT" \
+ *          --app-id     "$FARO_SOURCEMAP_APP_ID" \
+ *          --stack-id   "$FARO_SOURCEMAP_STACK_ID" \
+ *          --api-key    "$FARO_SOURCEMAP_API_KEY" \
+ *          --bundle-id  "$FARO_BUNDLE_ID"
+ *      The shim at `bin/faro-upload-source-map.js` forwards the call to
+ *      `faro-cli metro upload`. Gradle reads every required setting from env
+ *      vars and passes them as **explicit CLI arguments**, so the CLI never
+ *      relies on its own env-var resolution from this entry point.
+ *
+ * Required env at build time (Gradle forwards each as a CLI flag):
+ *   FARO_BUNDLE_ID                — same id baked into the JS bundle preamble
+ *                                   (see `metro.config.js`); ensures
+ *                                   `meta.app.bundleId` on the device matches
+ *                                   the uploaded map. Forwarded as --bundle-id.
+ *   FARO_SOURCEMAP_ENDPOINT       — Forwarded as --endpoint.
+ *   FARO_SOURCEMAP_APP_ID         — Forwarded as --app-id.
+ *   FARO_SOURCEMAP_STACK_ID       — Forwarded as --stack-id.
+ *   FARO_SOURCEMAP_API_KEY        — Forwarded as --api-key.
+ *
+ * Optional env at build time:
+ *   FARO_SKIP_SOURCEMAP_UPLOAD=1  — skip the upload (e.g. for offline iteration).
+ *
+ * Why this is a top-level registration:
+ *   Gradle forbids registering new tasks inside `tasks.matching { ... }.configureEach`
+ *   blocks (you'll see a `DefaultTaskContainer#register on task set cannot be executed
+ *   in the current context` error). Registering at the top level and wiring
+ *   `finalizedBy` from `afterEvaluate` is the safe pattern.
+ */
+
+ext.faroComposedAndroidMap = file("$projectDir/build/generated/sourcemaps/react/release/index.android.bundle.map")
+ext.faroAndroidUploadCli = file("$projectDir/../../node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.js")
+ext.faroAndroidJsRoot = file("$projectDir/../..")
+
+def faroUploadComposedSourceMap = tasks.register("faroUploadComposedSourceMapAndroidRelease", Exec) {
+    group = "react"
+    description = "Upload the composed Hermes Android source map to Faro."
+
+    def composedMap = project.ext.faroComposedAndroidMap
+    def cliPath = project.ext.faroAndroidUploadCli
+    def jsRoot = project.ext.faroAndroidJsRoot
+
+    workingDir = jsRoot
+
+    def faroSkip = (System.getenv("FARO_SKIP_SOURCEMAP_UPLOAD") ?: "").trim().toLowerCase()
+    def faroBundleId = (System.getenv("FARO_BUNDLE_ID") ?: "").trim()
+    def faroEndpoint = (System.getenv("FARO_SOURCEMAP_ENDPOINT") ?: "").trim()
+    def faroAppId = (System.getenv("FARO_SOURCEMAP_APP_ID") ?: "").trim()
+    def faroStackId = (System.getenv("FARO_SOURCEMAP_STACK_ID") ?: "").trim()
+    def faroApiKey = (System.getenv("FARO_SOURCEMAP_API_KEY") ?: "").trim()
+
+    // Capture the inputs we use for caching / up-to-date checks. We
+    // deliberately *don't* track FARO_SOURCEMAP_API_KEY in inputs to avoid
+    // Gradle leaking it into a cache-key string.
+    inputs.file(composedMap).withPropertyName("composedMap").optional()
+    inputs.property("faroBundleId", faroBundleId)
+    inputs.property("faroEndpoint", faroEndpoint)
+    inputs.property("faroAppId", faroAppId)
+    inputs.property("faroStackId", faroStackId)
+    inputs.property("faroSkipUpload", faroSkip)
+
+    onlyIf {
+        if (faroSkip == "1" || faroSkip == "true") {
+            logger.lifecycle("[Faro] Skipping composed source map upload (FARO_SKIP_SOURCEMAP_UPLOAD=${faroSkip}).")
+            return false
+        }
+        if (!cliPath.exists()) {
+            logger.warn("[Faro] Skipping composed source map upload — CLI shim not found at ${cliPath}. Run `yarn install` after upgrading @grafana/faro-metro-plugin.")
+            return false
+        }
+        if (!composedMap.exists()) {
+            logger.warn("[Faro] Skipping composed source map upload — ${composedMap} does not exist. Did Hermes precompile run?")
+            return false
+        }
+        def missing = []
+        if (faroBundleId.isEmpty()) missing << "FARO_BUNDLE_ID"
+        if (faroEndpoint.isEmpty()) missing << "FARO_SOURCEMAP_ENDPOINT"
+        if (faroAppId.isEmpty()) missing << "FARO_SOURCEMAP_APP_ID"
+        if (faroStackId.isEmpty()) missing << "FARO_SOURCEMAP_STACK_ID"
+        if (faroApiKey.isEmpty()) missing << "FARO_SOURCEMAP_API_KEY"
+        if (!missing.isEmpty()) {
+            logger.warn("[Faro] Skipping composed source map upload — missing required env vars: ${missing.join(", ")}. Export them before running `yarn android --mode=release`. FARO_BUNDLE_ID must match the id baked into the bundle preamble by @grafana/faro-metro-plugin.")
+            return false
+        }
+        return true
+    }
+
+    commandLine(
+        "node", cliPath.absolutePath,
+        "--verbose",
+        "--map", composedMap.absolutePath,
+        "--endpoint", faroEndpoint,
+        "--app-id", faroAppId,
+        "--stack-id", faroStackId,
+        "--api-key", faroApiKey,
+        "--bundle-id", faroBundleId,
+    )
+}
+
+afterEvaluate {
+    ["bundleReleaseJsAndAssets", "createBundleReleaseJsAndAssets"].each { name ->
+        def bundleTask = tasks.findByName(name)
+        if (bundleTask != null) {
+            bundleTask.finalizedBy(faroUploadComposedSourceMap)
+        }
+    }
+}
