@@ -13,6 +13,12 @@ import path from "path";
 import { ProxyAgent, RequestInit, Response } from "undici";
 import webpack, { Configuration, Stats } from "webpack";
 
+// Prevent git rev-parse from auto-injecting a hash in test environments
+jest.mock('child_process', () => ({
+  ...jest.requireActual<object>('child_process'),
+  execSync: jest.fn(() => { throw new Error('git not available'); }),
+}));
+
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
 mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
@@ -43,19 +49,13 @@ mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => {
-  const actual = jest.requireActual('undici') as object;
-  return {
-    ...actual,
-    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
-      return {
-        proxyUrl,
-        options: { proxy: proxyUrl }
-      };
-    }),
-  };
-});
+jest.mock('undici', () => ({
+  fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
+    proxyUrl,
+    options: { proxy: proxyUrl },
+  })),
+}));
 
 const uploadedFiles: string[] = [];
 const tempDirectories: string[] = [];
@@ -182,6 +182,33 @@ describe("Faro Webpack Plugin", () => {
     // Note: Webpack's exact output format might differ, so we check if it occurs near the beginning
     const firstCharsPos = content.indexOf("__faroBundleId_webpack-test-app");
     expect(firstCharsPos).toBeLessThan(200);
+  });
+
+  test("gitHash snippet is injected when gitHash option is provided", async () => {
+    const { outputDir } = await runWebpack({ bundleId: "test", gitHash: "abc123def456abc123def456abc123def456abc1" });
+
+    const content = await fs.readFile(path.join(outputDir, "main.js"), "utf8");
+    expect(content).toContain(`["__faroGitHash_webpack-test-app"]="abc123def456abc123def456abc123def456abc1"`);
+  });
+
+  test("gitHash snippet is not injected when gitHash option is not provided", async () => {
+    const { outputDir } = await runWebpack({ bundleId: "test" });
+
+    const content = await fs.readFile(path.join(outputDir, "main.js"), "utf8");
+    expect(content).not.toContain("__faroGitHash_webpack-test-app");
+  });
+
+  test("gitHash snippet is prepended before bundleId snippet", async () => {
+    const { outputDir } = await runWebpack({ bundleId: "test", gitHash: "abc123def456abc123def456abc123def456abc1" });
+
+    const content = await fs.readFile(path.join(outputDir, "main.js"), "utf8");
+
+    const gitHashIndex = content.indexOf("__faroGitHash_webpack-test-app");
+    const bundleIdIndex = content.indexOf("__faroBundleId_webpack-test-app");
+
+    expect(gitHashIndex).toBeGreaterThan(-1);
+    expect(bundleIdIndex).toBeGreaterThan(-1);
+    expect(gitHashIndex).toBeLessThan(bundleIdIndex);
   });
 
   test("nested source maps in output directory are not uploaded when recursive is false", async () => {

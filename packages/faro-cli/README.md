@@ -182,6 +182,36 @@ npx faro-cli inject-bundle-id \
 
 > **Web only.** This command is for already-built JavaScript bundles produced by web bundlers that don't already integrate the Faro plugin. The React Native (Metro) flow injects the bundle id at Metro time via `@grafana/faro-metro-plugin`'s preamble, so you don't run `inject-bundle-id` on RN bundles.
 
+### Injecting Git Hash into JavaScript Files
+
+For applications that build without access to a `.git` directory, or in post-build pipelines where you want to stamp already-built JavaScript files with the commit hash, use the `inject-git-hash` command:
+
+```bash
+npx faro-cli inject-git-hash \
+  --app-name "your-app-name" \
+  --files "dist/**/*.js" \
+  --verbose
+```
+
+When `--git-hash` is not provided, the command auto-detects the hash via `git rev-parse HEAD`. If the hash cannot be resolved, the command exits with a non-zero error code.
+
+**Explicit hash for CI:**
+
+```bash
+npx faro-cli inject-git-hash \
+  --git-hash "$GITHUB_SHA" \
+  --app-name "your-app-name" \
+  --files "dist/**/*.js"
+```
+
+#### Options
+
+- `--git-hash, -g`: Git commit hash to inject. Auto-detected via `git rev-parse HEAD` if not provided; exits with error if unresolvable.
+- `--app-name, -n`: Application name used in the git hash snippet (required)
+- `--files, -f`: File patterns to match (glob patterns supported)
+- `--verbose, -v`: Enable verbose logging
+- `--dry-run, -d`: Print which files would be modified without making changes
+
 ### Using with Bundler Plugins
 
 When using with the Faro bundler plugins, you can set the `skipUpload` option to `true` in the plugin configuration to skip uploading source maps during the build process and instead use the CLI to upload them later.
@@ -362,6 +392,14 @@ This will output a curl command that you can copy and run manually.
 - `-i, --max-upload-size <size>`: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
 - `-x, --proxy <url>`: Proxy URL to use for cURL requests (optional)
 - `-U, --proxy-user <user:password>`: Username and password for proxy authentication (optional)
+
+### inject-git-hash Command
+
+- `-g, --git-hash <hash>`: Git commit hash to inject (auto-detected via `git rev-parse HEAD` if not provided; exits with error if unresolvable)
+- `-n, --app-name <name>`: Application name used in the git hash snippet (required)
+- `-f, --files <patterns...>`: File patterns to match (glob patterns supported)
+- `-v, --verbose`: Enable verbose logging (default: false)
+- `-d, --dry-run`: Print which files would be modified without making changes (default: false)
 
 ### Curl Command
 

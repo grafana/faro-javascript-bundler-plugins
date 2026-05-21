@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { uploadSourceMaps, generateCurlCommand, injectBundleId } from './index';
+import { uploadSourceMaps, generateCurlCommand, injectBundleId, injectGitHash } from './index';
 import { runMetroUpload } from './metro';
-import { consoleInfoOrange, exportBundleIdToFile, JS_SOURCEMAP_PATTERN, randomString, cleanAppName } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, exportBundleIdToFile, JS_SOURCEMAP_PATTERN, randomString, cleanAppName, resolveGitHash } from '@grafana/faro-bundlers-shared';
 import path from 'path';
 import fs from 'fs';
 import { glob } from 'glob';
@@ -261,6 +261,80 @@ Example:
 
         // Export bundleId to environment variable for potential later use
         exportBundleIdToFile(bundleId, options.appName, options.verbose);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      process.exit(1);
+    }
+  });
+
+program
+  .command('inject-git-hash')
+  .description('Inject a git commit hash snippet into JavaScript bundle files')
+  .requiredOption('-n, --app-name <name>', 'Application name used in the git hash snippet')
+  .option('-f, --files <patterns...>', 'File patterns to match (glob patterns are supported)', JS_SOURCEMAP_PATTERN.toString())
+  .option('-g, --git-hash <hash>', 'Git commit hash to inject (auto-detected via git rev-parse HEAD if not provided)')
+  .option('-v, --verbose', 'Enable verbose logging', false)
+  .option('-d, --dry-run', 'Only print which files would be modified without making changes', false)
+  .addHelpText('after', `
+Example:
+  # Auto-detect git hash and inject into all JS files in the dist folder
+  $ faro-cli inject-git-hash -n myapp -f 'dist/**/*.js'
+
+  # Inject an explicit hash (e.g. from CI environment)
+  $ faro-cli inject-git-hash -g $GITHUB_SHA -n myapp -f 'dist/**/*.js'
+
+  # Dry run to see which files would be modified
+  $ faro-cli inject-git-hash -n myapp -f 'dist/**/*.js' -d -v`)
+  .action(async (options: {
+    gitHash?: string;
+    appName: string;
+    files: string[];
+    verbose: boolean;
+    dryRun: boolean;
+  }) => {
+    try {
+      const gitHash = resolveGitHash(options.gitHash);
+
+      if (!gitHash) {
+        console.error('Error: Could not resolve git hash. Provide it explicitly with --git-hash.');
+        process.exit(1);
+      }
+
+      const matchedFiles: string[] = [];
+
+      for (const pattern of options.files) {
+        const files = await glob(pattern);
+        if (files.length === 0 && options.verbose) {
+          consoleInfoOrange(`Warning: No files matched pattern '${pattern}'`);
+        }
+        matchedFiles.push(...files);
+      }
+
+      if (matchedFiles.length === 0) {
+        console.error('Error: No files matched the provided patterns');
+        process.exit(1);
+      }
+
+      options.verbose && consoleInfoOrange(`Found ${matchedFiles.length} files to process`);
+
+      const results = await injectGitHash(gitHash, options.appName, matchedFiles, {
+        verbose: options.verbose,
+        dryRun: options.dryRun,
+      });
+
+      const modifiedCount = results.filter((r) => r.modified).length;
+      const errorCount = results.filter((r) => r.error).length;
+
+      if (options.dryRun) {
+        consoleInfoOrange(`Would modify ${modifiedCount} of ${matchedFiles.length} files`);
+      } else {
+        consoleInfoOrange(`Modified ${modifiedCount} of ${matchedFiles.length} files`);
+      }
+
+      if (errorCount > 0) {
+        console.error(`Error: ${errorCount} file(s) failed to inject git hash`);
+        process.exit(1);
       }
     } catch (err) {
       console.error('Error:', err);

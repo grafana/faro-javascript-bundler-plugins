@@ -6,6 +6,12 @@ import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
 
+// Prevent git rev-parse from auto-injecting a hash in test environments
+jest.mock('child_process', () => ({
+  ...jest.requireActual<object>('child_process'),
+  execSync: jest.fn(() => { throw new Error('git not available'); }),
+}));
+
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
 mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
@@ -17,19 +23,13 @@ mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => {
-  const actual = jest.requireActual('undici') as object;
-  return {
-    ...actual,
-    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
-      return {
-        proxyUrl,
-        options: { proxy: proxyUrl }
-      };
-    }),
-  };
-});
+jest.mock('undici', () => ({
+  fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
+    proxyUrl,
+    options: { proxy: proxyUrl },
+  })),
+}));
 // Helper to create a run rollup with custom config
 const runRollup = async (customConfig: Record<string, unknown> = {}, outputConfig: Record<string, unknown> = {}) => {
   const bundle = await rollup({
@@ -104,6 +104,30 @@ describe('Faro Rollup Plugin', () => {
       /^\(function\(\)\{try\{var g=typeof globalThis!=="undefined"\?globalThis:typeof global!=="undefined"\?global:typeof window!=="undefined"\?window:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_rollup-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
 
     expect(output.output[0].code).toMatch(bundleIdRegex);
+  });
+
+  test('gitHash snippet is injected when gitHash option is provided', async () => {
+    const output = await runRollup({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+
+    expect(output.output[0].code).toContain(`g["__faroGitHash_rollup-test-app"]="abc123def456abc123def456abc123def456abc1"`);
+  });
+
+  test('gitHash snippet is not injected when gitHash option is not provided', async () => {
+    const output = await runRollup({ bundleId: 'test' });
+
+    expect(output.output[0].code).not.toContain('__faroGitHash_rollup-test-app');
+  });
+
+  test('gitHash snippet is prepended before bundleId snippet', async () => {
+    const output = await runRollup({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+    const code = output.output[0].code;
+
+    const gitHashIndex = code.indexOf('__faroGitHash_rollup-test-app');
+    const bundleIdIndex = code.indexOf('__faroBundleId_rollup-test-app');
+
+    expect(gitHashIndex).toBeGreaterThan(-1);
+    expect(bundleIdIndex).toBeGreaterThan(-1);
+    expect(gitHashIndex).toBeLessThan(bundleIdIndex);
   });
 
   test('proxy option with authentication is passed correctly', async () => {

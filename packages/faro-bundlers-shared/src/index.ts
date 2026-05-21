@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { execSync } from "child_process";
 import fs from "fs";
 import { create } from "tar";
 import ansi from "ansis";
@@ -23,6 +24,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   proxy?: string; // Proxy URL to use for source map uploads (e.g., "http://proxy.example.com:8080" or "http://user:pass@proxy.example.com:8080")
   prefixPath?: string; // Prefix to prepend to the file property in source maps (e.g., "_next/" or "robo/assets/")
   prefixPathBasenameOnly?: boolean; // When true, strips the directory path from the file property before prepending prefixPath (useful for flat CDN uploads)
+  gitHash?: string;
 }
 
 interface UploadSourceMapOptions {
@@ -306,8 +308,39 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
  * `window`-first order broke React Native Hermes when `window` exists but is not `globalThis`.
  */
 export const faroBundleIdSnippet = (bundleId: string, appName: string) => {
-  return `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g["__faroBundleId_${appName}"]="${bundleId}"}catch(l){}})();`;
+  const key = JSON.stringify(`__faroBundleId_${appName}`);
+  const value = JSON.stringify(bundleId);
+  return `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
 };
+
+export const faroGitHashSnippet = (gitHash: string, appName: string) => {
+  const key = JSON.stringify(`__faroGitHash_${appName}`);
+  const value = JSON.stringify(gitHash);
+  return `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g[${key}]=${value}}catch(l){}})();`;
+};
+
+const GIT_SHA_PATTERN = /^[0-9a-f]{40}$/;
+
+export function resolveGitHash(gitHash?: string): string | undefined {
+  if (gitHash && GIT_SHA_PATTERN.test(gitHash)) {
+    return gitHash;
+  }
+
+  try {
+    const hash = execSync("git rev-parse HEAD", {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 5000,
+    }).trim();
+    if (GIT_SHA_PATTERN.test(hash)) {
+      return hash;
+    }
+  } catch {
+    // git unavailable or not in a repo — fall through
+  }
+
+  return undefined;
+}
 
 export function randomString(length?: number): string {
   return crypto.randomBytes(length ?? 10).toString("hex");
