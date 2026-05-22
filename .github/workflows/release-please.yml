@@ -49,13 +49,6 @@ jobs:
       id-token: write
     if: ${{ needs.release-please.outputs.releases_created }}
     steps:
-      - id: get-secrets
-        name: get secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@0a7a2fc07560de0f2fe500ed9fd1f53ec7d86d33
-        with:
-          repo_secrets: |
-            NPM_TOKEN=npm:token
-
       - name: Checkout
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
         with:
