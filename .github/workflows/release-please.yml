@@ -131,7 +131,11 @@ jobs:
       - name: Build production bundle
         run: yarn build
 
-      - name: Install npm latest version # needed for Trusted Publishing
+      # Trusted Publishing requires npm >= 11.5.1. Pin to the 11.x range
+      # rather than `npm@latest` so a future npm major (with potentially
+      # stricter Node engine requirements or other breaking changes) can't
+      # break the publish job unannounced.
+      - name: Install npm with Trusted Publishing support
         run: npm install -g npm@latest
 
       - name: Publish package to NPM
