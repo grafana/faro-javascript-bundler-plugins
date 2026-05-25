@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.12.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.11.1...faro-webpack-plugin-v0.12.0) (2026-05-25)
+
+
+### Features
+
+* add faro metro plugin support for react native ([#541](https://github.com/grafana/faro-javascript-bundler-plugins/issues/541)) ([bbde065](https://github.com/grafana/faro-javascript-bundler-plugins/commit/bbde065c76cc8de711c4497a1c6b889d6981e548))
+* **plugins:** inject git commit hash into bundles at build time ([#533](https://github.com/grafana/faro-javascript-bundler-plugins/issues/533)) ([20226d9](https://github.com/grafana/faro-javascript-bundler-plugins/commit/20226d92bbcc7f18c9de7975972f1da89169bd4f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.10.1 to ^0.11.0
+
 ## [0.11.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.11.0...faro-webpack-plugin-v0.11.1) (2026-05-14)
 
 
