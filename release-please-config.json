@@ -26,6 +26,10 @@
     "packages/faro-esbuild": {
       "changelog-path": "CHANGELOG.md",
       "release-type": "node"
+    },
+    "packages/faro-metro-plugin": {
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node"
     }
   },
   "include-v-in-tag": true,

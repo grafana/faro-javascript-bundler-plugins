@@ -3,5 +3,6 @@
   "packages/faro-cli": "0.9.1",
   "packages/faro-esbuild": "0.5.1",
   "packages/faro-rollup": "0.10.1",
-  "packages/faro-webpack": "0.11.1"
+  "packages/faro-webpack": "0.11.1",
+  "packages/faro-metro-plugin": "0.1.0"
 }
