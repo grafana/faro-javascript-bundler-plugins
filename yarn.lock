@@ -857,7 +857,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-modules-systemjs@npm:^7.29.0, @babel/plugin-transform-modules-systemjs@npm:^7.29.4":
+"@babel/plugin-transform-modules-systemjs@npm:^7.29.4":
   version: 7.29.4
   resolution: "@babel/plugin-transform-modules-systemjs@npm:7.29.4"
   dependencies:
@@ -1174,87 +1174,6 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0
   checksum: 10/423971fe2eef9d18782b1c30f5f42613ee510e5b9c08760c5538a0997b36c34495acce261e0e37a27831f81330359230bd1f33c2e1822de70241002b45b7d68e
-  languageName: node
-  linkType: hard
-
-"@babel/preset-env@npm:7.29.3":
-  version: 7.29.3
-  resolution: "@babel/preset-env@npm:7.29.3"
-  dependencies:
-    "@babel/compat-data": "npm:^7.29.3"
-    "@babel/helper-compilation-targets": "npm:^7.28.6"
-    "@babel/helper-plugin-utils": "npm:^7.28.6"
-    "@babel/helper-validator-option": "npm:^7.27.1"
-    "@babel/plugin-bugfix-firefox-class-in-computed-class-key": "npm:^7.28.5"
-    "@babel/plugin-bugfix-safari-class-field-initializer-scope": "npm:^7.27.1"
-    "@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression": "npm:^7.27.1"
-    "@babel/plugin-bugfix-safari-rest-destructuring-rhs-array": "npm:^7.29.3"
-    "@babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining": "npm:^7.27.1"
-    "@babel/plugin-bugfix-v8-static-class-fields-redefine-readonly": "npm:^7.28.6"
-    "@babel/plugin-proposal-private-property-in-object": "npm:7.21.0-placeholder-for-preset-env.2"
-    "@babel/plugin-syntax-import-assertions": "npm:^7.28.6"
-    "@babel/plugin-syntax-import-attributes": "npm:^7.28.6"
-    "@babel/plugin-syntax-unicode-sets-regex": "npm:^7.18.6"
-    "@babel/plugin-transform-arrow-functions": "npm:^7.27.1"
-    "@babel/plugin-transform-async-generator-functions": "npm:^7.29.0"
-    "@babel/plugin-transform-async-to-generator": "npm:^7.28.6"
-    "@babel/plugin-transform-block-scoped-functions": "npm:^7.27.1"
-    "@babel/plugin-transform-block-scoping": "npm:^7.28.6"
-    "@babel/plugin-transform-class-properties": "npm:^7.28.6"
-    "@babel/plugin-transform-class-static-block": "npm:^7.28.6"
-    "@babel/plugin-transform-classes": "npm:^7.28.6"
-    "@babel/plugin-transform-computed-properties": "npm:^7.28.6"
-    "@babel/plugin-transform-destructuring": "npm:^7.28.5"
-    "@babel/plugin-transform-dotall-regex": "npm:^7.28.6"
-    "@babel/plugin-transform-duplicate-keys": "npm:^7.27.1"
-    "@babel/plugin-transform-duplicate-named-capturing-groups-regex": "npm:^7.29.0"
-    "@babel/plugin-transform-dynamic-import": "npm:^7.27.1"
-    "@babel/plugin-transform-explicit-resource-management": "npm:^7.28.6"
-    "@babel/plugin-transform-exponentiation-operator": "npm:^7.28.6"
-    "@babel/plugin-transform-export-namespace-from": "npm:^7.27.1"
-    "@babel/plugin-transform-for-of": "npm:^7.27.1"
-    "@babel/plugin-transform-function-name": "npm:^7.27.1"
-    "@babel/plugin-transform-json-strings": "npm:^7.28.6"
-    "@babel/plugin-transform-literals": "npm:^7.27.1"
-    "@babel/plugin-transform-logical-assignment-operators": "npm:^7.28.6"
-    "@babel/plugin-transform-member-expression-literals": "npm:^7.27.1"
-    "@babel/plugin-transform-modules-amd": "npm:^7.27.1"
-    "@babel/plugin-transform-modules-commonjs": "npm:^7.28.6"
-    "@babel/plugin-transform-modules-systemjs": "npm:^7.29.0"
-    "@babel/plugin-transform-modules-umd": "npm:^7.27.1"
-    "@babel/plugin-transform-named-capturing-groups-regex": "npm:^7.29.0"
-    "@babel/plugin-transform-new-target": "npm:^7.27.1"
-    "@babel/plugin-transform-nullish-coalescing-operator": "npm:^7.28.6"
-    "@babel/plugin-transform-numeric-separator": "npm:^7.28.6"
-    "@babel/plugin-transform-object-rest-spread": "npm:^7.28.6"
-    "@babel/plugin-transform-object-super": "npm:^7.27.1"
-    "@babel/plugin-transform-optional-catch-binding": "npm:^7.28.6"
-    "@babel/plugin-transform-optional-chaining": "npm:^7.28.6"
-    "@babel/plugin-transform-parameters": "npm:^7.27.7"
-    "@babel/plugin-transform-private-methods": "npm:^7.28.6"
-    "@babel/plugin-transform-private-property-in-object": "npm:^7.28.6"
-    "@babel/plugin-transform-property-literals": "npm:^7.27.1"
-    "@babel/plugin-transform-regenerator": "npm:^7.29.0"
-    "@babel/plugin-transform-regexp-modifiers": "npm:^7.28.6"
-    "@babel/plugin-transform-reserved-words": "npm:^7.27.1"
-    "@babel/plugin-transform-shorthand-properties": "npm:^7.27.1"
-    "@babel/plugin-transform-spread": "npm:^7.28.6"
-    "@babel/plugin-transform-sticky-regex": "npm:^7.27.1"
-    "@babel/plugin-transform-template-literals": "npm:^7.27.1"
-    "@babel/plugin-transform-typeof-symbol": "npm:^7.27.1"
-    "@babel/plugin-transform-unicode-escapes": "npm:^7.27.1"
-    "@babel/plugin-transform-unicode-property-regex": "npm:^7.28.6"
-    "@babel/plugin-transform-unicode-regex": "npm:^7.27.1"
-    "@babel/plugin-transform-unicode-sets-regex": "npm:^7.28.6"
-    "@babel/preset-modules": "npm:0.1.6-no-external-plugins"
-    babel-plugin-polyfill-corejs2: "npm:^0.4.15"
-    babel-plugin-polyfill-corejs3: "npm:^0.14.0"
-    babel-plugin-polyfill-regenerator: "npm:^0.6.6"
-    core-js-compat: "npm:^3.48.0"
-    semver: "npm:^6.3.1"
-  peerDependencies:
-    "@babel/core": ^7.0.0-0
-  checksum: 10/723676e883ac22bdf24000aad81a2f0a86e9b17c520423df4d54d34b6e183c8c2609019d745bcbb453bd11d9273aee237e641d2cdc27744ef6a494df96f18fb8
   languageName: node
   linkType: hard
 
@@ -1756,7 +1675,7 @@ __metadata:
   resolution: "@grafana/faro-webpack-plugin@workspace:packages/faro-webpack"
   dependencies:
     "@babel/core": "npm:7.29.0"
-    "@babel/preset-env": "npm:7.29.3"
+    "@babel/preset-env": "npm:7.29.5"
     "@grafana/faro-bundlers-shared": "npm:^0.10.1"
     "@jest/globals": "npm:30.4.1"
     "@rollup/plugin-babel": "npm:6.1.0"

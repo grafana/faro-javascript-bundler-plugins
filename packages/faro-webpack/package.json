@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.29.0",
-    "@babel/preset-env": "7.29.3",
+    "@babel/preset-env": "7.29.5",
     "@jest/globals": "30.4.1",
     "@rollup/plugin-babel": "6.1.0",
     "@rollup/plugin-node-resolve": "16.0.3",
