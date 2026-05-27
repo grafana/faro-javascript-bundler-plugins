@@ -1642,7 +1642,7 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:16.0.3"
     "@rollup/plugin-typescript": "npm:11.1.6"
     "@types/jest": "npm:30.0.0"
-    "@types/node": "npm:24.12.2"
+    "@types/node": "npm:24.12.4"
     cross-fetch: "npm:^4.0.0"
     jest: "npm:30.4.2"
     metro: "npm:0.83.6"
@@ -3437,15 +3437,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~7.21.0"
   checksum: 10/1b11c865ea517ab90af870c2f58c100804e3dd8dc25a62b5e5af3aea12ad015f9faf513664babc7e0c755bb1c0744649b2ff19b7b434c1648ad8057f2dc6c71a
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:24.12.2":
-  version: 24.12.2
-  resolution: "@types/node@npm:24.12.2"
-  dependencies:
-    undici-types: "npm:~7.16.0"
-  checksum: 10/99b9f15e67a4b3c39b39ad83ee0febad7f0b4709c004863104d7acfa4146dd7e58c12a08a9a7ff2be8c2eefd0063bf991fade0879d7c4a370a0ee7fd4c799e8a
   languageName: node
   linkType: hard
 
