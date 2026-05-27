@@ -30,7 +30,7 @@
     "@types/node": "24.12.4",
     "babel-jest": "30.4.1",
     "jest": "30.4.2",
-    "ts-jest": "29.4.9"
+    "ts-jest": "29.4.11"
   },
   "files": [
     "dist",
