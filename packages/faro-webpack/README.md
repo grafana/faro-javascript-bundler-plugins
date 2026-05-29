@@ -84,6 +84,7 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `outputPath: string` *optional*: Override the output directory path where source maps are located, by default uses Webpack's output.path
 - `outputFiles: string[] | RegExp` *optional*: An array of source map files to upload or a regex pattern to match files, by default Faro uploads all source maps
 - `bundleId: string` *optional*: The ID of the bundle/build, by default auto-generated, or specify an ID to filter by bundle ID in Frontend Observability
+- `gitHash: string` *optional*: Git commit hash to inject into the bundle as `window.__faroGitHash_<appName>`. Auto-detected via `git rev-parse HEAD` if not provided. Use this to supply an explicit value when Git is unavailable at build time (for example, `process.env.GITHUB_SHA`). If unresolvable, no git hash is injected.
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
 - `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`
 - `verbose: boolean` *optional*: Whether to log verbose output during the upload process, default `false`
@@ -94,6 +95,34 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `prefixPath: string` *optional*: Prefix to prepend to the `file` property in source maps. This is useful when files in the browser appear in a hierarchy different than how the bundler is aware of. For example, if a CDN is used, stack traces might have file paths starting with `cdn/index.js`, but the source map's `file` property only shows `index.js`. By adding the `cdn/` prefix, the source map decoder can correctly match stack traces to source maps. If both `prefixPath` and `nextjs` are provided, they will be combined as `${prefixPath}/_next/`. Examples: `"cdn/"`, `"robo/assets/"`, `"_next/"`
 - `prefixPathBasenameOnly: boolean` *optional*: When `true`, strips any directory path from the source map `file` property before prepending `prefixPath`, keeping only the filename. Useful when assets are deployed flat to a CDN with no subdirectory structure. For example, if the source map's `file` is `assets/index.js` and `prefixPath` is `https://cdn.example.com/assets/`, enabling this option produces `https://cdn.example.com/assets/index.js` instead of `https://cdn.example.com/assets/assets/index.js`. Only applies when `prefixPath` is set. Default `false`.
 - `nextjs: boolean` *optional*: Whether to prepend `_next/` to source map file properties for Next.js compatibility. This should only be needed if your NextJS application has both client and server side code. If your application is only client side, this should not be needed. Default `false`. If both `prefixPath` and `nextjs` are provided, they will be combined as `${prefixPath}/_next/`
+
+### Link errors to commits (Suspect commits)
+
+The plugin injects the current git commit hash into your bundle at build time. The Faro Web SDK reads this value and includes it in every telemetry payload, enabling Frontend Observability to associate errors with the commit that introduced them.
+
+Resolution order:
+1. Explicit `gitHash` option
+2. Auto-detected via `git rev-parse HEAD`
+
+**Default (auto-detection)** — works in most local and CI environments with a `.git` directory:
+
+```javascript
+new FaroSourceMapUploaderPlugin({
+  // ... required options
+  // gitHash is auto-detected from git rev-parse HEAD
+});
+```
+
+**Explicit override** — use when `HEAD` is a synthetic merge commit (GitHub Actions `pull_request` events) or `.git` is unavailable:
+
+```javascript
+new FaroSourceMapUploaderPlugin({
+  // ... required options
+  gitHash: process.env.GITHUB_SHA,      // GitHub Actions
+  // gitHash: process.env.GIT_COMMIT,   // Jenkins
+  // gitHash: process.env.CI_COMMIT_SHA, // GitLab CI
+});
+```
 
 After initial configuration, the Faro JavaScript bundler plugins automatically uploads your source maps to Grafana Cloud when you build your application. You can verify that the source maps upload successfully by in the "Settings" -> "Source Maps" tab in the Frontend Observability plugin. From there you are able to see the source maps that you have uploaded.
 

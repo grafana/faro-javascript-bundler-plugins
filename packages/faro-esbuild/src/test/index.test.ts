@@ -6,6 +6,12 @@ import fs from 'fs';
 import { jest } from '@jest/globals';
 import { Mock } from 'jest-mock';
 
+// Prevent git rev-parse from auto-injecting a hash in test environments
+jest.mock('child_process', () => ({
+  ...jest.requireActual<object>('child_process'),
+  execSync: jest.fn(() => { throw new Error('git not available'); }),
+}));
+
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
 mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
@@ -17,19 +23,13 @@ mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => {
-  const actual = jest.requireActual('undici') as object;
-  return {
-    ...actual,
-    fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-    ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => {
-      return {
-        proxyUrl,
-        options: { proxy: proxyUrl }
-      };
-    }),
-  };
-});
+jest.mock('undici', () => ({
+  fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
+  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
+    proxyUrl,
+    options: { proxy: proxyUrl },
+  })),
+}));
 
 // helper to run esbuild with custom config
 const runEsbuild = async (customConfig: Record<string, unknown> = {}, buildOptions: Record<string, unknown> = {}) => {
@@ -81,7 +81,11 @@ describe('Faro Esbuild Plugin', () => {
   test('basic bundleId injection test', async () => {
     const { code } = await runEsbuild({ bundleId: 'test' });
 
-    expect(code.startsWith(`(function(){try{var g=typeof window!=="undefined"?window:typeof global!=="undefined"?global:typeof self!=="undefined"?self:{};g["__faroBundleId_esbuild-test-app"]="test"`)).toBeTruthy();
+    expect(
+      code.startsWith(
+        `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g["__faroBundleId_esbuild-test-app"]="test"`
+      )
+    ).toBeTruthy();
   });
 
   test('custom bundleId is correctly injected', async () => {
@@ -117,9 +121,33 @@ describe('Faro Esbuild Plugin', () => {
     const { code } = await runEsbuild({ bundleId: 'test' });
 
     // create a simple regex to check code starts with the bundle ID snippet
-    const bundleIdRegex = /^\(function\(\)\{try\{var g=typeof window!=="undefined"\?window:typeof global!=="undefined"\?global:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_esbuild-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
+    const bundleIdRegex =
+      /^\(function\(\)\{try\{var g=typeof globalThis!=="undefined"\?globalThis:typeof global!=="undefined"\?global:typeof window!=="undefined"\?window:typeof self!=="undefined"\?self:\{\};g\["__faroBundleId_esbuild-test-app"\]="test"\}catch\(l\)\{\}\}\)\(\);/;
 
     expect(code).toMatch(bundleIdRegex);
+  });
+
+  test('gitHash snippet is injected when gitHash option is provided', async () => {
+    const { code } = await runEsbuild({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+
+    expect(code).toContain(`g["__faroGitHash_esbuild-test-app"]="abc123def456abc123def456abc123def456abc1"`);
+  });
+
+  test('gitHash snippet is not injected when gitHash option is not provided', async () => {
+    const { code } = await runEsbuild({ bundleId: 'test' });
+
+    expect(code).not.toContain('__faroGitHash_esbuild-test-app');
+  });
+
+  test('gitHash snippet is prepended before bundleId snippet', async () => {
+    const { code } = await runEsbuild({ bundleId: 'test', gitHash: 'abc123def456abc123def456abc123def456abc1' });
+
+    const gitHashIndex = code.indexOf('__faroGitHash_esbuild-test-app');
+    const bundleIdIndex = code.indexOf('__faroBundleId_esbuild-test-app');
+
+    expect(gitHashIndex).toBeGreaterThan(-1);
+    expect(bundleIdIndex).toBeGreaterThan(-1);
+    expect(gitHashIndex).toBeLessThan(bundleIdIndex);
   });
 
   test('banner string is preserved and bundleId snippet is prepended', async () => {

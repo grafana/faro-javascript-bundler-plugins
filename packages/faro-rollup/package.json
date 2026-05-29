@@ -1,6 +1,5 @@
 {
   "name": "@grafana/faro-rollup-plugin",
-  "packageManager": "yarn@1.22.22",
   "version": "0.10.1",
   "description": "Upload a source map to the Faro source map API from a Rollup build pipeline",
   "main": "dist/cjs/index.js",
@@ -26,7 +25,7 @@
     "@jest/globals": "30.4.1",
     "@types/jest": "30.0.0",
     "jest": "30.4.2",
-    "ts-jest": "29.4.9"
+    "ts-jest": "29.4.11"
   },
   "files": [
     "dist",

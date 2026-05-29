@@ -4,12 +4,14 @@ A collection of plugins for various JavaScript bundlers. Used in conjunction wit
 
 ## Get started
 
-The Faro JavaScript bundler plugins work with the [Faro Web SDK](https://github.com/grafana/faro-web-sdk) and [Grafana Cloud Frontend Observability](https://grafana.com/products/cloud/frontend-observability-for-real-user-monitoring/). To use these bundler plugins, you must first have instrumented your JavaScript application with Faro and be sending your telemetry data to a Faro Collector endpoint in Grafana Cloud. Follow the Frontend Observability [quickstart guide](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/quickstart/javascript/) to get started.
+The Faro JavaScript bundler plugins work with the [Faro Web SDK](https://github.com/grafana/faro-web-sdk), the [Faro React Native SDK](https://github.com/grafana/faro-react-native-sdk), and [Grafana Cloud Frontend Observability](https://grafana.com/products/cloud/frontend-observability-for-real-user-monitoring/). To use these bundler plugins, you must first have instrumented your JavaScript or React Native application with Faro and be sending your telemetry data to a Faro Collector endpoint in Grafana Cloud. Follow the Frontend Observability [quickstart guide](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/quickstart/javascript/) to get started.
 
 After you have an instrumented JavaScript application sending data to Grafana Cloud, you are ready to get started.
 
 > [!NOTE]
 > The Faro JavaScript bundler plugins work with client-side rendered applications. Server-side rendering isn't yet supported.
+>
+> For **React Native**, use the Metro plugin below with [@grafana/faro-react-native](https://github.com/grafana/faro-react-native-sdk).
 
 ---
 
@@ -51,6 +53,24 @@ To install the Rollup/Vite plugin with `yarn`, run:
 ```bash
 yarn add --dev @grafana/faro-rollup-plugin
 ```
+
+### Metro (React Native)
+
+Use this plugin with **Metro** to inject a Faro bundle id into release bundles, emit Hermes-compatible source maps where applicable, and upload maps to Grafana Cloud (same auth model as the other plugins).
+
+To install the Metro plugin with `npm`, run:
+
+```bash
+npm install --save-dev @grafana/faro-metro-plugin
+```
+
+To install the Metro plugin with `yarn`, run:
+
+```bash
+yarn add --dev @grafana/faro-metro-plugin
+```
+
+For environment variables (`FARO_SOURCEMAP_API_KEY`, `FARO_BUNDLE_ID`, optional `FARO_SKIP_SOURCEMAP_UPLOAD`), iOS vs Android bundle filenames, and Hermes `sourceMapFile` alignment with `releaseBundleFilename`, see the [Metro plugin README](packages/faro-metro-plugin/README.md).
 
 ## Obtaining API key
 
@@ -125,6 +145,35 @@ export default defineConfig(({ mode }) => {
 });
 ```
 
+### Metro (React Native)
+
+To use the Metro plugin, wrap your config in `metro.config.js` (typically with `@react-native/metro-config`). Uploads are skipped for development builds unless you override `skipUpload`.
+
+```javascript
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const withFaroConfig = require('@grafana/faro-metro-plugin').default;
+
+module.exports = mergeConfig(
+  getDefaultConfig(__dirname),
+  withFaroConfig(
+    {},
+    {
+      appName: '$your-app-name',
+      // this URL is different from the Faro Collector URL - find this value in the Frontend Observability plugin under "Settings" -> "Source Maps" tab
+      endpoint: '$your-faro-sourcemap-api-url',
+      apiKey: process.env.FARO_SOURCEMAP_API_KEY,
+      appId: '$your-app-id',
+      stackId: '$your-stack-id',
+      bundleId: process.env.FARO_BUNDLE_ID,
+      gzipContents: true,
+      verbose: false,
+    }
+  )
+);
+```
+
+See the [Metro plugin README](packages/faro-metro-plugin/README.md) for CLI sanity checks (`react-native bundle`) and optional `sourceMapFile`.
+
 ### Configuration Options
 
 The following options are available for the Faro JavaScript bundler plugins:
@@ -173,6 +222,8 @@ yarn add --dev @grafana/faro-cli
 
 When using with the Faro bundler plugins, you can set the `skipUpload` option to `true` in the plugin configuration to skip uploading source maps during the build process and instead use the CLI to upload them later.
 
+**Web (Webpack / Vite / Rollup / Rspack):**
+
 ```bash
 npx faro-cli upload \
   --endpoint "https://faro-collector-prod-us-east-0.grafana.net" \
@@ -181,6 +232,19 @@ npx faro-cli upload \
   --stack-id "your-stack-id" \
   --bundle-id "your-bundle-id" \
   --output-path "./dist" \
+  --verbose
+```
+
+**React Native (Metro):** pass one `.map` with `--map` (your Gradle/Xcode hook or CI supplies the path). `--bundle-id` must match the id `@grafana/faro-metro-plugin` baked into the shipped bundle.
+
+```bash
+npx faro-cli metro upload \
+  --map "path/to/your.map" \
+  --endpoint "$FARO_SOURCEMAP_ENDPOINT" \
+  --app-id   "$FARO_SOURCEMAP_APP_ID" \
+  --stack-id "$FARO_SOURCEMAP_STACK_ID" \
+  --api-key  "$FARO_SOURCEMAP_API_KEY" \
+  --bundle-id "$FARO_BUNDLE_ID" \
   --verbose
 ```
 

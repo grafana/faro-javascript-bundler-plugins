@@ -76,6 +76,19 @@ describe('injectBundleId', () => {
     expect(content).not.toContain(bundleId);
   });
 
+  it('does not skip files that only contain the key name without a string assignment', async () => {
+    // A file that mentions the key in a comment but has no real assignment should still be injected
+    const bundleId = 'new-bundle-id';
+    const appName = 'testapp';
+    const commentOnlyFile = path.join(testDir, 'comment-only.js');
+    fs.writeFileSync(commentOnlyFile, '// __faroBundleId_testapp is used here\nconsole.log("hi");');
+    testFiles.push(commentOnlyFile);
+
+    const results = await injectBundleId(bundleId, appName, [commentOnlyFile]);
+
+    expect(results[0].modified).toBe(true);
+  });
+
   it('respects dry run mode', async () => {
     const bundleId = 'dry-run-test-id';
     const appName = 'testapp';
