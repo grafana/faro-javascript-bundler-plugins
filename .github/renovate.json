@@ -4,45 +4,41 @@
     "config:recommended",
     "github>grafana/grafana-renovate-config//presets/plugin-ci-workflows"
   ],
+  "schedule": [
+    "before 5am on Monday",
+    "before 5am on Wednesday",
+    "before 5am on Friday"
+  ],
+  "semanticCommits": "enabled",
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "prHourlyLimit": 2,
+  "prConcurrentLimit": 10,
   "packageRules": [
     {
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "digest"
-      ],
-      "automerge": true
+      "description": "Group npm dependencies",
+      "matchManagers": ["npm"],
+      "groupName": "npm-dependencies"
     },
     {
-      "description": "Label patch updates",
-      "matchUpdateTypes": [
-        "patch"
-      ],
-      "labels": [
-        "automerge-patch",
-        "dependencies"
-      ]
+      "description": "Group GitHub Actions dependencies",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions"
     },
     {
-      "description": "Label minor updates",
-      "matchUpdateTypes": [
-        "minor"
-      ],
-      "labels": [
-        "automerge-minor",
-        "dependencies"
-      ]
+      "description": "Auto-merge patch updates only",
+      "matchUpdateTypes": ["patch"],
+      "automerge": true,
+      "labels": ["dependencies"]
     },
     {
-      "description": "Label digest updates",
-      "matchUpdateTypes": [
-        "digest"
-      ],
-      "labels": [
-        "automerge-digest",
-        "dependencies"
-      ]
+      "description": "Prioritize security updates",
+      "matchDatasources": ["npm"],
+      "vulnerabilityAlerts": {
+        "enabled": true
+      },
+      "labels": ["security"],
+      "prPriority": 10
     }
   ]
 }
