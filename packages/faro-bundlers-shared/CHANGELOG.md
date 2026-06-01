@@ -6,6 +6,14 @@
 
 * `shouldProcessFile` / `JS_SOURCEMAP_PATTERN`: accept React Native Android/iOS bundle maps (`*.bundle.map`, `*.jsbundle.map`) so Metro uploads are not silently skipped when `sourceMapFile` uses names like `index.android.bundle`.
 
+## [0.11.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.10.1...faro-bundlers-shared-v0.11.0) (2026-06-01)
+
+
+### Features
+
+* add faro metro plugin support for react native ([#541](https://github.com/grafana/faro-javascript-bundler-plugins/issues/541)) ([bbde065](https://github.com/grafana/faro-javascript-bundler-plugins/commit/bbde065c76cc8de711c4497a1c6b889d6981e548))
+* **plugins:** inject git commit hash into bundles at build time ([#533](https://github.com/grafana/faro-javascript-bundler-plugins/issues/533)) ([20226d9](https://github.com/grafana/faro-javascript-bundler-plugins/commit/20226d92bbcc7f18c9de7975972f1da89169bd4f))
+
 ## [0.10.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.10.0...faro-bundlers-shared-v0.10.1) (2026-05-14)
 
 

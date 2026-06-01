@@ -1581,7 +1581,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-bundlers-shared@npm:^0.10.0, @grafana/faro-bundlers-shared@npm:^0.10.1, @grafana/faro-bundlers-shared@workspace:packages/faro-bundlers-shared":
+"@grafana/faro-bundlers-shared@npm:^0.11.0, @grafana/faro-bundlers-shared@workspace:packages/faro-bundlers-shared":
   version: 0.0.0-use.local
   resolution: "@grafana/faro-bundlers-shared@workspace:packages/faro-bundlers-shared"
   dependencies:
@@ -1598,7 +1598,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-cli@workspace:packages/faro-cli"
   dependencies:
-    "@grafana/faro-bundlers-shared": "npm:^0.10.1"
+    "@grafana/faro-bundlers-shared": "npm:^0.11.0"
     "@jest/globals": "npm:30.4.1"
     "@rollup/plugin-typescript": "npm:11.1.6"
     "@types/glob": "npm:9.0.0"
@@ -1620,7 +1620,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-esbuild-plugin@workspace:packages/faro-esbuild"
   dependencies:
-    "@grafana/faro-bundlers-shared": "npm:^0.10.1"
+    "@grafana/faro-bundlers-shared": "npm:^0.11.0"
     "@jest/globals": "npm:30.4.1"
     "@types/jest": "npm:30.0.0"
     esbuild: "npm:^0.28.0"
@@ -1633,7 +1633,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-metro-plugin@workspace:packages/faro-metro-plugin"
   dependencies:
-    "@grafana/faro-bundlers-shared": "npm:^0.10.0"
+    "@grafana/faro-bundlers-shared": "npm:^0.11.0"
     "@grafana/faro-cli": "npm:^0.10.0"
     "@jest/globals": "npm:30.4.1"
     "@rollup/plugin-babel": "npm:6.1.0"
@@ -1660,7 +1660,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-rollup-plugin@workspace:packages/faro-rollup"
   dependencies:
-    "@grafana/faro-bundlers-shared": "npm:^0.10.1"
+    "@grafana/faro-bundlers-shared": "npm:^0.11.0"
     "@jest/globals": "npm:30.4.1"
     "@types/jest": "npm:30.0.0"
     jest: "npm:30.4.2"
@@ -1676,7 +1676,7 @@ __metadata:
   dependencies:
     "@babel/core": "npm:7.29.0"
     "@babel/preset-env": "npm:7.29.5"
-    "@grafana/faro-bundlers-shared": "npm:^0.10.1"
+    "@grafana/faro-bundlers-shared": "npm:^0.11.0"
     "@jest/globals": "npm:30.4.1"
     "@rollup/plugin-babel": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:16.0.3"
