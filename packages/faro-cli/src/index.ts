@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
 import { execSync } from 'child_process';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
@@ -81,6 +81,20 @@ const createGzippedFile = (filePath: string): string => {
  * @param maxSize Optional custom max size in bytes (defaults to 30MB)
  * @returns boolean indicating if the file exceeds the size limit
  */
+
+
+const buildUploadHeaders = (url: string, stackId: string, apiKey: string): Record<string, string> => {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${stackId}:${apiKey}`,
+  };
+  if (isLocalEndpoint(url)) {
+    headers['X-Scope-OrgID'] = String(stackId);
+  }
+  return headers;
+};
+
+const CURL_HTTP_STATUS_MARKER = '__FARO_HTTP_STATUS__:';
+
 const exceedsMaxSize = (filePath: string, maxSize?: number): boolean => {
   const { size } = fs.statSync(filePath);
   const maxAllowedSize = maxSize && maxSize > 0 ? maxSize : THIRTY_MB_IN_BYTES;
@@ -140,7 +154,7 @@ const executeCurl = (
     // Build the curl command
     const proxyArg = proxy ? `--proxy "${proxy}"` : '';
     const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}"` : '';
-    const curlCommand = `curl -s -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @${fileToUpload}`;
+    const curlCommand = `curl -sS -w "\n${CURL_HTTP_STATUS_MARKER}%{http_code}" -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @${fileToUpload}`;
 
     // Execute the curl command
     const result = execSync(curlCommand, { encoding: 'utf8' });
@@ -150,9 +164,21 @@ const executeCurl = (
       fs.unlinkSync(tempFile);
     }
 
-    // Check if the response contains an error
-    if (result && result.toLowerCase().includes('error')) {
-      console.error(`Error in cURL response: ${result}`);
+    const markerIndex = result.lastIndexOf(CURL_HTTP_STATUS_MARKER);
+    const body = markerIndex >= 0 ? result.slice(0, markerIndex).trimEnd() : result.trimEnd();
+    const statusText = markerIndex >= 0 ? result.slice(markerIndex + CURL_HTTP_STATUS_MARKER.length).trim() : '';
+    const httpStatus = Number.parseInt(statusText, 10);
+
+    if (!Number.isFinite(httpStatus) || httpStatus < 200 || httpStatus >= 300) {
+      const detail = body.trim();
+      console.error(
+        `Error: source map upload failed with HTTP ${Number.isFinite(httpStatus) ? httpStatus : 'unknown'}${detail ? ` — ${detail}` : ''}`
+      );
+      return false;
+    }
+
+    if (body.toLowerCase().includes('error')) {
+      console.error(`Error in cURL response body: ${body}`);
       return false;
     }
 
@@ -203,7 +229,7 @@ export const uploadSourceMap = async (
     success = executeCurl(
       sourcemapEndpoint,
       filePath,
-      { "Authorization": `Bearer ${stackId}:${apiKey}` },
+      buildUploadHeaders(sourcemapEndpoint, stackId, apiKey),
       "application/json",
       gzipPayload,
       maxUploadSize,
@@ -302,7 +328,7 @@ export const uploadCompressedSourceMaps = async (
     success = executeCurl(
       sourcemapEndpoint,
       tarball,
-      { "Authorization": `Bearer ${stackId}:${apiKey}` },
+      buildUploadHeaders(sourcemapEndpoint, stackId, apiKey),
       "application/gzip",
       false, // Don't gzip again as tarball is already compressed
       maxUploadSize,

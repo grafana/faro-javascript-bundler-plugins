@@ -74,7 +74,7 @@ describe('faro-cli', () => {
     jest.mocked(path.join).mockImplementation((...args: string[]) => args.join('/'));
 
     // Mock child_process
-    jest.mocked(execSync).mockReturnValue('{"success":true}');
+    jest.mocked(execSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
 
     // Mock zlib
     jest.mocked(gzipSync).mockReturnValue(Buffer.from('gzipped content'));
@@ -123,7 +123,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       expect(execSync).toHaveBeenCalledTimes(1);
       expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining(`curl -s -X POST`),
+        expect.stringContaining(`curl -sS`),
         expect.any(Object)
       );
     });
@@ -153,6 +153,18 @@ describe('faro-cli', () => {
         expect.stringContaining('exceeds the maximum allowed size')
       );
       expect(execSync).not.toHaveBeenCalled();
+    });
+
+
+    it('should report non-2xx HTTP status as upload failure', async () => {
+      (execSync as jest.Mock).mockReturnValue('Unauthorized\n__FARO_HTTP_STATUS__:401');
+
+      const result = await uploadSourceMap(mockOptions);
+
+      expect(result).toBe(false);
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('source map upload failed with HTTP 401')
+      );
     });
 
     it('should handle curl execution errors', async () => {

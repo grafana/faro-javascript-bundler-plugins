@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { uploadSourceMaps, generateCurlCommand, injectBundleId, injectGitHash } from './index';
 import { runMetroUpload } from './metro';
+import { runAndroidSymbolsUpload } from './androidSymbols';
 import { consoleInfoOrange, exportBundleIdToFile, JS_SOURCEMAP_PATTERN, randomString, cleanAppName, resolveGitHash } from '@grafana/faro-bundlers-shared';
 import path from 'path';
 import fs from 'fs';
@@ -354,7 +355,10 @@ metro
   .option('-a, --app-id <id>', 'Faro app id (env: FARO_SOURCEMAP_APP_ID)')
   .option('-s, --stack-id <id>', 'Grafana Cloud stack id (env: FARO_SOURCEMAP_STACK_ID)')
   .option('-k, --api-key <key>', 'Bearer API key (env: FARO_SOURCEMAP_API_KEY)')
-  .option('-b, --bundle-id <id>', 'Bundle id matching the shipped JS bundle (env: FARO_BUNDLE_ID)')
+  .option(
+    '-b, --bundle-id <id>',
+    'Bundle id matching the shipped JS bundle (env: FARO_BUNDLE_ID). On Android React Native with com.grafana.faro, omit — Gradle supplies applicationId@versionCode@versionName via @grafana/faro-metro-plugin.',
+  )
   .option('--no-gzip', 'POST the raw .map JSON instead of a gzipped tarball')
   .option('-v, --verbose', 'Verbose logging', false)
   .option('--dry-run', 'Show what would be uploaded and exit', false)
@@ -372,14 +376,15 @@ Examples:
       --api-key  "$FARO_SOURCEMAP_API_KEY" \\
       --bundle-id "$FARO_BUNDLE_ID"
 
-  # Env fallbacks (when the surrounding shell already exports FARO_*)
+  # Env fallbacks (iOS / manual re-upload; Android RN release builds should use Gradle + faro-metro-plugin instead)
   $ FARO_SOURCEMAP_ENDPOINT=… FARO_SOURCEMAP_APP_ID=… FARO_SOURCEMAP_STACK_ID=… \\
-    FARO_SOURCEMAP_API_KEY=…   FARO_BUNDLE_ID=$(git rev-parse HEAD) \\
-    faro-cli metro upload --map path/to/your.map
+    FARO_SOURCEMAP_API_KEY=… faro-cli metro upload --map path/to/your.map --bundle-id "<your-ios-bundle-id>"
 
 Resolution: each connection setting and the bundle id come from the matching
 CLI flag (preferred) or the FARO_* env var (fallback). The path to the map
-is required (--map); this command never tries to construct it.`)
+is required (--map); this command never tries to construct it. On Android,
+prefer ./gradlew assembleRelease with the Faro Gradle plugin so bundle id
+matches R8 symbol uploads without exporting FARO_BUNDLE_ID.`)
   .action(async (options: {
     map: string;
     endpoint?: string;
@@ -407,6 +412,84 @@ is required (--map); this command never tries to construct it.`)
         verbose: !!options.verbose,
         dryRun: !!options.dryRun,
         maxUploadSize: options.maxUploadSize,
+        proxy: options.proxy,
+        proxyUser: options.proxyUser,
+      });
+      if (code !== 0) {
+        process.exit(code);
+      }
+    } catch (err) {
+      console.error('Error:', err instanceof Error ? err.message : err);
+      process.exit(1);
+    }
+  });
+
+const android = program
+  .command('android')
+  .description('Android native crash symbolication commands');
+
+android
+  .command('upload')
+  .description('Upload Android symbol artifacts (R8 mapping.txt and/or native-debug-symbols.zip) to the Faro API')
+  .option('--mapping <path>', 'Path to the R8/ProGuard mapping.txt')
+  .option('--native-symbols <path>', 'Path to the native-debug-symbols.zip')
+  .option('-e, --endpoint <url>', 'Faro API base URL (env: FARO_SOURCEMAP_ENDPOINT)')
+  .option('-a, --app-id <id>', 'Faro app id (env: FARO_SOURCEMAP_APP_ID)')
+  .option('-s, --stack-id <id>', 'Grafana Cloud stack id (env: FARO_SOURCEMAP_STACK_ID)')
+  .option('-k, --api-key <key>', 'Bearer API key (env: FARO_SOURCEMAP_API_KEY)')
+  .option('--application-id <id>', 'Android applicationId (env: FARO_ANDROID_APPLICATION_ID)')
+  .option('--version-code <code>', 'Android versionCode (env: FARO_ANDROID_VERSION_CODE)')
+  .option('--version-name <name>', 'Android versionName (env: FARO_ANDROID_VERSION_NAME)')
+  .option('-v, --verbose', 'Verbose logging', false)
+  .option('--dry-run', 'Show what would be uploaded and exit', false)
+  .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
+  .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
+  .addHelpText('after', `
+Examples:
+  # Upload an R8 mapping and native debug symbols
+  $ faro-cli android upload \\
+      --mapping app/build/outputs/mapping/release/mapping.txt \\
+      --native-symbols app/build/outputs/native-debug-symbols/release/native-debug-symbols.zip \\
+      --endpoint "$FARO_SOURCEMAP_ENDPOINT" \\
+      --app-id   "$FARO_SOURCEMAP_APP_ID" \\
+      --stack-id "$FARO_SOURCEMAP_STACK_ID" \\
+      --api-key  "$FARO_SOURCEMAP_API_KEY" \\
+      --application-id com.grafana.quickpizza \\
+      --version-code 42 \\
+      --version-name 1.0
+
+The encoded bundle id (applicationId@versionCode@versionName) must match meta.app.bundleId on
+app reports in meta.app so the collector can locate this mapping when retracing
+a crash. Connection and identity settings each fall back to the matching FARO_*
+env var. At least one of --mapping or --native-symbols is required.`)
+  .action(async (options: {
+    mapping?: string;
+    nativeSymbols?: string;
+    endpoint?: string;
+    appId?: string;
+    stackId?: string;
+    apiKey?: string;
+    applicationId?: string;
+    versionCode?: string;
+    versionName?: string;
+    verbose: boolean;
+    dryRun: boolean;
+    proxy?: string;
+    proxyUser?: string;
+  }) => {
+    try {
+      const code = await runAndroidSymbolsUpload({
+        mapping: options.mapping,
+        nativeSymbols: options.nativeSymbols,
+        endpoint: options.endpoint,
+        appId: options.appId,
+        stackId: options.stackId,
+        apiKey: options.apiKey,
+        applicationId: options.applicationId,
+        versionCode: options.versionCode,
+        versionName: options.versionName,
+        verbose: !!options.verbose,
+        dryRun: !!options.dryRun,
         proxy: options.proxy,
         proxyUser: options.proxyUser,
       });

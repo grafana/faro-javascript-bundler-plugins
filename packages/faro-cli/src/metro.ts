@@ -4,6 +4,7 @@ import path from 'path';
 import {
   consoleInfoOrange,
   ensureSourceMapFileProperty,
+  isLocalEndpoint,
   THIRTY_MB_IN_BYTES,
 } from '@grafana/faro-bundlers-shared';
 
@@ -209,7 +210,20 @@ export const runMetroUpload = async (opts: MetroUploadOptions): Promise<number> 
       });
 
   if (!ok) {
-    process.stderr.write('\nUpload failed. Re-run with --verbose for the response status.\n');
+    const hints = [
+      'Verify endpoint, app id, stack id, and API key (CLI flags or FARO_SOURCEMAP_* env vars).',
+    ];
+    if (isLocalEndpoint(normalizedEndpoint)) {
+      hints.push('Local stack: confirm the API key matches your Frontend Observability source map upload token.');
+    }
+    hints.push('Re-run with --verbose to see the HTTP status and response body.');
+
+    process.stderr.write(
+      `\n[Faro] ERROR: Metro composed source map upload failed.\n` +
+        `  endpoint : ${sourcemapEndpoint}\n` +
+        `  bundleId : ${bundleId}\n` +
+        hints.map((line) => `  ${line}\n`).join('')
+    );
     return 1;
   }
 

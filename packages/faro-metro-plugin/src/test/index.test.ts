@@ -24,12 +24,29 @@ describe('@grafana/faro-metro-plugin', () => {
     );
   });
 
-  test('resolveBundleId uses env FARO_BUNDLE_ID with trimming via hash when too long', () => {
+  test('resolveBundleId uses Gradle-aligned FARO_BUNDLE_ID from env', () => {
+    const prev = process.env.FARO_BUNDLE_ID;
+    process.env.FARO_BUNDLE_ID = 'com.test.app@42@1.0.0';
+    try {
+      const id = resolveBundleId({}, false, false);
+      expect(id).toBe('com.test.app@42@1.0.0');
+    } finally {
+      if (prev === undefined) {
+        delete process.env.FARO_BUNDLE_ID;
+      } else {
+        process.env.FARO_BUNDLE_ID = prev;
+      }
+    }
+  });
+
+  test('resolveBundleId hashes long env id on iOS (no Android format enforcement)', () => {
     const longId = 'a'.repeat(600);
     const prev = process.env.FARO_BUNDLE_ID;
+    const prevPlatform = process.env.FARO_PLATFORM;
     process.env.FARO_BUNDLE_ID = longId;
+    process.env.FARO_PLATFORM = 'ios';
     try {
-      const id = resolveBundleId(undefined, false, false);
+      const id = resolveBundleId({}, false, false);
       expect(id.length).toBeLessThanOrEqual(512);
       expect(id.length).toBe(32);
     } finally {
@@ -37,6 +54,11 @@ describe('@grafana/faro-metro-plugin', () => {
         delete process.env.FARO_BUNDLE_ID;
       } else {
         process.env.FARO_BUNDLE_ID = prev;
+      }
+      if (prevPlatform === undefined) {
+        delete process.env.FARO_PLATFORM;
+      } else {
+        process.env.FARO_PLATFORM = prevPlatform;
       }
     }
   });
@@ -127,7 +149,7 @@ describe('@grafana/faro-metro-plugin', () => {
     });
 
     test('prepends faro bundle id snippet (release bundle)', async () => {
-      process.env.FARO_BUNDLE_ID = 'release-id-1';
+      process.env.FARO_BUNDLE_ID = 'com.test.app@1@1.0';
       const serializer = createFaroMetroCustomSerializer(null, {
         appName: 'rn-app',
         endpoint: 'http://localhost:8000/faro/api/v1',
@@ -139,7 +161,7 @@ describe('@grafana/faro-metro-plugin', () => {
       const graph = { dependencies: new Map() };
       const out = await serializer('/app/index.js', [], graph, baseOptions());
       expect(out.code).toContain('__faroBundleId_rn-app');
-      expect(out.code).toContain('"release-id-1"');
+      expect(out.code).toContain('"com.test.app@1@1.0"');
       const parsed = JSON.parse(out.map) as { version: number };
       expect(parsed.version).toBe(3);
     });
