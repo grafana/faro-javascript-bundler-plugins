@@ -6,6 +6,8 @@ import fs from 'fs';
 import { jest } from '@jest/globals';
 import { Mock } from 'jest-mock';
 
+const TEST_OUTDIR = path.resolve(process.cwd(), '.test-dist');
+
 // Prevent git rev-parse from auto-injecting a hash in test environments
 jest.mock('child_process', () => ({
   ...jest.requireActual<object>('child_process'),
@@ -33,7 +35,7 @@ jest.mock('undici', () => ({
 
 // helper to run esbuild with custom config
 const runEsbuild = async (customConfig: Record<string, unknown> = {}, buildOptions: Record<string, unknown> = {}) => {
-  const outdir = path.resolve(process.cwd(), 'dist');
+  const outdir = TEST_OUTDIR;
 
   // ensure outdir exists
   if (!fs.existsSync(outdir)) {
@@ -70,10 +72,9 @@ const runEsbuild = async (customConfig: Record<string, unknown> = {}, buildOptio
 
 describe('Faro Esbuild Plugin', () => {
   afterEach(() => {
-    // cleanup dist directory
-    const distDir = path.resolve(process.cwd(), 'dist');
-    if (fs.existsSync(distDir)) {
-      fs.rmSync(distDir, { recursive: true, force: true });
+    // cleanup test output directory
+    if (fs.existsSync(TEST_OUTDIR)) {
+      fs.rmSync(TEST_OUTDIR, { recursive: true, force: true });
     }
     jest.clearAllMocks();
   });
@@ -309,14 +310,14 @@ describe('Faro Esbuild Plugin', () => {
   });
 
   test('prefixPath is prepended to the file property of the sourcemap when prefixPath is provided', async () => {
-    const { mapCode } = await runEsbuild({
+    const { mapCode, outdir } = await runEsbuild({
       bundleId: 'prefixpath-test',
       skipUpload: false,
       keepSourcemaps: true,
       prefixPath: 'robo/assets',
     });
 
-    const outputFiles = fs.readdirSync(path.resolve(process.cwd(), 'dist'));
+    const outputFiles = fs.readdirSync(outdir);
     const mapFile = outputFiles.find(f => f.endsWith('.map'));
     expect(mapFile).toBeTruthy();
 
@@ -327,14 +328,14 @@ describe('Faro Esbuild Plugin', () => {
   });
 
   test('prefixPath with trailing slash is prepended correctly', async () => {
-    const { mapCode } = await runEsbuild({
+    const { mapCode, outdir } = await runEsbuild({
       bundleId: 'prefixpath-slash-test',
       skipUpload: false,
       keepSourcemaps: true,
       prefixPath: 'robo/assets/',
     });
 
-    const outputFiles = fs.readdirSync(path.resolve(process.cwd(), 'dist'));
+    const outputFiles = fs.readdirSync(outdir);
     const mapFile = outputFiles.find(f => f.endsWith('.map'));
     expect(mapFile).toBeTruthy();
 
@@ -345,14 +346,14 @@ describe('Faro Esbuild Plugin', () => {
   });
 
   test('prefixPath is applied when skipUpload is true', async () => {
-    const { mapCode } = await runEsbuild({
+    const { mapCode, outdir } = await runEsbuild({
       bundleId: 'prefixpath-skip-upload-test',
       skipUpload: true,
       keepSourcemaps: true,
       prefixPath: 'robo/assets',
     });
 
-    const outputFiles = fs.readdirSync(path.resolve(process.cwd(), 'dist'));
+    const outputFiles = fs.readdirSync(outdir);
     const mapFile = outputFiles.find(f => f.endsWith('.map'));
     expect(mapFile).toBeTruthy();
 

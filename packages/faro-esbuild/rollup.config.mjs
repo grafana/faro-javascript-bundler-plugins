@@ -15,17 +15,11 @@ export default {
   ],
   output: [
     {
-      file: packageJson.module,
+      file: packageJson.main,
       format: "esm",
       exports: "named",
       sourcemap: true,
-    },
-    {
-      file: packageJson.main,
-      format: "cjs",
-      exports: "named",
-      sourcemap: true,
-    },
+    }
   ],
   plugins: [
     typescript({
