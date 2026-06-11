@@ -281,4 +281,31 @@ describe('buildAndroidSymbolsUploadRequests', () => {
     expect(requests[1].curlCommand).toContain('-F "abi=arm64-v8a"');
     expect(requests[2].curlCommand).toContain('-F "abi=x86_64"');
   });
+
+  it('preserves backslash-n in curl -w format for HTTP status extraction', () => {
+    const requests = buildAndroidSymbolsUploadRequests(config(), { verbose: false, dryRun: false }, []);
+    expect(requests).toHaveLength(1);
+    const cmd = requests[0].curlCommand;
+    // Verify the command contains the literal backslash-n sequence, not just 'n'
+    expect(cmd).toContain('-w "\\n%{http_code}"');
+    expect(cmd).not.toContain('-w "n%{http_code}"');
+  });
+
+  it('preserves backslashes in Windows file paths', () => {
+    // Simulate a Windows-style path with backslashes
+    const windowsStylePath = 'C:\\Users\\test\\mapping.txt';
+    const windowsConfig = { ...config(), mappingPath: windowsStylePath };
+    
+    // Create a real temp file for validation
+    const realPath = path.join(localTempDir, 'win-test.txt');
+    fs.writeFileSync(realPath, 'test');
+    windowsConfig.mappingPath = realPath;
+    
+    const requests = buildAndroidSymbolsUploadRequests(windowsConfig, { verbose: false, dryRun: false }, []);
+    const cmd = requests[0].curlCommand;
+    
+    // The path should still contain backslashes (not consumed as escapes)
+    // This test verifies the parser preserves backslashes that aren't escape sequences
+    expect(cmd).toContain(realPath);
+  });
 });

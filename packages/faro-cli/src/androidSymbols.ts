@@ -277,8 +277,19 @@ function runCurl(command: string): { statusCode: number; body: string } {
       continue;
     }
     
+    // Only treat backslash as escape for sequences the command builder emits (e.g., \" for literal quotes)
+    // Otherwise preserve backslashes verbatim to support:
+    // - curl's -w "\\n%{http_code}" format
+    // - Windows file paths like C:\\Users\\...
     if (char === '\\') {
-      escapeNext = true;
+      const nextChar = cmdString[i + 1];
+      if (nextChar === '"') {
+        // Escape sequence for literal quote - consume backslash and set escape flag
+        escapeNext = true;
+        continue;
+      }
+      // Not an escape sequence we emit - preserve the backslash
+      current += char;
       continue;
     }
     
