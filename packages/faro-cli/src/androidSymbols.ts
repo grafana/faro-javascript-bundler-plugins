@@ -1,8 +1,11 @@
 import { execSync } from 'child_process';
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { consoleInfoOrange, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
+
+import { AbiZipArtifact, packNativeSymbolsByAbi } from './nativeSymbolsByAbi';
 
 /**
  * Options for `faro-cli android upload`.
@@ -23,7 +26,9 @@ import { consoleInfoOrange, isLocalEndpoint } from '@grafana/faro-bundlers-share
  *   - --version-name   / FARO_ANDROID_VERSION_NAME
  *
  * At least one of `--mapping` (R8/ProGuard mapping.txt) or `--native-symbols`
- * (native-debug-symbols.zip) must be provided.
+ * (native-debug-symbols.zip) must be provided. When native symbols are provided,
+ * the CLI splits the AGP zip by ABI and uploads one POST per ABI (each under the
+ * HTTP body size limit).
  */
 export interface AndroidSymbolsUploadOptions {
   endpoint?: string;
@@ -67,7 +72,7 @@ interface ResolvedConfig {
 }
 
 /** Encoded Android symbols bundle id: `{applicationId}@{versionCode}@{versionName}`. */
-export function formatAndroidSymbolsBundleId(
+function formatAndroidSymbolsBundleId(
   applicationId: string,
   versionCode: string,
   versionName: string
@@ -137,19 +142,27 @@ function resolveConfig(opts: AndroidSymbolsUploadOptions): ResolveResult {
   };
 }
 
+export interface AndroidSymbolsUploadRequest {
+  label: string;
+  curlCommand: string;
+  localBytes: number;
+}
+
 /**
- * Builds the multipart `curl` command used to POST Android symbol artifacts.
- * Exported for testing. `curl -F` sets `Content-Type: multipart/form-data`
- * automatically, so no explicit content-type header is added.
+ * Builds curl commands for mapping (optional) and each ABI zip (when native symbols provided).
+ * Exported for testing.
  */
-export function buildAndroidSymbolsCurlCommand(config: ResolvedConfig, opts: AndroidSymbolsUploadOptions): string {
+export function buildAndroidSymbolsUploadRequests(
+  config: ResolvedConfig,
+  opts: AndroidSymbolsUploadOptions,
+  abiArtifacts: AbiZipArtifact[] = []
+): AndroidSymbolsUploadRequest[] {
   const normalizedEndpoint = config.endpoint.replace(/\/$/, '');
   const url = `${normalizedEndpoint}/app/${config.appId}/symbols/android/${encodeURIComponent(config.bundleId)}`;
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${config.stackId}:${config.apiKey}`,
   };
-  // Local dev (noop auth) derives the stack from X-Scope-OrgID instead of the token.
   if (isLocalEndpoint(url)) {
     headers['X-Scope-OrgID'] = config.stackId;
   }
@@ -158,31 +171,44 @@ export function buildAndroidSymbolsCurlCommand(config: ResolvedConfig, opts: And
     .map(([key, value]) => `-H "${key}: ${value}"`)
     .join(' ');
 
-  const formArgs: string[] = [];
-  if (config.mappingPath) {
-    formArgs.push(`-F "mapping=@${config.mappingPath};type=text/plain"`);
-  }
-  if (config.nativeSymbolsPath) {
-    formArgs.push(`-F "native-symbols=@${config.nativeSymbolsPath};type=application/zip"`);
-  }
-
   const proxyArg = opts.proxy ? `--proxy "${opts.proxy}"` : '';
   const proxyUserArg = opts.proxyUser ? `--proxy-user "${opts.proxyUser}"` : '';
+  const baseCurl = `curl -s -w "\\n%{http_code}" -X POST ${proxyArg} ${proxyUserArg}`.replace(/\s+/g, ' ').trim();
 
-  // -w prints the HTTP status code on its own trailing line so we can detect failures.
-  return `curl -s -w "\\n%{http_code}" -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} ${formArgs.join(' ')}`
-    .replace(/\s+/g, ' ')
-    .trim();
+  const requests: AndroidSymbolsUploadRequest[] = [];
+
+  if (config.mappingPath) {
+    const mappingBytes = fs.statSync(config.mappingPath).size;
+    requests.push({
+      label: 'mapping',
+      localBytes: mappingBytes,
+      curlCommand: `${baseCurl} "${url}" ${headerArgs} -F "mapping=@${config.mappingPath};type=text/plain"`,
+    });
+  }
+
+  for (const artifact of abiArtifacts) {
+    requests.push({
+      label: `native-symbols (${artifact.abi})`,
+      localBytes: artifact.bytes,
+      curlCommand:
+        `${baseCurl} "${url}" ${headerArgs} -F "abi=${artifact.abi}" ` +
+        `-F "native-symbols=@${artifact.zipPath};type=application/zip"`,
+    });
+  }
+
+  return requests;
+}
+
+function runCurl(command: string): { statusCode: number; body: string } {
+  const result = execSync(command, { encoding: 'utf8' });
+  const lines = result.trim().split('\n');
+  const statusCode = Number.parseInt(lines[lines.length - 1] ?? '', 10);
+  const body = lines.slice(0, -1).join('\n').trim();
+  return { statusCode, body };
 }
 
 /**
- * Resolves config, then uploads the Android symbol artifacts via `curl`.
- *
- * Returns a numeric exit code (so it is easy to test and the commander action
- * can `process.exit` on non-zero):
- *   - 0 success
- *   - 1 upload failure (non-2xx response or curl error)
- *   - 2 fatal config/validation error
+ * Resolves config, splits native symbols by ABI, then uploads via sequential curl POSTs.
  */
 export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions): Promise<number> => {
   const resolved = resolveConfig(opts);
@@ -192,47 +218,52 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
   }
 
   const config = resolved.config;
-  const command = buildAndroidSymbolsCurlCommand(config, opts);
   const targetUrl = `${config.endpoint.replace(/\/$/, '')}/app/${config.appId}/symbols/android/${encodeURIComponent(config.bundleId)}`;
 
-  const artifactList = [
-    config.mappingPath ? `mapping=${path.basename(config.mappingPath)}` : null,
-    config.nativeSymbolsPath ? `native-symbols=${path.basename(config.nativeSymbolsPath)}` : null,
-  ]
-    .filter(Boolean)
-    .join(', ');
+  let abiArtifacts: AbiZipArtifact[] = [];
+  let tempDir: string | undefined;
+  if (config.nativeSymbolsPath) {
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-abi-'));
+    abiArtifacts = packNativeSymbolsByAbi(config.nativeSymbolsPath, tempDir);
+  }
+
+  const requests = buildAndroidSymbolsUploadRequests(config, opts, abiArtifacts);
 
   if (opts.dryRun) {
-    process.stdout.write(
-      `[dry-run] would upload Android symbols (${artifactList}) for ${config.bundleId} to ${targetUrl}\n`
-    );
-    opts.verbose && process.stdout.write(`[dry-run] ${command}\n`);
+    for (const req of requests) {
+      process.stdout.write(
+        `[dry-run] would upload ${req.label} (${req.localBytes} bytes) for ${config.bundleId} to ${targetUrl}\n`
+      );
+      opts.verbose && process.stdout.write(`[dry-run] ${req.curlCommand}\n`);
+    }
     return 0;
   }
 
   opts.verbose &&
-    consoleInfoOrange(
-      `Uploading Android symbols (${artifactList}) for ${config.bundleId} to ${targetUrl}`
-    );
+    consoleInfoOrange(`Uploading Android symbols (${requests.length} POSTs) for ${config.bundleId} to ${targetUrl}`);
 
   try {
-    const result = execSync(command, { encoding: 'utf8' });
-    const lines = result.trim().split('\n');
-    const statusCode = Number.parseInt(lines[lines.length - 1] ?? '', 10);
-    const body = lines.slice(0, -1).join('\n').trim();
-
-    if (Number.isNaN(statusCode) || statusCode < 200 || statusCode >= 300) {
-      process.stderr.write(`Android symbols upload failed (HTTP ${lines[lines.length - 1] ?? '?'}).\n`);
-      if (body) {
-        process.stderr.write(`${body}\n`);
+    for (const req of requests) {
+      opts.verbose && process.stdout.write(`[Faro] uploading ${req.label} (${req.localBytes} bytes)\n`);
+      const { statusCode, body } = runCurl(req.curlCommand);
+      if (Number.isNaN(statusCode) || statusCode < 200 || statusCode >= 300) {
+        process.stderr.write(`Android symbols upload failed for ${req.label} (HTTP ${statusCode}).\n`);
+        if (body) {
+          process.stderr.write(`${body}\n`);
+        }
+        return 1;
       }
-      return 1;
+      process.stdout.write(`Uploaded ${req.label} (${req.localBytes} bytes, HTTP ${statusCode}).\n`);
     }
 
-    process.stdout.write(`Upload complete (HTTP ${statusCode}).\n`);
+    process.stdout.write(`Upload complete (${requests.length} POSTs).\n`);
     return 0;
   } catch (error) {
     process.stderr.write(`Error executing curl command: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
+  } finally {
+    if (tempDir) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   }
 };

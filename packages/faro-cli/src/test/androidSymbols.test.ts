@@ -3,7 +3,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { buildAndroidSymbolsCurlCommand, runAndroidSymbolsUpload } from '../androidSymbols';
+import { buildAndroidSymbolsUploadRequests, runAndroidSymbolsUpload } from '../androidSymbols';
+import { buildTestAgpZip } from './helpers/buildTestAgpZip';
 
 jest.mock('child_process', () => ({
   execSync: jest.fn(),
@@ -87,10 +88,10 @@ describe('runAndroidSymbolsUpload', () => {
     expect(code).toBe(0);
     expect(mockedExecSync).not.toHaveBeenCalled();
     const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
-    expect(stdout).toMatch(/\[dry-run\] would upload Android symbols/);
+    expect(stdout).toMatch(/\[dry-run\] would upload mapping/);
   });
 
-  it('uploads and returns 0 on a 2xx response', async () => {
+  it('uploads mapping and returns 0 on a 2xx response', async () => {
     mockedExecSync.mockReturnValue('\n201' as never);
 
     const code = await runAndroidSymbolsUpload({
@@ -104,7 +105,7 @@ describe('runAndroidSymbolsUpload', () => {
     expect(mockedExecSync).toHaveBeenCalledTimes(1);
     expect(mockedExecSync).toHaveBeenCalledWith(expect.stringContaining('curl -s'), expect.any(Object));
     const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
-    expect(stdout).toMatch(/Upload complete \(HTTP 201\)/);
+    expect(stdout).toMatch(/Upload complete \(1 POSTs\)/);
   });
 
   it('returns 1 on a non-2xx response', async () => {
@@ -138,32 +139,74 @@ describe('runAndroidSymbolsUpload', () => {
   });
 });
 
-describe('buildAndroidSymbolsCurlCommand', () => {
-  const config = {
+describe('buildAndroidSymbolsUploadRequests', () => {
+  let localTempDir: string;
+  let localMappingPath: string;
+
+  beforeEach(() => {
+    localTempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-android-req-'));
+    localMappingPath = path.join(localTempDir, 'mapping.txt');
+    fs.writeFileSync(localMappingPath, 'proguard mapping');
+  });
+
+  afterEach(() => {
+    fs.rmSync(localTempDir, { recursive: true, force: true });
+  });
+
+  const config = () => ({
     ...baseConnection,
     endpoint: 'https://e.test/',
-    mappingPath: '/abs/mapping.txt',
-    nativeSymbolsPath: '/abs/native-debug-symbols.zip',
+    mappingPath: localMappingPath,
+    nativeSymbolsPath: undefined as string | undefined,
     bundleId: 'com.grafana.quickpizza@42@1.0',
-  };
+  });
 
-  it('builds the symbols/android URL, auth header and multipart fields', () => {
-    const cmd = buildAndroidSymbolsCurlCommand(config, { verbose: false, dryRun: false });
-
+  it('builds mapping-only request with URL, auth, and mapping field', () => {
+    const requests = buildAndroidSymbolsUploadRequests(config(), { verbose: false, dryRun: false }, []);
+    expect(requests).toHaveLength(1);
+    expect(requests[0].label).toBe('mapping');
+    const cmd = requests[0].curlCommand;
     expect(cmd).toContain('"https://e.test/app/aid/symbols/android/com.grafana.quickpizza%4042%401.0"');
     expect(cmd).toContain('-H "Authorization: Bearer sid:secret"');
-    expect(cmd).toContain('-F "mapping=@/abs/mapping.txt;type=text/plain"');
-    expect(cmd).toContain('-F "native-symbols=@/abs/native-debug-symbols.zip;type=application/zip"');
+    expect(cmd).toContain(`-F "mapping=@${localMappingPath};type=text/plain"`);
     // Remote endpoint must not leak a stack-id header.
     expect(cmd).not.toContain('X-Scope-OrgID');
   });
 
   it('adds X-Scope-OrgID for local endpoints', () => {
-    const cmd = buildAndroidSymbolsCurlCommand(
-      { ...config, endpoint: 'http://localhost:8000' },
-      { verbose: false, dryRun: false }
+    const requests = buildAndroidSymbolsUploadRequests(
+      { ...config(), endpoint: 'http://localhost:8000' },
+      { verbose: false, dryRun: false },
+      [],
+    );
+    expect(requests[0].curlCommand).toContain('-H "X-Scope-OrgID: sid"');
+  });
+
+  it('builds per-ABI native requests with abi form field', () => {
+    const nativePath = path.join(localTempDir, 'native.zip');
+    fs.writeFileSync(
+      nativePath,
+      buildTestAgpZip([
+        ['arm64-v8a/liba.so', Buffer.alloc(8, 1)],
+        ['x86_64/libb.so', Buffer.alloc(8, 2)],
+      ]),
     );
 
-    expect(cmd).toContain('-H "X-Scope-OrgID: sid"');
+    const abiArtifacts = [
+      { abi: 'arm64-v8a' as const, zipPath: path.join(localTempDir, 'arm64-v8a.zip'), bytes: 100 },
+      { abi: 'x86_64' as const, zipPath: path.join(localTempDir, 'x86_64.zip'), bytes: 100 },
+    ];
+    fs.writeFileSync(abiArtifacts[0].zipPath, Buffer.alloc(100));
+    fs.writeFileSync(abiArtifacts[1].zipPath, Buffer.alloc(100));
+
+    const requests = buildAndroidSymbolsUploadRequests(
+      { ...config(), nativeSymbolsPath: nativePath },
+      { verbose: false, dryRun: false },
+      abiArtifacts,
+    );
+
+    expect(requests).toHaveLength(3);
+    expect(requests[1].curlCommand).toContain('-F "abi=arm64-v8a"');
+    expect(requests[2].curlCommand).toContain('-F "abi=x86_64"');
   });
 });
