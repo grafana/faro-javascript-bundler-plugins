@@ -154,7 +154,7 @@ const executeCurl = (
     // Build the curl command
     const proxyArg = proxy ? `--proxy "${proxy}"` : '';
     const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}"` : '';
-    const curlCommand = `curl -sS -w "\n${CURL_HTTP_STATUS_MARKER}%{http_code}" -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @${fileToUpload}`;
+    const curlCommand = `curl -sS -w "\n${CURL_HTTP_STATUS_MARKER}%{http_code}" -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @"${fileToUpload}"`;
 
     // Execute the curl command
     const result = execSync(curlCommand, { encoding: 'utf8' });
