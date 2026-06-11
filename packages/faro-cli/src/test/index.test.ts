@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as tar from 'tar';
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 import { consoleInfoOrange, THIRTY_MB_IN_BYTES, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
@@ -75,6 +75,7 @@ describe('faro-cli', () => {
 
     // Mock child_process
     jest.mocked(execSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
+    jest.mocked(execFileSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
 
     // Mock zlib
     jest.mocked(gzipSync).mockReturnValue(Buffer.from('gzipped content'));
@@ -121,9 +122,10 @@ describe('faro-cli', () => {
       const result = await uploadSourceMap(mockOptions);
 
       expect(result).toBe(true);
-      expect(execSync).toHaveBeenCalledTimes(1);
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining(`curl -sS`),
+      expect(execFileSync).toHaveBeenCalledTimes(1);
+      expect(execFileSync).toHaveBeenCalledWith(
+        'curl',
+        expect.any(Array),
         expect.any(Object)
       );
     });
@@ -152,12 +154,12 @@ describe('faro-cli', () => {
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('exceeds the maximum allowed size')
       );
-      expect(execSync).not.toHaveBeenCalled();
+      expect(execFileSync).not.toHaveBeenCalled();
     });
 
 
     it('should report non-2xx HTTP status as upload failure', async () => {
-      (execSync as jest.Mock).mockReturnValue('Unauthorized\n__FARO_HTTP_STATUS__:401');
+      jest.mocked(execFileSync).mockReturnValue('Unauthorized\n__FARO_HTTP_STATUS__:401');
 
       const result = await uploadSourceMap(mockOptions);
 
@@ -168,7 +170,7 @@ describe('faro-cli', () => {
     });
 
     it('should handle curl execution errors', async () => {
-      (execSync as jest.Mock).mockImplementation(() => {
+      jest.mocked(execFileSync).mockImplementation(() => {
         throw new Error('curl error');
       });
 
@@ -184,8 +186,9 @@ describe('faro-cli', () => {
         gzipPayload: true
       });
 
-      expect(execSync).toHaveBeenCalledWith(
-        expect.stringContaining('Content-Encoding: gzip'),
+      expect(execFileSync).toHaveBeenCalledWith(
+        'curl',
+        expect.arrayContaining([expect.stringMatching(/Content-Encoding.*gzip/)]),
         expect.any(Object)
       );
     });
@@ -212,7 +215,7 @@ describe('faro-cli', () => {
         expect.objectContaining({ z: true }),
         expect.arrayContaining([mockFilePath])
       );
-      expect(execSync).toHaveBeenCalledTimes(1);
+      expect(execFileSync).toHaveBeenCalledTimes(1);
     });
 
     it('should delete the sourcemap files if keepSourcemaps is false', async () => {
@@ -358,7 +361,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // 5 files with batchSize=2 → 3 batches (2, 2, 1), each creating a tarball
       expect(tar.create).toHaveBeenCalledTimes(3);
-      expect(execSync).toHaveBeenCalledTimes(3);
+      expect(execFileSync).toHaveBeenCalledTimes(3);
     });
 
     it('should upload all files in a single batch when batchSize exceeds file count', async () => {
@@ -378,7 +381,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // All 3 files fit in one batch
       expect(tar.create).toHaveBeenCalledTimes(1);
-      expect(execSync).toHaveBeenCalledTimes(1);
+      expect(execFileSync).toHaveBeenCalledTimes(1);
     });
 
     it('should split files into batches by maxUploadSize', async () => {
@@ -399,7 +402,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // 3 files at 20MB each, 30MB limit → batches of 1 file each
       expect(tar.create).toHaveBeenCalledTimes(3);
-      expect(execSync).toHaveBeenCalledTimes(3);
+      expect(execFileSync).toHaveBeenCalledTimes(3);
     });
 
     it('should respect whichever limit is hit first: batchSize or maxUploadSize', async () => {
@@ -420,7 +423,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // batchSize=1 forces 4 batches even though size limit wouldn't require it
       expect(tar.create).toHaveBeenCalledTimes(4);
-      expect(execSync).toHaveBeenCalledTimes(4);
+      expect(execFileSync).toHaveBeenCalledTimes(4);
     });
 
     it('should use batchSize for non-gzip chunked uploads (>10 files)', async () => {
@@ -440,7 +443,7 @@ describe('faro-cli', () => {
 
       expect(result).toBe(true);
       // 12 files, batchSize=5, no gzip → individual uploads but chunked: 5+5+2 = 12 curl calls
-      expect(execSync).toHaveBeenCalledTimes(12);
+      expect(execFileSync).toHaveBeenCalledTimes(12);
       // No tarballs created
       expect(tar.create).not.toHaveBeenCalled();
     });

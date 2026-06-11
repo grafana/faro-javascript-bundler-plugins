@@ -215,8 +215,14 @@ export function buildAndroidSymbolsUploadRequests(
     .map(([key, value]) => `-H "${key}: ${value}"`)
     .join(' ');
 
-  if (opts.proxy && /["`$]/.test(opts.proxy)) throw new Error('Invalid proxy URL: contains shell metacharacters');
-  if (opts.proxyUser && /["`$]/.test(opts.proxyUser)) throw new Error('Invalid proxy credentials: contains shell metacharacters');
+  // Validate proxy and credentials don't contain shell metacharacters (use safer string methods instead of regex to avoid ReDoS)
+  const shellMetachars = ['"', '`', '$'];
+  if (opts.proxy && shellMetachars.some(char => opts.proxy!.includes(char))) {
+    throw new Error('Invalid proxy URL: contains shell metacharacters');
+  }
+  if (opts.proxyUser && shellMetachars.some(char => opts.proxyUser!.includes(char))) {
+    throw new Error('Invalid proxy credentials: contains shell metacharacters');
+  }
   const proxyArg = opts.proxy ? `--proxy "${opts.proxy}"` : '';
   const proxyUserArg = opts.proxyUser ? `--proxy-user "${opts.proxyUser}"` : '';
   const baseCurl = `curl -s -w "\\n%{http_code}" -X POST ${proxyArg} ${proxyUserArg}`.replace(/\s+/g, ' ').trim();
