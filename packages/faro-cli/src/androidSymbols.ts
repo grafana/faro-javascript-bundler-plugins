@@ -202,7 +202,7 @@ export function buildAndroidSymbolsUploadRequests(
     throw new Error('Invalid endpoint URL: contains shell metacharacters');
   }
   
-  const url = `${normalizedEndpoint}/app/${config.appId}/symbols/android/${encodeURIComponent(config.bundleId)}`;
+  const url = `${normalizedEndpoint}/app/${encodeURIComponent(config.appId)}/symbols/android/${encodeURIComponent(config.bundleId)}`;
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${config.stackId}:${config.apiKey}`,
