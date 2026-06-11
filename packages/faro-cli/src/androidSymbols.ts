@@ -277,9 +277,16 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
 
   let abiArtifacts: AbiZipArtifact[] = [];
   let tempDir: string | undefined;
-  if (config.nativeSymbolsPath) {
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-abi-'));
-    abiArtifacts = packNativeSymbolsByAbi(config.nativeSymbolsPath, tempDir);
+  try {
+    if (config.nativeSymbolsPath) {
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-abi-'));
+      abiArtifacts = packNativeSymbolsByAbi(config.nativeSymbolsPath, tempDir);
+    }
+  } catch (err) {
+    if (tempDir) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+    throw err;
   }
 
   const requests = buildAndroidSymbolsUploadRequests(config, opts, abiArtifacts);
