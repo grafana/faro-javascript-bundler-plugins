@@ -1,4 +1,4 @@
-import { execSync, execFileSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -7,11 +7,9 @@ import { buildAndroidSymbolsUploadRequests, runAndroidSymbolsUpload } from '../a
 import { buildTestAgpZip } from './helpers/buildTestAgpZip';
 
 jest.mock('child_process', () => ({
-  execSync: jest.fn(),
   execFileSync: jest.fn(),
 }));
 
-const mockedExecSync = execSync as jest.MockedFunction<typeof execSync>;
 const mockedExecFileSync = execFileSync as jest.MockedFunction<typeof execFileSync>;
 
 const baseConnection = {
@@ -36,7 +34,6 @@ describe('runAndroidSymbolsUpload', () => {
     fs.writeFileSync(mappingPath, 'com.example.Foo -> a:\n');
     stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
     stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    mockedExecSync.mockReset();
     mockedExecFileSync.mockReset();
     // Mock successful curl response by default
     mockedExecFileSync.mockReturnValue('{"uploaded": true}\n201');

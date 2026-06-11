@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as tar from 'tar';
-import { execSync, execFileSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 import { consoleInfoOrange, THIRTY_MB_IN_BYTES, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
@@ -74,7 +74,6 @@ describe('faro-cli', () => {
     jest.mocked(path.join).mockImplementation((...args: string[]) => args.join('/'));
 
     // Mock child_process
-    jest.mocked(execSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
     jest.mocked(execFileSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
 
     // Mock zlib
