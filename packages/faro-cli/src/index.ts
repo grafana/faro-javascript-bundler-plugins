@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
@@ -142,22 +142,34 @@ const executeCurl = (
       fileToUpload = tempFile;
     }
 
-    // Build headers string for curl command
-    const headerArgs = Object.entries({
+    // Build headers for curl command
+    const uploadHeaders = Object.entries({
       ...headers,
       'Content-Type': finalContentType,
       ...(gzipPayload && !contentType.includes('gzip') ? { 'Content-Encoding': 'gzip' } : {})
-    })
-      .map(([key, value]) => `-H "${key}: ${value}"`)
-      .join(' ');
+    });
 
-    // Build the curl command
-    const proxyArg = proxy ? `--proxy "${proxy}"` : '';
-    const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}"` : '';
-    const curlCommand = `curl -sS -w "\n${CURL_HTTP_STATUS_MARKER}%{http_code}" -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @"${fileToUpload}"`;
+    // Build curl arguments (avoid shell interpretation)
+    const curlArgs: string[] = ['-sS', '-w', `\n${CURL_HTTP_STATUS_MARKER}%{http_code}`, '-X', 'POST'];
 
-    // Execute the curl command
-    const result = execSync(curlCommand, { encoding: 'utf8' });
+    if (proxy) {
+      curlArgs.push('--proxy', proxy);
+    }
+
+    if (proxyUser) {
+      curlArgs.push('--proxy-user', proxyUser);
+    }
+
+    curlArgs.push(url);
+
+    for (const [key, value] of uploadHeaders) {
+      curlArgs.push('-H', `${key}: ${value}`);
+    }
+
+    curlArgs.push('--data-binary', `@${fileToUpload}`);
+
+    // Execute curl without invoking a shell
+    const result = execFileSync('curl', curlArgs, { encoding: 'utf8' });
 
     // Clean up temporary file if created
     if (tempFile && fs.existsSync(tempFile)) {
