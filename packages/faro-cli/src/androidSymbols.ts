@@ -74,10 +74,8 @@ function redactBearerToken(stackId: string, apiKey: string): string {
 
 function buildVerboseCurlCommand(command: string, config: ResolvedConfig): string {
   let redacted = command;
-  redacted = redacted.replace(
-    new RegExp(`Bearer ${config.stackId}:${config.apiKey}`, 'g'),
-    redactBearerToken(config.stackId, config.apiKey)
-  );
+  const rawBearerToken = `Bearer ${config.stackId}:${config.apiKey}`;
+  redacted = redacted.split(rawBearerToken).join(redactBearerToken(config.stackId, config.apiKey));
   if (command.includes('--proxy-user')) {
     redacted = redacted.replace(/--proxy-user "([^"]+)"/g, '--proxy-user "****"');
   }
