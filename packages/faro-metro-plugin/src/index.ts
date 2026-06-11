@@ -41,4 +41,11 @@ export {
 } from './serialize';
 export { shiftGeneratedLineNumbers } from './shiftSourceMap';
 export { flattenMapForHermes } from './flattenMapForHermes';
-export { normalizeBundleIdLength, resolveBundleId } from './resolveBundleId';
+export {
+  normalizeBundleIdLength,
+  resolveBundleId,
+  resolveRnProjectRoot,
+  validateAndroidBundleId,
+  isIosBundleContext,
+  type ResolveBundleIdOptions,
+} from './resolveBundleId';
