@@ -2,10 +2,19 @@
   "name": "@grafana/faro-cli",
   "version": "0.10.0",
   "description": "CLI for uploading sourcemaps to the Faro source map API",
-  "main": "dist/cjs/index.js",
-  "types": "dist/cjs/index.d.ts",
-  "module": "dist/esm/index.mjs",
-  "bin": "dist/cjs/cli.js",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/src/index.d.ts",
+  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./dist/cli.js": "./dist/cli.js"
+  },
+  "bin": "dist/cli.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
