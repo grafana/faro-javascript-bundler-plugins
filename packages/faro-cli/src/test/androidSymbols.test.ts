@@ -235,7 +235,7 @@ describe('buildAndroidSymbolsUploadRequests', () => {
     const cmd = requests[0].curlCommand;
     expect(cmd).toContain('"https://e.test/app/aid/symbols/android/com.grafana.quickpizza%4042%401.0"');
     expect(cmd).toContain('-H "Authorization: Bearer sid:secret"');
-    expect(cmd).toContain(`-F "mapping=@${localMappingPath};type=text/plain"`);
+    expect(cmd).toContain(`-F "mapping=@\\"${localMappingPath}\\";type=text/plain"`);
     // Remote endpoint must not leak a stack-id header.
     expect(cmd).not.toContain('X-Scope-OrgID');
   });

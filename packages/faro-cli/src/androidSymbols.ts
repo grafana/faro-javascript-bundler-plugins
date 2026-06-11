@@ -228,7 +228,7 @@ export function buildAndroidSymbolsUploadRequests(
     requests.push({
       label: 'mapping',
       localBytes: mappingBytes,
-      curlCommand: `${baseCurl} "${url}" ${headerArgs} -F "mapping=@${config.mappingPath};type=text/plain"`,
+      curlCommand: `${baseCurl} "${url}" ${headerArgs} -F "mapping=@\\"${config.mappingPath}\\";type=text/plain"`,
     });
   }
 
@@ -238,7 +238,7 @@ export function buildAndroidSymbolsUploadRequests(
       localBytes: artifact.bytes,
       curlCommand:
         `${baseCurl} "${url}" ${headerArgs} -F "abi=${artifact.abi}" ` +
-        `-F "native-symbols=@${artifact.zipPath};type=application/zip"`,
+        `-F "native-symbols=@\\"${artifact.zipPath}\\";type=application/zip"`,
     });
   }
 
