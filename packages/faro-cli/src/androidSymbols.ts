@@ -68,20 +68,6 @@ function redactCredential(value: string): string {
   return value.substring(0, 4) + '****';
 }
 
-function redactBearerToken(stackId: string, apiKey: string): string {
-  return `Bearer ${redactCredential(stackId)}:${redactCredential(apiKey)}`;
-}
-
-function buildVerboseCurlCommand(command: string, config: ResolvedConfig): string {
-  let redacted = command;
-  const rawBearerToken = `Bearer ${config.stackId}:${config.apiKey}`;
-  redacted = redacted.split(rawBearerToken).join(redactBearerToken(config.stackId, config.apiKey));
-  if (command.includes('--proxy-user')) {
-    redacted = redacted.replace(/--proxy-user "([^"]+)"/g, '--proxy-user "****"');
-  }
-  return redacted;
-}
-
 interface ResolvedConfig {
   endpoint: string;
   appId: string;
@@ -182,12 +168,13 @@ function resolveConfig(opts: AndroidSymbolsUploadOptions): ResolveResult {
 
 export interface AndroidSymbolsUploadRequest {
   label: string;
-  curlCommand: string;
+  curlCommand: string; // For verbose/dry-run display only
+  curlArgs: string[];  // Actual args array for execFileSync
   localBytes: number;
 }
 
 /**
- * Builds curl commands for mapping (optional) and each ABI zip (when native symbols provided).
+ * Builds curl args arrays for mapping (optional) and each ABI zip (when native symbols provided).
  * Exported for testing.
  */
 export function buildAndroidSymbolsUploadRequests(
@@ -196,12 +183,6 @@ export function buildAndroidSymbolsUploadRequests(
   abiArtifacts: AbiZipArtifact[] = []
 ): AndroidSymbolsUploadRequest[] {
   const normalizedEndpoint = config.endpoint.replace(/\/$/, '');
-  
-  // Validate URL to prevent command injection
-  if (normalizedEndpoint.includes('"') || normalizedEndpoint.includes('`') || normalizedEndpoint.includes('$')) {
-    throw new Error('Invalid endpoint URL: contains shell metacharacters');
-  }
-  
   const url = `${normalizedEndpoint}/app/${encodeURIComponent(config.appId)}/symbols/android/${encodeURIComponent(config.bundleId)}`;
 
   const headers: Record<string, string> = {
@@ -211,40 +192,49 @@ export function buildAndroidSymbolsUploadRequests(
     headers['X-Scope-OrgID'] = config.stackId;
   }
 
-  const headerArgs = Object.entries(headers)
-    .map(([key, value]) => `-H "${key}: ${value}"`)
-    .join(' ');
-
-  // Validate proxy and credentials don't contain shell metacharacters (use safer string methods instead of regex to avoid ReDoS)
-  const shellMetachars = ['"', '`', '$'];
-  if (opts.proxy && shellMetachars.some(char => opts.proxy!.includes(char))) {
-    throw new Error('Invalid proxy URL: contains shell metacharacters');
+  // Build base curl args array directly (no string concatenation/parsing)
+  const baseArgs: string[] = ['-sS', '-w', `\n%{http_code}`, '-X', 'POST'];
+  
+  if (opts.proxy) {
+    baseArgs.push('--proxy', opts.proxy);
   }
-  if (opts.proxyUser && shellMetachars.some(char => opts.proxyUser!.includes(char))) {
-    throw new Error('Invalid proxy credentials: contains shell metacharacters');
+  
+  if (opts.proxyUser) {
+    baseArgs.push('--proxy-user', opts.proxyUser);
   }
-  const proxyArg = opts.proxy ? `--proxy "${opts.proxy}"` : '';
-  const proxyUserArg = opts.proxyUser ? `--proxy-user "${opts.proxyUser}"` : '';
-  const baseCurl = `curl -s -w "\\n%{http_code}" -X POST ${proxyArg} ${proxyUserArg}`.replace(/\s+/g, ' ').trim();
+  
+  baseArgs.push(url);
+  
+  for (const [key, value] of Object.entries(headers)) {
+    baseArgs.push('-H', `${key}: ${value}`);
+  }
 
   const requests: AndroidSymbolsUploadRequest[] = [];
 
   if (config.mappingPath) {
     const mappingBytes = fs.statSync(config.mappingPath).size;
+    const args = [...baseArgs, '-F', `mapping=@${config.mappingPath};type=text/plain`];
+    
     requests.push({
       label: 'mapping',
       localBytes: mappingBytes,
-      curlCommand: `${baseCurl} "${url}" ${headerArgs} -F "mapping=@\\"${config.mappingPath}\\";type=text/plain"`,
+      curlArgs: args,
+      curlCommand: buildDisplayCommand(args, config, opts),
     });
   }
 
   for (const artifact of abiArtifacts) {
+    const args = [
+      ...baseArgs,
+      '-F', `abi=${artifact.abi}`,
+      '-F', `native-symbols=@${artifact.zipPath};type=application/zip`,
+    ];
+    
     requests.push({
       label: `native-symbols (${artifact.abi})`,
       localBytes: artifact.bytes,
-      curlCommand:
-        `${baseCurl} "${url}" ${headerArgs} -F "abi=${artifact.abi}" ` +
-        `-F "native-symbols=@\\"${artifact.zipPath}\\";type=application/zip"`,
+      curlArgs: args,
+      curlCommand: buildDisplayCommand(args, config, opts),
     });
   }
 
@@ -252,67 +242,34 @@ export function buildAndroidSymbolsUploadRequests(
 }
 
 /**
- * Executes curl command and parses HTTP status from output.
+ * Builds a display-friendly curl command string for verbose/dry-run output.
+ * Redacts credentials and quotes arguments for readability.
+ */
+function buildDisplayCommand(args: string[], config: ResolvedConfig, opts: AndroidSymbolsUploadOptions): string {
+  const displayArgs = args.map((arg, i) => {
+    // Redact Bearer token
+    if (arg.startsWith('Authorization: Bearer ')) {
+      return `Authorization: Bearer ${redactCredential(config.stackId)}:${redactCredential(config.apiKey)}`;
+    }
+    // Redact proxy credentials
+    if (args[i - 1] === '--proxy-user') {
+      return '****';
+    }
+    // Quote arguments with spaces or special chars for display
+    if (arg.includes(' ') || arg.includes('@')) {
+      return `"${arg}"`;
+    }
+    return arg;
+  });
+  
+  return `curl ${displayArgs.join(' ')}`;
+}
+
+/**
+ * Executes curl with the given args array and parses HTTP status from output.
  * Uses execFileSync to avoid shell interpretation and prevent command injection.
  */
-function runCurl(command: string): { statusCode: number; body: string } {
-  // Parse curl command string into arguments array for execFileSync
-  // The command format is: curl -s -w "\n%{http_code}" ... [args]
-  const args: string[] = [];
-  
-  // Extract arguments from command string (skip 'curl' prefix if present)
-  const cmdString = command.startsWith('curl ') ? command.substring(5) : command;
-  
-  // Simple argument parser that handles quoted strings
-  let current = '';
-  let inQuote = false;
-  let escapeNext = false;
-  
-  for (let i = 0; i < cmdString.length; i++) {
-    const char = cmdString[i];
-    
-    if (escapeNext) {
-      current += char;
-      escapeNext = false;
-      continue;
-    }
-    
-    // Only treat backslash as escape for sequences the command builder emits (e.g., \" for literal quotes)
-    // Otherwise preserve backslashes verbatim to support:
-    // - curl's -w "\\n%{http_code}" format
-    // - Windows file paths like C:\\Users\\...
-    if (char === '\\') {
-      const nextChar = cmdString[i + 1];
-      if (nextChar === '"') {
-        // Escape sequence for literal quote - consume backslash and set escape flag
-        escapeNext = true;
-        continue;
-      }
-      // Not an escape sequence we emit - preserve the backslash
-      current += char;
-      continue;
-    }
-    
-    if (char === '"') {
-      inQuote = !inQuote;
-      continue;
-    }
-    
-    if (char === ' ' && !inQuote) {
-      if (current) {
-        args.push(current);
-        current = '';
-      }
-      continue;
-    }
-    
-    current += char;
-  }
-  
-  if (current) {
-    args.push(current);
-  }
-  
+function runCurl(args: string[]): { statusCode: number; body: string } {
   const result = execFileSync('curl', args, { encoding: 'utf8' });
   const lines = result.trim().split('\n');
   const statusCode = Number.parseInt(lines[lines.length - 1] ?? '', 10);
@@ -355,8 +312,7 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
         `[dry-run] would upload ${req.label} (${req.localBytes} bytes) for ${config.bundleId} to ${targetUrl}\n`
       );
       if (opts.verbose) {
-        const redacted = buildVerboseCurlCommand(req.curlCommand, config);
-        process.stdout.write(`[dry-run] ${redacted}\n`);
+        process.stdout.write(`[dry-run] ${req.curlCommand}\n`);
       }
     }
     if (tempDir) {
@@ -371,7 +327,8 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
   try {
     for (const req of requests) {
       opts.verbose && process.stdout.write(`[Faro] uploading ${req.label} (${req.localBytes} bytes)\n`);
-      const { statusCode, body } = runCurl(req.curlCommand);
+      opts.verbose && process.stdout.write(`[Faro] ${req.curlCommand}\n`);
+      const { statusCode, body } = runCurl(req.curlArgs);
       if (Number.isNaN(statusCode) || statusCode < 200 || statusCode >= 300) {
         process.stderr.write(`Android symbols upload failed for ${req.label} (HTTP ${statusCode}).\n`);
         if (body) {

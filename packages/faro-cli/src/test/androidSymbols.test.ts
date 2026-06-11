@@ -220,26 +220,23 @@ describe('buildAndroidSymbolsUploadRequests', () => {
     bundleId: 'com.grafana.quickpizza@42@1.0',
   });
 
-  it('throws when endpoint contains shell metacharacters', () => {
-    expect(() =>
-      buildAndroidSymbolsUploadRequests(
-        { ...config(), endpoint: 'https://e.test/`whoami`' },
-        { verbose: false, dryRun: false },
-        []
-      )
-    ).toThrow('shell metacharacters');
-  });
-
   it('builds mapping-only request with URL, auth, and mapping field', () => {
     const requests = buildAndroidSymbolsUploadRequests(config(), { verbose: false, dryRun: false }, []);
     expect(requests).toHaveLength(1);
     expect(requests[0].label).toBe('mapping');
+    
+    // Check args array (used for execution)
+    const args = requests[0].curlArgs;
+    expect(args).toContain('https://e.test/app/aid/symbols/android/com.grafana.quickpizza%4042%401.0');
+    expect(args).toContain(`Authorization: Bearer sid:secret`);
+    expect(args).toContain(`mapping=@${localMappingPath};type=text/plain`);
+    // Remote endpoint must not leak a stack-id header
+    expect(args.some(arg => arg.includes('X-Scope-OrgID'))).toBe(false);
+    
+    // Check display command (for verbose output)
     const cmd = requests[0].curlCommand;
-    expect(cmd).toContain('"https://e.test/app/aid/symbols/android/com.grafana.quickpizza%4042%401.0"');
-    expect(cmd).toContain('-H "Authorization: Bearer sid:secret"');
-    expect(cmd).toContain(`-F "mapping=@\\"${localMappingPath}\\";type=text/plain"`);
-    // Remote endpoint must not leak a stack-id header.
-    expect(cmd).not.toContain('X-Scope-OrgID');
+    expect(cmd).toContain('curl');
+    expect(cmd).toContain('Authorization: Bearer');
   });
 
   it('adds X-Scope-OrgID for local endpoints', () => {
@@ -248,7 +245,8 @@ describe('buildAndroidSymbolsUploadRequests', () => {
       { verbose: false, dryRun: false },
       [],
     );
-    expect(requests[0].curlCommand).toContain('-H "X-Scope-OrgID: sid"');
+    const args = requests[0].curlArgs;
+    expect(args).toContain('X-Scope-OrgID: sid');
   });
 
   it('builds per-ABI native requests with abi form field', () => {
@@ -275,34 +273,18 @@ describe('buildAndroidSymbolsUploadRequests', () => {
     );
 
     expect(requests).toHaveLength(3);
-    expect(requests[1].curlCommand).toContain('-F "abi=arm64-v8a"');
-    expect(requests[2].curlCommand).toContain('-F "abi=x86_64"');
+    expect(requests[1].curlArgs).toContain('abi=arm64-v8a');
+    expect(requests[2].curlArgs).toContain('abi=x86_64');
   });
 
-  it('preserves backslash-n in curl -w format for HTTP status extraction', () => {
+  it('builds curl args array with proper -w flag format', () => {
     const requests = buildAndroidSymbolsUploadRequests(config(), { verbose: false, dryRun: false }, []);
     expect(requests).toHaveLength(1);
-    const cmd = requests[0].curlCommand;
-    // Verify the command contains the literal backslash-n sequence, not just 'n'
-    expect(cmd).toContain('-w "\\n%{http_code}"');
-    expect(cmd).not.toContain('-w "n%{http_code}"');
-  });
-
-  it('preserves backslashes in Windows file paths', () => {
-    // Simulate a Windows-style path with backslashes
-    const windowsStylePath = 'C:\\Users\\test\\mapping.txt';
-    const windowsConfig = { ...config(), mappingPath: windowsStylePath };
+    const args = requests[0].curlArgs;
     
-    // Create a real temp file for validation
-    const realPath = path.join(localTempDir, 'win-test.txt');
-    fs.writeFileSync(realPath, 'test');
-    windowsConfig.mappingPath = realPath;
-    
-    const requests = buildAndroidSymbolsUploadRequests(windowsConfig, { verbose: false, dryRun: false }, []);
-    const cmd = requests[0].curlCommand;
-    
-    // The path should still contain backslashes (not consumed as escapes)
-    // This test verifies the parser preserves backslashes that aren't escape sequences
-    expect(cmd).toContain(realPath);
+    // Verify -w flag and its value are separate args (not concatenated)
+    const wIndex = args.indexOf('-w');
+    expect(wIndex).toBeGreaterThan(-1);
+    expect(args[wIndex + 1]).toBe('\n%{http_code}');
   });
 });
