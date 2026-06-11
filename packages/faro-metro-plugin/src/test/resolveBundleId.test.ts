@@ -75,4 +75,39 @@ describe('resolveBundleId Android Gradle', () => {
     const id = resolveBundleId({}, false, false);
     expect(id).toBe('git-sha-only');
   });
+
+  test('throws when androidModule contains path traversal characters', () => {
+    delete process.env.FARO_BUNDLE_ID;
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-metro-'));
+    
+    expect(() => {
+      resolveBundleId({ androidModule: '../evil' }, false, false, { projectRoot: root });
+    }).toThrow('Invalid androidModule');
+    
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  test('throws when androidModule contains special characters', () => {
+    delete process.env.FARO_BUNDLE_ID;
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-metro-'));
+    
+    expect(() => {
+      resolveBundleId({ androidModule: 'app; rm -rf /' }, false, false, { projectRoot: root });
+    }).toThrow('Invalid androidModule');
+    
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+
+  test('accepts valid androidModule with hyphens and underscores', () => {
+    delete process.env.FARO_BUNDLE_ID;
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-metro-'));
+    const fileDir = path.join(root, 'android', 'my-app_module', 'build', 'faro');
+    fs.mkdirSync(fileDir, { recursive: true });
+    fs.writeFileSync(path.join(fileDir, 'bundle-id-release.txt'), 'com.test@1@1.0\n');
+
+    const id = resolveBundleId({ androidModule: 'my-app_module' }, false, false, { projectRoot: root });
+
+    expect(id).toBe('com.test@1@1.0');
+    fs.rmSync(root, { recursive: true, force: true });
+  });
 });

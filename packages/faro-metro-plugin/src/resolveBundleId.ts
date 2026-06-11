@@ -99,11 +99,22 @@ function readBundleIdFile(filePath: string): string | undefined {
   }
 }
 
+/**
+ * Runs Gradle task to write bundle id file.
+ * 
+ * Security note: execSync with shell=true is used here because:
+ * 1. androidModule is validated to contain only safe characters
+ * 2. gradlew path is resolved from the project structure
+ * 3. The task name is constructed from validated inputs
+ * 4. All inputs are checked before shell execution
+ */
 function runGradleWriteBundleId(
   projectRoot: string,
   androidModule: string,
   variant: string
 ): void {
+  validateAndroidModule(androidModule);
+  
   const androidDir = path.join(projectRoot, 'android');
   const gradlew = path.join(androidDir, process.platform === 'win32' ? 'gradlew.bat' : 'gradlew');
   if (!fs.existsSync(gradlew)) {
@@ -127,6 +138,7 @@ function resolveFromAndroidGradle(
 ): string | undefined {
   const projectRoot = resolveRnProjectRoot(bundleOptions);
   const androidModule = options.androidModule ?? 'app';
+  validateAndroidModule(androidModule);
   const filePath = bundleIdFilePath(projectRoot, androidModule, ANDROID_RELEASE_VARIANT);
 
   let id = readBundleIdFile(filePath);
@@ -156,6 +168,21 @@ function resolveFromAndroidGradle(
 function taskLabel(androidModule: string, variant: string): string {
   const variantCap = variant.replace(/^\w/, (c) => c.toUpperCase());
   return `:${androidModule}:faroWriteBundleId${variantCap}`;
+}
+
+function validateAndroidModule(androidModule: string): void {
+  if (!/^[a-zA-Z0-9_-]+$/.test(androidModule)) {
+    throw new Error(
+      `[faro-metro-plugin] Invalid androidModule "${androidModule}". ` +
+        'Must contain only alphanumeric characters, hyphens, and underscores.'
+    );
+  }
+  if (androidModule.includes('..') || androidModule.includes('/') || androidModule.includes('\\')) {
+    throw new Error(
+      `[faro-metro-plugin] Invalid androidModule "${androidModule}". ` +
+        'Path traversal characters are not allowed.'
+    );
+  }
 }
 
 export function resolveBundleId(

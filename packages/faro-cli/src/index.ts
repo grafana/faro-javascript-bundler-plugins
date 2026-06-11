@@ -177,11 +177,6 @@ const executeCurl = (
       return false;
     }
 
-    if (body.toLowerCase().includes('error')) {
-      console.error(`Error in cURL response body: ${body}`);
-      return false;
-    }
-
     return true;
   } catch (error) {
     console.error('Error executing cURL command:', error);

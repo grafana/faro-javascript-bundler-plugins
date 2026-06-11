@@ -64,6 +64,48 @@ describe('runAndroidSymbolsUpload', () => {
     expect(stderr).toMatch(/at least one of --mapping/i);
   });
 
+  it('returns 2 when applicationId contains @ character', async () => {
+    const code = await runAndroidSymbolsUpload({
+      ...baseConnection,
+      applicationId: 'com.evil@inject',
+      mapping: mappingPath,
+      verbose: false,
+      dryRun: false,
+    });
+
+    expect(code).toBe(2);
+    const stderr = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(stderr).toMatch(/cannot contain '@'/);
+  });
+
+  it('returns 2 when versionName contains @ character', async () => {
+    const code = await runAndroidSymbolsUpload({
+      ...baseConnection,
+      versionName: '1.0@evil',
+      mapping: mappingPath,
+      verbose: false,
+      dryRun: false,
+    });
+
+    expect(code).toBe(2);
+    const stderr = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(stderr).toMatch(/cannot contain '@'/);
+  });
+
+  it('returns 2 when versionCode is not an integer', async () => {
+    const code = await runAndroidSymbolsUpload({
+      ...baseConnection,
+      versionCode: '42.5',
+      mapping: mappingPath,
+      verbose: false,
+      dryRun: false,
+    });
+
+    expect(code).toBe(2);
+    const stderr = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(stderr).toMatch(/must be an integer/);
+  });
+
   it('returns 2 when the mapping file does not exist', async () => {
     const code = await runAndroidSymbolsUpload({
       ...baseConnection,
@@ -89,6 +131,21 @@ describe('runAndroidSymbolsUpload', () => {
     expect(mockedExecSync).not.toHaveBeenCalled();
     const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(stdout).toMatch(/\[dry-run\] would upload mapping/);
+  });
+
+  it('redacts credentials in verbose dry-run output', async () => {
+    const code = await runAndroidSymbolsUpload({
+      ...baseConnection,
+      mapping: mappingPath,
+      verbose: true,
+      dryRun: true,
+    });
+
+    expect(code).toBe(0);
+    const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
+    // Credentials should be redacted
+    expect(stdout).not.toContain('sid:secret');
+    expect(stdout).toMatch(/Bearer.*\*\*\*\*/);
   });
 
   it('uploads mapping and returns 0 on a 2xx response', async () => {
@@ -159,6 +216,16 @@ describe('buildAndroidSymbolsUploadRequests', () => {
     mappingPath: localMappingPath,
     nativeSymbolsPath: undefined as string | undefined,
     bundleId: 'com.grafana.quickpizza@42@1.0',
+  });
+
+  it('throws when endpoint contains shell metacharacters', () => {
+    expect(() =>
+      buildAndroidSymbolsUploadRequests(
+        { ...config(), endpoint: 'https://e.test/`whoami`' },
+        { verbose: false, dryRun: false },
+        []
+      )
+    ).toThrow('shell metacharacters');
   });
 
   it('builds mapping-only request with URL, auth, and mapping field', () => {
