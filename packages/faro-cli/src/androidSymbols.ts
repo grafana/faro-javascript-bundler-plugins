@@ -294,6 +294,9 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
         process.stdout.write(`[dry-run] ${redacted}\n`);
       }
     }
+    if (tempDir) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
     return 0;
   }
 
