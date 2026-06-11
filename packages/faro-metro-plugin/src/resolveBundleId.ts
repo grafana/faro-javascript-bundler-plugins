@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { randomString, consoleInfoOrange } from '@grafana/faro-bundlers-shared';
 
 const MAX_BUNDLE_ID_LEN = 512;
@@ -101,12 +101,8 @@ function readBundleIdFile(filePath: string): string | undefined {
 
 /**
  * Runs Gradle task to write bundle id file.
- * 
- * Security note: execSync with shell=true is used here because:
- * 1. androidModule is validated to contain only safe characters
- * 2. gradlew path is resolved from the project structure
- * 3. The task name is constructed from validated inputs
- * 4. All inputs are checked before shell execution
+ * Uses execFileSync to avoid shell interpretation.
+ * androidModule is validated to contain only safe characters before use.
  */
 function runGradleWriteBundleId(
   projectRoot: string,
@@ -125,7 +121,7 @@ function runGradleWriteBundleId(
   }
   const variantCap = variant.replace(/^\w/, (c) => c.toUpperCase());
   const task = `:${androidModule}:faroWriteBundleId${variantCap}`;
-  execSync(`"${gradlew}" ${task} -q`, {
+  execFileSync(gradlew, [task, '-q'], {
     cwd: androidDir,
     stdio: ['ignore', 'pipe', 'pipe'],
     env: process.env,

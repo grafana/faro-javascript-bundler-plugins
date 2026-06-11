@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -8,9 +8,11 @@ import { buildTestAgpZip } from './helpers/buildTestAgpZip';
 
 jest.mock('child_process', () => ({
   execSync: jest.fn(),
+  execFileSync: jest.fn(),
 }));
 
 const mockedExecSync = execSync as jest.MockedFunction<typeof execSync>;
+const mockedExecFileSync = execFileSync as jest.MockedFunction<typeof execFileSync>;
 
 const baseConnection = {
   endpoint: 'https://e.test/',
@@ -35,6 +37,9 @@ describe('runAndroidSymbolsUpload', () => {
     stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
     stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
     mockedExecSync.mockReset();
+    mockedExecFileSync.mockReset();
+    // Mock successful curl response by default
+    mockedExecFileSync.mockReturnValue('{"uploaded": true}\n201');
   });
 
   afterEach(() => {
@@ -51,7 +56,7 @@ describe('runAndroidSymbolsUpload', () => {
     });
 
     expect(code).toBe(2);
-    expect(mockedExecSync).not.toHaveBeenCalled();
+    expect(mockedExecFileSync).not.toHaveBeenCalled();
     const stderr = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(stderr).toMatch(/Missing required settings/);
   });
@@ -128,7 +133,7 @@ describe('runAndroidSymbolsUpload', () => {
     });
 
     expect(code).toBe(0);
-    expect(mockedExecSync).not.toHaveBeenCalled();
+    expect(mockedExecFileSync).not.toHaveBeenCalled();
     const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(stdout).toMatch(/\[dry-run\] would upload mapping/);
   });
@@ -149,7 +154,7 @@ describe('runAndroidSymbolsUpload', () => {
   });
 
   it('uploads mapping and returns 0 on a 2xx response', async () => {
-    mockedExecSync.mockReturnValue('\n201' as never);
+    mockedExecFileSync.mockReturnValue('\n201' as never);
 
     const code = await runAndroidSymbolsUpload({
       ...baseConnection,
@@ -159,14 +164,14 @@ describe('runAndroidSymbolsUpload', () => {
     });
 
     expect(code).toBe(0);
-    expect(mockedExecSync).toHaveBeenCalledTimes(1);
-    expect(mockedExecSync).toHaveBeenCalledWith(expect.stringContaining('curl -s'), expect.any(Object));
+    expect(mockedExecFileSync).toHaveBeenCalledTimes(1);
+    expect(mockedExecFileSync).toHaveBeenCalledWith('curl', expect.any(Array), expect.any(Object));
     const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(stdout).toMatch(/Upload complete \(1 POSTs\)/);
   });
 
   it('returns 1 on a non-2xx response', async () => {
-    mockedExecSync.mockReturnValue('bad request\n400' as never);
+    mockedExecFileSync.mockReturnValue('bad request\n400' as never);
 
     const code = await runAndroidSymbolsUpload({
       ...baseConnection,
@@ -181,7 +186,7 @@ describe('runAndroidSymbolsUpload', () => {
   });
 
   it('returns 1 when curl throws', async () => {
-    mockedExecSync.mockImplementation(() => {
+    mockedExecFileSync.mockImplementation(() => {
       throw new Error('curl: command not found');
     });
 

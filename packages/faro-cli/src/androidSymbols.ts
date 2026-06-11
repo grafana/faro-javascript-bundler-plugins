@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -253,15 +253,56 @@ export function buildAndroidSymbolsUploadRequests(
 
 /**
  * Executes curl command and parses HTTP status from output.
- * 
- * Security note: execSync with shell=true is used here because:
- * 1. All inputs (URLs, file paths) are validated before reaching this function
- * 2. File paths are resolved and checked for existence before use
- * 3. Credentials and proxy settings are properly quoted
- * 4. The command structure is deterministic and not derived from untrusted input
+ * Uses execFileSync to avoid shell interpretation and prevent command injection.
  */
 function runCurl(command: string): { statusCode: number; body: string } {
-  const result = execSync(command, { encoding: 'utf8' });
+  // Parse curl command string into arguments array for execFileSync
+  // The command format is: curl -s -w "\n%{http_code}" ... [args]
+  const args: string[] = [];
+  
+  // Extract arguments from command string (skip 'curl' prefix if present)
+  const cmdString = command.startsWith('curl ') ? command.substring(5) : command;
+  
+  // Simple argument parser that handles quoted strings
+  let current = '';
+  let inQuote = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < cmdString.length; i++) {
+    const char = cmdString[i];
+    
+    if (escapeNext) {
+      current += char;
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"') {
+      inQuote = !inQuote;
+      continue;
+    }
+    
+    if (char === ' ' && !inQuote) {
+      if (current) {
+        args.push(current);
+        current = '';
+      }
+      continue;
+    }
+    
+    current += char;
+  }
+  
+  if (current) {
+    args.push(current);
+  }
+  
+  const result = execFileSync('curl', args, { encoding: 'utf8' });
   const lines = result.trim().split('\n');
   const statusCode = Number.parseInt(lines[lines.length - 1] ?? '', 10);
   const body = lines.slice(0, -1).join('\n').trim();
