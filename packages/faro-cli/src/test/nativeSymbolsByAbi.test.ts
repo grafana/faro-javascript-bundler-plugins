@@ -47,6 +47,10 @@ describe('nativeSymbolsByAbi', () => {
     for (const artifact of artifacts) {
       expect(fs.existsSync(artifact.zipPath)).toBe(true);
     }
+    
+    // Verify artifacts are sorted by ABI name
+    const abis = artifacts.map((a) => a.abi);
+    expect(abis).toEqual(['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']);
   });
 
   it('buildAbiZip produces parseable zip output', () => {

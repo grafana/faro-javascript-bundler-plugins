@@ -169,27 +169,30 @@ const executeCurl = (
     curlArgs.push('--data-binary', `@${fileToUpload}`);
 
     // Execute curl without invoking a shell
-    const result = execFileSync('curl', curlArgs, { encoding: 'utf8' });
+    // Use try-finally to ensure temp file cleanup even if execFileSync throws
+    try {
+      const result = execFileSync('curl', curlArgs, { encoding: 'utf8' });
 
-    // Clean up temporary file if created
-    if (tempFile && fs.existsSync(tempFile)) {
-      fs.unlinkSync(tempFile);
+      const markerIndex = result.lastIndexOf(CURL_HTTP_STATUS_MARKER);
+      const body = markerIndex >= 0 ? result.slice(0, markerIndex).trimEnd() : result.trimEnd();
+      const statusText = markerIndex >= 0 ? result.slice(markerIndex + CURL_HTTP_STATUS_MARKER.length).trim() : '';
+      const httpStatus = Number.parseInt(statusText, 10);
+
+      if (!Number.isFinite(httpStatus) || httpStatus < 200 || httpStatus >= 300) {
+        const detail = body.trim();
+        console.error(
+          `Error: source map upload failed with HTTP ${Number.isFinite(httpStatus) ? httpStatus : 'unknown'}${detail ? ` — ${detail}` : ''}`
+        );
+        return false;
+      }
+
+      return true;
+    } finally {
+      // Clean up temporary file if created (runs even if execFileSync throws)
+      if (tempFile && fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
     }
-
-    const markerIndex = result.lastIndexOf(CURL_HTTP_STATUS_MARKER);
-    const body = markerIndex >= 0 ? result.slice(0, markerIndex).trimEnd() : result.trimEnd();
-    const statusText = markerIndex >= 0 ? result.slice(markerIndex + CURL_HTTP_STATUS_MARKER.length).trim() : '';
-    const httpStatus = Number.parseInt(statusText, 10);
-
-    if (!Number.isFinite(httpStatus) || httpStatus < 200 || httpStatus >= 300) {
-      const detail = body.trim();
-      console.error(
-        `Error: source map upload failed with HTTP ${Number.isFinite(httpStatus) ? httpStatus : 'unknown'}${detail ? ` — ${detail}` : ''}`
-      );
-      return false;
-    }
-
-    return true;
   } catch (error) {
     console.error('Error executing cURL command:', error);
     return false;

@@ -88,7 +88,8 @@ export function packNativeSymbolsByAbi(agpZipPath: string, outputDir: string): A
     throw new Error(`no native .so entries found in ${agpZipPath}`);
   }
 
-  return artifacts;
+  // Sort artifacts by ABI name to match documented behavior
+  return artifacts.sort((a, b) => a.abi.localeCompare(b.abi));
 }
 
 function abiFromZipPath(name: string): NativeAbi | null {
