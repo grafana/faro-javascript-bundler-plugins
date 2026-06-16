@@ -6,6 +6,8 @@ import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
 
+const TEST_OUTDIR = path.resolve(process.cwd(), '.test-dist');
+
 // Prevent git rev-parse from auto-injecting a hash in test environments
 jest.mock('child_process', () => ({
   ...jest.requireActual<object>('child_process'),
@@ -48,7 +50,7 @@ const runRollup = async (customConfig: Record<string, unknown> = {}, outputConfi
 
   // Set default output options if not provided
   const output = {
-    file: path.resolve(process.cwd(), 'dist/bundle.js'),
+    file: path.resolve(TEST_OUTDIR, 'bundle.js'),
     format: 'commonjs' as ModuleFormat,
     ...outputConfig
   };
@@ -57,6 +59,13 @@ const runRollup = async (customConfig: Record<string, unknown> = {}, outputConfi
 };
 
 describe('Faro Rollup Plugin', () => {
+  afterEach(() => {
+    if (fs.existsSync(TEST_OUTDIR)) {
+      fs.rmSync(TEST_OUTDIR, { recursive: true, force: true });
+    }
+    jest.clearAllMocks();
+  });
+
   test('basic bundleId injection test', async () => {
     const output = await runRollup({ bundleId: 'test' });
 
@@ -268,7 +277,7 @@ describe('Faro Rollup Plugin', () => {
       sourcemap: true,
     });
 
-    const sourceMapPath = path.resolve(process.cwd(), 'dist/bundle.js.map');
+    const sourceMapPath = path.resolve(TEST_OUTDIR, 'bundle.js.map');
     const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
     expect(sourceMap.file).toBe('robo/assets/bundle.js');
   });
@@ -283,7 +292,7 @@ describe('Faro Rollup Plugin', () => {
       sourcemap: true,
     });
 
-    const sourceMapPath = path.resolve(process.cwd(), 'dist/bundle.js.map');
+    const sourceMapPath = path.resolve(TEST_OUTDIR, 'bundle.js.map');
     const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
     expect(sourceMap.file).toBe('robo/assets/bundle.js');
   });
@@ -298,7 +307,7 @@ describe('Faro Rollup Plugin', () => {
       sourcemap: true,
     });
 
-    const sourceMapPath = path.resolve(process.cwd(), 'dist/bundle.js.map');
+    const sourceMapPath = path.resolve(TEST_OUTDIR, 'bundle.js.map');
     const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
     expect(sourceMap.file).toBe('robo/assets/bundle.js');
   });
@@ -324,13 +333,13 @@ describe('Faro Rollup Plugin', () => {
     });
 
     await bundle.write({
-      dir: path.resolve(process.cwd(), 'dist'),
+      dir: TEST_OUTDIR,
       format: 'esm' as ModuleFormat,
       sourcemap: true,
       entryFileNames: 'assets/[name].js',
     });
 
-    const sourceMapPath = path.resolve(process.cwd(), 'dist/assets/main.js.map');
+    const sourceMapPath = path.resolve(TEST_OUTDIR, 'assets/main.js.map');
     const sourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
     expect(sourceMap.file).toBe('robo/assets/main.js');
   });

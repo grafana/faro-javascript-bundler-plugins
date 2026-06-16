@@ -13,11 +13,11 @@
  * For direct manual invocation, call `npx faro-cli metro upload …`.
  */
 
-'use strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const { spawnSync } = require('child_process');
-const cliPath = require.resolve('@grafana/faro-cli/dist/cjs/cli.js');
-const result = spawnSync('node', [cliPath, 'metro', 'upload', ...process.argv.slice(2)], {
+const cliPath = fileURLToPath(import.meta.resolve('@grafana/faro-cli/dist/cli.js'));
+const result = spawnSync(process.execPath, [cliPath, 'metro', 'upload', ...process.argv.slice(2)], {
   stdio: 'inherit',
 });
 process.exit(result.status ?? 1);

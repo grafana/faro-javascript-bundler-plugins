@@ -14,11 +14,6 @@ export default [
     output: [
       {
         file: pkg.main,
-        format: 'cjs',
-        sourcemap: true,
-      },
-      {
-        file: pkg.module,
         format: 'esm',
         sourcemap: true,
       },
@@ -57,8 +52,8 @@ export default [
   {
     input: 'src/cli.ts',
     output: {
-      file: 'dist/cjs/cli.js',
-      format: 'cjs',
+      file: 'dist/cli.js',
+      format: 'esm',
       sourcemap: true,
       banner: '#!/usr/bin/env node',
     },

@@ -208,5 +208,3 @@ export default function faroUploader(
     },
   };
 }
-
-module.exports = faroUploader;
