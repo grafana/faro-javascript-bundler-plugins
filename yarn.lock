@@ -5462,7 +5462,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "faro-javascript-bundler-plugins@workspace:."
   dependencies:
-    "@babel/core": "npm:7.29.0"
+    "@babel/core": "npm:7.29.6"
     "@babel/preset-env": "npm:7.29.5"
     "@babel/preset-typescript": "npm:7.28.5"
     "@grafana/tsconfig": "npm:2.1.0"
