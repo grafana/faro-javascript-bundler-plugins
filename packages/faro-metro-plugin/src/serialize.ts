@@ -26,6 +26,11 @@ export type FaroMetroPluginOptions = FaroSourceMapUploaderPluginOptions & {
    * back to the legacy `+1` line shift.
    */
   hermes?: boolean;
+  /**
+   * Android app module folder under `android/` (default `app`). Release variant only.
+   * Override only when the application module is not named `app`.
+   */
+  androidModule?: string;
 };
 
 /**
@@ -169,7 +174,7 @@ export function createFaroMetroCustomSerializer(
 
     const { code, map } = await toCodeAndMap(inner, prepend, graph, bundleOptions);
 
-    const bundleId = resolveBundleId(pluginOptions.bundleId, bundleDev, skip);
+    const bundleId = resolveBundleId(pluginOptions, bundleDev, skip, bundleOptions);
     const snippet = faroBundleIdSnippet(bundleId, pluginOptions.appName);
     const newCode = `${snippet}\n${code}`;
 

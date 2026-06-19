@@ -75,9 +75,12 @@ describe('detectHermesMode', () => {
 
 describe('serializer behaviour by Hermes mode', () => {
   let prevNodeEnv: string | undefined;
+  let prevPlatform: string | undefined;
   beforeEach(() => {
     prevNodeEnv = process.env.NODE_ENV;
+    prevPlatform = process.env.FARO_PLATFORM;
     process.env.NODE_ENV = 'production';
+    process.env.FARO_PLATFORM = 'ios';
     process.env.FARO_BUNDLE_ID = 'unit-test-id';
   });
 
@@ -86,6 +89,11 @@ describe('serializer behaviour by Hermes mode', () => {
       delete process.env.NODE_ENV;
     } else {
       process.env.NODE_ENV = prevNodeEnv;
+    }
+    if (prevPlatform === undefined) {
+      delete process.env.FARO_PLATFORM;
+    } else {
+      process.env.FARO_PLATFORM = prevPlatform;
     }
     delete process.env.FARO_BUNDLE_ID;
     delete process.env.FARO_DISABLE_HERMES_PRECOMPILE;

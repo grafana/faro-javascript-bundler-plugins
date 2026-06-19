@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
-import { execSync } from 'child_process';
-import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties } from '@grafana/faro-bundlers-shared';
+import { execFileSync } from 'child_process';
+import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
 import { tmpdir } from 'os';
 
@@ -81,6 +81,20 @@ const createGzippedFile = (filePath: string): string => {
  * @param maxSize Optional custom max size in bytes (defaults to 30MB)
  * @returns boolean indicating if the file exceeds the size limit
  */
+
+
+const buildUploadHeaders = (url: string, stackId: string, apiKey: string): Record<string, string> => {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${stackId}:${apiKey}`,
+  };
+  if (isLocalEndpoint(url)) {
+    headers['X-Scope-OrgID'] = String(stackId);
+  }
+  return headers;
+};
+
+const CURL_HTTP_STATUS_MARKER = '__FARO_HTTP_STATUS__:';
+
 const exceedsMaxSize = (filePath: string, maxSize?: number): boolean => {
   const { size } = fs.statSync(filePath);
   const maxAllowedSize = maxSize && maxSize > 0 ? maxSize : THIRTY_MB_IN_BYTES;
@@ -128,35 +142,57 @@ const executeCurl = (
       fileToUpload = tempFile;
     }
 
-    // Build headers string for curl command
-    const headerArgs = Object.entries({
+    // Build headers for curl command
+    const uploadHeaders = Object.entries({
       ...headers,
       'Content-Type': finalContentType,
       ...(gzipPayload && !contentType.includes('gzip') ? { 'Content-Encoding': 'gzip' } : {})
-    })
-      .map(([key, value]) => `-H "${key}: ${value}"`)
-      .join(' ');
+    });
 
-    // Build the curl command
-    const proxyArg = proxy ? `--proxy "${proxy}"` : '';
-    const proxyUserArg = proxyUser ? `--proxy-user "${proxyUser}"` : '';
-    const curlCommand = `curl -s -X POST ${proxyArg} ${proxyUserArg} "${url}" ${headerArgs} --data-binary @${fileToUpload}`;
+    // Build curl arguments (avoid shell interpretation)
+    const curlArgs: string[] = ['-sS', '-w', `\n${CURL_HTTP_STATUS_MARKER}%{http_code}`, '-X', 'POST'];
 
-    // Execute the curl command
-    const result = execSync(curlCommand, { encoding: 'utf8' });
-
-    // Clean up temporary file if created
-    if (tempFile && fs.existsSync(tempFile)) {
-      fs.unlinkSync(tempFile);
+    if (proxy) {
+      curlArgs.push('--proxy', proxy);
     }
 
-    // Check if the response contains an error
-    if (result && result.toLowerCase().includes('error')) {
-      console.error(`Error in cURL response: ${result}`);
-      return false;
+    if (proxyUser) {
+      curlArgs.push('--proxy-user', proxyUser);
     }
 
-    return true;
+    curlArgs.push(url);
+
+    for (const [key, value] of uploadHeaders) {
+      curlArgs.push('-H', `${key}: ${value}`);
+    }
+
+    curlArgs.push('--data-binary', `@${fileToUpload}`);
+
+    // Execute curl without invoking a shell
+    // Use try-finally to ensure temp file cleanup even if execFileSync throws
+    try {
+      const result = execFileSync('curl', curlArgs, { encoding: 'utf8' });
+
+      const markerIndex = result.lastIndexOf(CURL_HTTP_STATUS_MARKER);
+      const body = markerIndex >= 0 ? result.slice(0, markerIndex).trimEnd() : result.trimEnd();
+      const statusText = markerIndex >= 0 ? result.slice(markerIndex + CURL_HTTP_STATUS_MARKER.length).trim() : '';
+      const httpStatus = Number.parseInt(statusText, 10);
+
+      if (!Number.isFinite(httpStatus) || httpStatus < 200 || httpStatus >= 300) {
+        const detail = body.trim();
+        console.error(
+          `Error: source map upload failed with HTTP ${Number.isFinite(httpStatus) ? httpStatus : 'unknown'}${detail ? ` — ${detail}` : ''}`
+        );
+        return false;
+      }
+
+      return true;
+    } finally {
+      // Clean up temporary file if created (runs even if execFileSync throws)
+      if (tempFile && fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
+      }
+    }
   } catch (error) {
     console.error('Error executing cURL command:', error);
     return false;
@@ -203,7 +239,7 @@ export const uploadSourceMap = async (
     success = executeCurl(
       sourcemapEndpoint,
       filePath,
-      { "Authorization": `Bearer ${stackId}:${apiKey}` },
+      buildUploadHeaders(sourcemapEndpoint, stackId, apiKey),
       "application/json",
       gzipPayload,
       maxUploadSize,
@@ -302,7 +338,7 @@ export const uploadCompressedSourceMaps = async (
     success = executeCurl(
       sourcemapEndpoint,
       tarball,
-      { "Authorization": `Bearer ${stackId}:${apiKey}` },
+      buildUploadHeaders(sourcemapEndpoint, stackId, apiKey),
       "application/gzip",
       false, // Don't gzip again as tarball is already compressed
       maxUploadSize,

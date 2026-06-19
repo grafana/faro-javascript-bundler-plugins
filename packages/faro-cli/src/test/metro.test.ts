@@ -573,7 +573,7 @@ describe('runMetroUpload — upload delegation', () => {
 
     expect(code).toBe(1);
     const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join('');
-    expect(stderr).toMatch(/Upload failed/);
+    expect(stderr).toMatch(/Metro composed source map upload failed/);
   });
 
   it('passes verbose=true through to the gzip upload helper', async () => {
