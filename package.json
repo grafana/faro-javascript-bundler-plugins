@@ -28,7 +28,6 @@
     "typescript": "6.0.3"
   },
   "resolutions": {
-    "minimatch": "^8.0.5",
     "axios": "1.18.1",
     "fast-uri": "4.0.0",
     "ip-address": "10.2.0",
