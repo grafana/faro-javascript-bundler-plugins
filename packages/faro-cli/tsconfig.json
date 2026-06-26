@@ -2,10 +2,11 @@
   "extends": "@grafana/tsconfig",
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "./src",
     "module": "esnext",
     "target": "es2020",
     "declaration": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "sourceMap": true,
