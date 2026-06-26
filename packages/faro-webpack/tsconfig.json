@@ -2,10 +2,11 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@grafana/tsconfig",
   "include": ["**/*", "../package.json"],
-  "rootDir": "./src",
-  "declaration": true,
   "compilerOptions": {
+    "rootDir": "./src",
+    "declaration": true,
     "sourceMap": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": ["jest", "node"]
   }
 }
