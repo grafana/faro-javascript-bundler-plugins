@@ -96,7 +96,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: ${{ needs.release-please.outputs.releases_created }}
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
 
     env:
       NPM_CONFIG_ACCESS: public
