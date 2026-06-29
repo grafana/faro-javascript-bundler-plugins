@@ -40,9 +40,15 @@ jobs:
       # resolution would change — additionally, Yarn berry auto-enables
       # hardened mode on public PR workflows, which forbids any lockfile
       # mutation. Refresh yarn.lock on the release branch so CI passes.
+      #
+      # Gate on the `pr` output (present whenever a release PR was created OR
+      # updated), not `prs_created` (only true on first creation). Subsequent
+      # commits to main update the existing release PR with new version bumps
+      # but leave `prs_created` false, so gating on it would skip the refresh
+      # and let yarn.lock drift out of sync until --immutable fails.
       - name: Resolve release PR branch
         id: release-branch
-        if: ${{ steps.release.outputs.prs_created == 'true' }}
+        if: ${{ steps.release.outputs.pr != '' && steps.release.outputs.pr != 'null' }}
         env:
           PR_JSON: ${{ steps.release.outputs.pr }}
         run: |
@@ -50,7 +56,7 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Checkout release PR branch
-        if: ${{ steps.release.outputs.prs_created == 'true' && steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
+        if: ${{ steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
         with:
           ref: ${{ steps.release-branch.outputs.branch }}
@@ -58,18 +64,18 @@ jobs:
           persist-credentials: true
 
       - name: Enable corepack
-        if: ${{ steps.release.outputs.prs_created == 'true' && steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
+        if: ${{ steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
         run: corepack enable
 
       - name: Setup Node.js
-        if: ${{ steps.release.outputs.prs_created == 'true' && steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
+        if: ${{ steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
 
       - name: Refresh yarn.lock on release PR
-        if: ${{ steps.release.outputs.prs_created == 'true' && steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
+        if: ${{ steps.release-branch.outputs.branch != '' && steps.release-branch.outputs.branch != 'null' }}
         run: |
           set -euo pipefail
           # `--mode update-lockfile` writes the lockfile without installing
