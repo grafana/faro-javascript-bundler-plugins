@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-metro-plugin-v0.2.0...faro-metro-plugin-v0.3.0) (2026-06-30)
+
+
+### Features
+
+* implement faro-cli android upload and Gradle-derived bundle id for Metro ([#602](https://github.com/grafana/faro-javascript-bundler-plugins/issues/602)) ([5b55b56](https://github.com/grafana/faro-javascript-bundler-plugins/commit/5b55b56e431718928341c3ff87c3ddb06f173b9c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-cli bumped from ^0.10.0 to ^0.11.0
+
 ## [0.2.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-metro-plugin-v0.1.0...faro-metro-plugin-v0.2.0) (2026-06-01)
 
 

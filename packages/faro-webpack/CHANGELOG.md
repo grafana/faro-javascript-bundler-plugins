@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.12.0...faro-webpack-plugin-v0.12.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* **security/low/packages/faro-webpack:** update security packages/faro-webpack @babel/core to v7.29.6 [security] ([#610](https://github.com/grafana/faro-javascript-bundler-plugins/issues/610)) ([bec278d](https://github.com/grafana/faro-javascript-bundler-plugins/commit/bec278d52d63e78959670658edee1cccf23a5faa))
+
 ## [0.12.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-webpack-plugin-v0.11.1...faro-webpack-plugin-v0.12.0) (2026-06-01)
 
 
