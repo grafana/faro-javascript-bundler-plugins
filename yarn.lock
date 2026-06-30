@@ -1772,7 +1772,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/faro-cli@npm:^0.10.0, @grafana/faro-cli@workspace:packages/faro-cli":
+"@grafana/faro-cli@npm:^0.11.0, @grafana/faro-cli@workspace:packages/faro-cli":
   version: 0.0.0-use.local
   resolution: "@grafana/faro-cli@workspace:packages/faro-cli"
   dependencies:
@@ -1812,7 +1812,7 @@ __metadata:
   resolution: "@grafana/faro-metro-plugin@workspace:packages/faro-metro-plugin"
   dependencies:
     "@grafana/faro-bundlers-shared": "npm:^0.11.0"
-    "@grafana/faro-cli": "npm:^0.10.0"
+    "@grafana/faro-cli": "npm:^0.11.0"
     "@jest/globals": "npm:30.4.1"
     "@rollup/plugin-babel": "npm:7.1.0"
     "@rollup/plugin-commonjs": "npm:29.0.3"
