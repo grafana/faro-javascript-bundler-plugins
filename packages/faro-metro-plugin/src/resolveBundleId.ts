@@ -155,7 +155,7 @@ function resolveFromAndroidGradle(
   if (!id || !validateAndroidBundleId(id)) {
     throw new Error(
       `[faro-metro-plugin] Invalid or missing bundle id at ${filePath}. ` +
-        'Apply the Faro Gradle plugin (com.grafana.faro) and ensure release variant version fields are set.'
+        'Apply the Faro Gradle plugin (com.grafana.faro.android-symbols) and ensure release variant version fields are set.'
     );
   }
   return normalizeBundleIdLength(id);
