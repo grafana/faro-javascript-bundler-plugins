@@ -357,7 +357,7 @@ metro
   .option('-k, --api-key <key>', 'Bearer API key (env: FARO_SOURCEMAP_API_KEY)')
   .option(
     '-b, --bundle-id <id>',
-    'Bundle id matching the shipped JS bundle (env: FARO_BUNDLE_ID). On Android React Native with com.grafana.faro, omit — Gradle supplies applicationId@versionCode@versionName via @grafana/faro-metro-plugin.',
+    'Bundle id matching the shipped JS bundle (env: FARO_BUNDLE_ID). On Android React Native with com.grafana.faro.android-symbols, omit — Gradle supplies applicationId@versionCode@versionName via @grafana/faro-metro-plugin.',
   )
   .option('--no-gzip', 'POST the raw .map JSON instead of a gzipped tarball')
   .option('-v, --verbose', 'Verbose logging', false)
