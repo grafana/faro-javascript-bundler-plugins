@@ -1787,7 +1787,7 @@ __metadata:
     dotenv: "npm:^17.0.1"
     glob: "npm:^13.0.0"
     jest: "npm:30.4.2"
-    tar: "npm:^7.1.0"
+    tar: "npm:^7.5.21"
     ts-jest: "npm:29.4.11"
   bin:
     faro-cli: dist/cjs/cli.js
