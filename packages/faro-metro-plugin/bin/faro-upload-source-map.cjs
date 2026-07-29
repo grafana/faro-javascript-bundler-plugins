@@ -4,7 +4,7 @@
  * `faro-upload-source-map` binary for `@grafana/faro-metro-plugin`.
  *
  * Forwards every CLI argument verbatim to `faro-cli metro upload` by
- * spawning Node on `@grafana/faro-cli`'s `cli.js`, then exits with the
+ * spawning Node on `@grafana/faro-cli`'s `cli.cjs`, then exits with the
  * child process's status code. Intended for callers that resolve binaries
  * by package name, e.g.:
  *
@@ -16,7 +16,7 @@
 'use strict';
 
 const { spawnSync } = require('child_process');
-const cliPath = require.resolve('@grafana/faro-cli/dist/cjs/cli.js');
+const cliPath = require.resolve('@grafana/faro-cli/dist/cjs/cli.cjs');
 const result = spawnSync('node', [cliPath, 'metro', 'upload', ...process.argv.slice(2)], {
   stdio: 'inherit',
 });

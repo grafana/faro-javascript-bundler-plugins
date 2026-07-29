@@ -298,5 +298,3 @@ export default class FaroSourceMapUploaderPlugin
     });
   }
 }
-
-module.exports = FaroSourceMapUploaderPlugin;

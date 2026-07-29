@@ -1,19 +1,21 @@
-import { Mock } from 'jest-mock';
+import type { Mock } from 'jest-mock';
 import { ModuleFormat, rollup } from 'rollup';
-import faroUploader from '@grafana/faro-rollup-plugin';
-import { ProxyAgent, RequestInit, Response } from 'undici';
+import type { RequestInit, Response } from 'undici';
 import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
-jest.mock('child_process', () => ({
-  ...jest.requireActual<object>('child_process'),
+jest.unstable_mockModule('child_process', () => ({
   execSync: jest.fn(() => { throw new Error('git not available'); }),
 }));
 
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+const mockProxyAgent = jest.fn().mockImplementation((proxyUrl: unknown) => ({
+  proxyUrl,
+  options: { proxy: proxyUrl },
+}));
 mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   return {
     ok: true,
@@ -23,13 +25,13 @@ mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => ({
+jest.unstable_mockModule('undici', () => ({
   fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
-    proxyUrl,
-    options: { proxy: proxyUrl },
-  })),
+  ProxyAgent: mockProxyAgent,
 }));
+
+const { default: faroUploader } = await import('@grafana/faro-rollup-plugin');
+const { ProxyAgent } = await import('undici');
 // Helper to create a run rollup with custom config
 const runRollup = async (customConfig: Record<string, unknown> = {}, outputConfig: Record<string, unknown> = {}) => {
   const bundle = await rollup({
