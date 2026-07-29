@@ -1763,10 +1763,19 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-bundlers-shared@workspace:packages/faro-bundlers-shared"
   dependencies:
+    "@babel/core": "npm:8.0.1"
+    "@babel/preset-typescript": "npm:8.0.1"
+    "@grafana/tsconfig": "npm:2.2.0"
+    "@rollup/plugin-babel": "npm:7.1.0"
+    "@rollup/plugin-commonjs": "npm:29.0.3"
+    "@rollup/plugin-json": "npm:6.1.0"
+    "@rollup/plugin-node-resolve": "npm:16.0.3"
     "@rollup/plugin-typescript": "npm:12.3.0"
     "@types/tar": "npm:7.0.87"
     ansis: "npm:^4.0.0"
+    rollup: "npm:4.62.2"
     tar: "npm:^7.5.21"
+    typescript: "npm:6.0.3"
     undici: "npm:^8.5.0"
     undici-types: "npm:8.5.0"
   languageName: unknown
@@ -1776,8 +1785,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-cli@workspace:packages/faro-cli"
   dependencies:
+    "@babel/core": "npm:8.0.1"
+    "@babel/preset-typescript": "npm:8.0.1"
     "@grafana/faro-bundlers-shared": "npm:^0.11.0"
+    "@grafana/tsconfig": "npm:2.2.0"
     "@jest/globals": "npm:30.4.1"
+    "@rollup/plugin-babel": "npm:7.1.0"
+    "@rollup/plugin-commonjs": "npm:29.0.3"
+    "@rollup/plugin-json": "npm:6.1.0"
+    "@rollup/plugin-node-resolve": "npm:16.0.3"
     "@rollup/plugin-typescript": "npm:12.3.0"
     "@types/glob": "npm:9.0.0"
     "@types/jest": "npm:30.0.0"
@@ -1787,10 +1803,12 @@ __metadata:
     dotenv: "npm:^17.0.1"
     glob: "npm:^13.0.0"
     jest: "npm:30.4.2"
+    rollup: "npm:4.62.2"
     tar: "npm:^7.5.21"
     ts-jest: "npm:29.4.11"
+    typescript: "npm:6.0.3"
   bin:
-    faro-cli: dist/cjs/cli.js
+    faro-cli: dist/cjs/cli.cjs
   languageName: unknown
   linkType: soft
 
@@ -1798,12 +1816,22 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-esbuild-plugin@workspace:packages/faro-esbuild"
   dependencies:
+    "@babel/core": "npm:8.0.1"
+    "@babel/preset-typescript": "npm:8.0.1"
     "@grafana/faro-bundlers-shared": "npm:^0.11.0"
+    "@grafana/tsconfig": "npm:2.2.0"
     "@jest/globals": "npm:30.4.1"
+    "@rollup/plugin-babel": "npm:7.1.0"
+    "@rollup/plugin-commonjs": "npm:29.0.3"
+    "@rollup/plugin-json": "npm:6.1.0"
+    "@rollup/plugin-node-resolve": "npm:16.0.3"
+    "@rollup/plugin-typescript": "npm:12.3.0"
     "@types/jest": "npm:30.0.0"
     esbuild: "npm:^0.28.0"
     jest: "npm:30.4.2"
+    rollup: "npm:4.62.2"
     ts-jest: "npm:29.4.11"
+    typescript: "npm:6.0.3"
   languageName: unknown
   linkType: soft
 
@@ -1811,8 +1839,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-metro-plugin@workspace:packages/faro-metro-plugin"
   dependencies:
+    "@babel/core": "npm:8.0.1"
     "@grafana/faro-bundlers-shared": "npm:^0.11.0"
     "@grafana/faro-cli": "npm:^0.11.0"
+    "@grafana/tsconfig": "npm:2.2.0"
     "@jest/globals": "npm:30.4.1"
     "@rollup/plugin-babel": "npm:7.1.0"
     "@rollup/plugin-commonjs": "npm:29.0.3"
@@ -1824,13 +1854,15 @@ __metadata:
     cross-fetch: "npm:^4.0.0"
     jest: "npm:30.4.2"
     metro: "npm:0.85.0"
+    rollup: "npm:4.62.2"
     source-map: "npm:^0.7.4"
     ts-jest: "npm:29.4.11"
     tslib: "npm:2.8.1"
+    typescript: "npm:6.0.3"
   peerDependencies:
     metro: ">=0.81.0"
   bin:
-    faro-upload-source-map: bin/faro-upload-source-map.js
+    faro-upload-source-map: bin/faro-upload-source-map.cjs
   languageName: unknown
   linkType: soft
 
@@ -1838,13 +1870,22 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/faro-rollup-plugin@workspace:packages/faro-rollup"
   dependencies:
+    "@babel/core": "npm:8.0.1"
+    "@babel/preset-typescript": "npm:8.0.1"
     "@grafana/faro-bundlers-shared": "npm:^0.11.0"
+    "@grafana/tsconfig": "npm:2.2.0"
     "@jest/globals": "npm:30.4.1"
+    "@rollup/plugin-babel": "npm:7.1.0"
+    "@rollup/plugin-commonjs": "npm:29.0.3"
+    "@rollup/plugin-json": "npm:6.1.0"
+    "@rollup/plugin-node-resolve": "npm:16.0.3"
+    "@rollup/plugin-typescript": "npm:12.3.0"
     "@types/jest": "npm:30.0.0"
     jest: "npm:30.4.2"
     magic-string: "npm:^0.30.5"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:4.62.2"
     ts-jest: "npm:29.4.11"
+    typescript: "npm:6.0.3"
   languageName: unknown
   linkType: soft
 
@@ -1854,15 +1895,22 @@ __metadata:
   dependencies:
     "@babel/core": "npm:8.0.1"
     "@babel/preset-env": "npm:8.0.2"
+    "@babel/preset-typescript": "npm:8.0.1"
     "@grafana/faro-bundlers-shared": "npm:^0.11.0"
+    "@grafana/tsconfig": "npm:2.2.0"
     "@jest/globals": "npm:30.4.1"
     "@rollup/plugin-babel": "npm:7.1.0"
+    "@rollup/plugin-commonjs": "npm:29.0.3"
+    "@rollup/plugin-json": "npm:6.1.0"
     "@rollup/plugin-node-resolve": "npm:16.0.3"
+    "@rollup/plugin-typescript": "npm:12.3.0"
     "@types/jest": "npm:30.0.0"
     "@types/node": "npm:24.13.2"
     babel-jest: "npm:30.4.1"
     jest: "npm:30.4.2"
+    rollup: "npm:4.62.2"
     ts-jest: "npm:29.4.11"
+    typescript: "npm:6.0.3"
     webpack: "npm:^5.89.0"
   languageName: unknown
   linkType: soft
@@ -5656,17 +5704,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "faro-javascript-bundler-plugins@workspace:."
   dependencies:
-    "@babel/core": "npm:8.0.1"
-    "@babel/preset-env": "npm:8.0.2"
-    "@babel/preset-typescript": "npm:8.0.1"
-    "@grafana/tsconfig": "npm:2.2.0"
-    "@rollup/plugin-babel": "npm:7.1.0"
-    "@rollup/plugin-commonjs": "npm:29.0.3"
-    "@rollup/plugin-json": "npm:6.1.0"
-    "@rollup/plugin-typescript": "npm:12.3.0"
     lerna: "npm:9.0.7"
-    rollup: "npm:4.62.2"
-    typescript: "npm:6.0.3"
   languageName: unknown
   linkType: soft
 
@@ -9598,7 +9636,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:4.62.2, rollup@npm:^4.22.4":
+"rollup@npm:4.62.2":
   version: 4.62.2
   resolution: "rollup@npm:4.62.2"
   dependencies:

@@ -1,7 +1,7 @@
+import resolve from "@rollup/plugin-node-resolve";
 import babel from "@rollup/plugin-babel";
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
-import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
 import packageJson from './package.json' with { type: 'json' };
 
@@ -11,7 +11,7 @@ const extensions = [".ts"];
 // within the bundle's output directory, so declarations can only be generated
 // alongside a single-directory output. Emit them with the CJS build (which the
 // "types" field points at) and disable declarations for the ESM build.
-const plugins = ({ declaration }) => [
+const plugins = ({ declaration }: { declaration: boolean }) => [
   typescript(
     declaration
       ? { declarationDir: "dist/cjs", exclude: ["**/*.test.ts", "**/test/**"] }
@@ -20,8 +20,8 @@ const plugins = ({ declaration }) => [
   babel({
     extensions,
     babelHelpers: "bundled",
-    include: ["src/**/*"],
-    exclude: [/node_modules/, /test/, "*.test.ts"]
+    include: ["src/**/*", "**/*.test.ts", "**/test/**"],
+    exclude: /node_modules/
   }),
   json(),
   resolve({
@@ -37,7 +37,6 @@ const plugins = ({ declaration }) => [
 
 const external = [
   ...Object.keys(packageJson.dependencies),
-  "webpack"
 ];
 
 export default [

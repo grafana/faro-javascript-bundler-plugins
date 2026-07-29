@@ -1,16 +1,21 @@
-/** @type {import('jest').Config} */
-module.exports = {
-  preset: 'ts-jest',
+import type { Config } from 'jest';
+
+const config: Config = {
+  preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   testMatch: ['**/test/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'mjs', 'json'],
-  // msw@2 pulls ESM-only deps (e.g. rettime); transpile them for Jest.
+  extensionsToTreatAsEsm: ['.ts'],
+  moduleNameMapper: {
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+  },
   transformIgnorePatterns: [
     '/node_modules/(?!(msw|@mswjs|@open-draft|rettime|until-async|strict-event-emitter|@bundled-es-modules)/)',
   ],
   transform: {
     '^.+\\.ts$': ['ts-jest', {
       tsconfig: 'tsconfig.json',
+      useESM: true,
     }],
     '^.+\\.(js|mjs)$': ['babel-jest', {
       presets: [
@@ -19,3 +24,5 @@ module.exports = {
     }],
   },
 };
+
+export default config;

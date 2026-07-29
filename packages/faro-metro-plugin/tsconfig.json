@@ -1,12 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@grafana/tsconfig",
-  "include": ["./**/*"],
+  "include": ["src/**/*.ts"],
   "compilerOptions": {
     "rootDir": "./src",
     "sourceMap": true,
     "esModuleInterop": true,
-    "module": "esnext",
+    "module": "ESNext",
     "moduleResolution": "bundler",
     "types": ["jest", "node"]
   }

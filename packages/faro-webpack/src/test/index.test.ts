@@ -1,4 +1,4 @@
-import FaroSourceMapUploaderPlugin, { WebpackFaroSourceMapUploaderPluginOptions } from "@grafana/faro-webpack-plugin";
+import type { WebpackFaroSourceMapUploaderPluginOptions } from "@grafana/faro-webpack-plugin";
 import {
   afterEach,
   describe,
@@ -6,21 +6,25 @@ import {
   test,
   jest,
 } from "@jest/globals";
-import { Mock } from 'jest-mock';
+import type { Mock } from 'jest-mock';
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
-import { ProxyAgent, RequestInit, Response } from "undici";
-import webpack, { Configuration, Stats } from "webpack";
+import type { RequestInit, Response } from "undici";
+import webpack from "webpack";
+import type { Configuration, Stats } from "webpack";
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
-jest.mock('child_process', () => ({
-  ...jest.requireActual<object>('child_process'),
+jest.unstable_mockModule('child_process', () => ({
   execSync: jest.fn(() => { throw new Error('git not available'); }),
 }));
 
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+const mockProxyAgent = jest.fn().mockImplementation((proxyUrl: unknown) => ({
+  proxyUrl,
+  options: { proxy: proxyUrl },
+}));
 mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
   const headers = options?.headers as Record<string, string> | undefined;
   const contentType = headers?.["Content-Type"] || headers?.["content-type"];
@@ -49,13 +53,13 @@ mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => ({
+jest.unstable_mockModule('undici', () => ({
   fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
-    proxyUrl,
-    options: { proxy: proxyUrl },
-  })),
+  ProxyAgent: mockProxyAgent,
 }));
+
+const { default: FaroSourceMapUploaderPlugin } = await import("@grafana/faro-webpack-plugin");
+const { ProxyAgent } = await import("undici");
 
 const uploadedFiles: string[] = [];
 const tempDirectories: string[] = [];

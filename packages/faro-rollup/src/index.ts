@@ -1,4 +1,4 @@
-import { Plugin, OutputOptions, OutputBundle } from "rollup";
+import type { Plugin, OutputOptions, OutputBundle } from "rollup";
 import MagicString from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
@@ -208,5 +208,3 @@ export default function faroUploader(
     },
   };
 }
-
-module.exports = faroUploader;
