@@ -1766,6 +1766,7 @@ __metadata:
     "@rollup/plugin-typescript": "npm:12.3.0"
     "@types/tar": "npm:7.0.87"
     ansis: "npm:^4.0.0"
+    rollup: "npm:4.62.2"
     tar: "npm:^7.5.21"
     undici: "npm:^8.5.0"
     undici-types: "npm:8.5.0"
@@ -1787,10 +1788,11 @@ __metadata:
     dotenv: "npm:^17.0.1"
     glob: "npm:^13.0.0"
     jest: "npm:30.4.2"
+    rollup: "npm:4.62.2"
     tar: "npm:^7.5.21"
     ts-jest: "npm:29.4.11"
   bin:
-    faro-cli: dist/cjs/cli.js
+    faro-cli: dist/cjs/cli.cjs
   languageName: unknown
   linkType: soft
 
@@ -1803,6 +1805,7 @@ __metadata:
     "@types/jest": "npm:30.0.0"
     esbuild: "npm:^0.28.0"
     jest: "npm:30.4.2"
+    rollup: "npm:4.62.2"
     ts-jest: "npm:29.4.11"
   languageName: unknown
   linkType: soft
@@ -1824,13 +1827,14 @@ __metadata:
     cross-fetch: "npm:^4.0.0"
     jest: "npm:30.4.2"
     metro: "npm:0.85.0"
+    rollup: "npm:4.62.2"
     source-map: "npm:^0.7.4"
     ts-jest: "npm:29.4.11"
     tslib: "npm:2.8.1"
   peerDependencies:
     metro: ">=0.81.0"
   bin:
-    faro-upload-source-map: bin/faro-upload-source-map.js
+    faro-upload-source-map: bin/faro-upload-source-map.cjs
   languageName: unknown
   linkType: soft
 
@@ -1843,7 +1847,7 @@ __metadata:
     "@types/jest": "npm:30.0.0"
     jest: "npm:30.4.2"
     magic-string: "npm:^0.30.5"
-    rollup: "npm:^4.22.4"
+    rollup: "npm:4.62.2"
     ts-jest: "npm:29.4.11"
   languageName: unknown
   linkType: soft
@@ -1862,6 +1866,7 @@ __metadata:
     "@types/node": "npm:24.13.2"
     babel-jest: "npm:30.4.1"
     jest: "npm:30.4.2"
+    rollup: "npm:4.62.2"
     ts-jest: "npm:29.4.11"
     webpack: "npm:^5.89.0"
   languageName: unknown
@@ -9598,7 +9603,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:4.62.2, rollup@npm:^4.22.4":
+"rollup@npm:4.62.2":
   version: 4.62.2
   resolution: "rollup@npm:4.62.2"
   dependencies:

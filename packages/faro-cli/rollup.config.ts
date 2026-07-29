@@ -26,7 +26,7 @@ const external = [
 // It is bundled separately below, so exclude it from the library program.
 const libExclude = ["**/*.test.ts", "**/test/**", "src/cli.ts"];
 
-const libPlugins = ({ declaration }) => [
+const libPlugins = ({ declaration }: { declaration: boolean }) => [
   typescript(
     declaration
       ? { declarationDir: "dist/cjs", exclude: libExclude }
@@ -74,7 +74,7 @@ export default [
   {
     input: 'src/cli.ts',
     output: {
-      file: 'dist/cjs/cli.js',
+      file: 'dist/cjs/cli.cjs',
       format: 'cjs',
       sourcemap: true,
       banner: '#!/usr/bin/env node',

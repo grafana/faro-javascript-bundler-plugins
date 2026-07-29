@@ -2,10 +2,18 @@
   "name": "@grafana/faro-cli",
   "version": "0.11.0",
   "description": "CLI for uploading sourcemaps to the Faro source map API",
-  "main": "dist/cjs/index.js",
+  "type": "module",
+  "main": "dist/cjs/index.cjs",
   "types": "dist/cjs/index.d.ts",
   "module": "dist/esm/index.mjs",
-  "bin": "dist/cjs/cli.js",
+  "bin": "dist/cjs/cli.cjs",
+  "exports": {
+    ".": {
+      "types": "./dist/cjs/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
@@ -14,9 +22,9 @@
   "license": "Apache-2.0",
   "author": "Grafana Labs",
   "scripts": {
-    "build": "rollup --config rollup.config.mjs",
-    "test": "jest",
-    "test:watch": "jest --watch"
+    "build": "rollup --config rollup.config.ts",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --watch"
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.11.0",
@@ -33,6 +41,7 @@
     "@types/node": "24.13.2",
     "@types/tar": "7.0.87",
     "jest": "30.4.2",
+    "rollup": "4.62.2",
     "ts-jest": "29.4.11"
   },
   "files": [

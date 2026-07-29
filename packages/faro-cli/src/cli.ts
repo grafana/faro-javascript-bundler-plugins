@@ -7,7 +7,9 @@ import path from 'path';
 import fs from 'fs';
 import { glob } from 'glob';
 import dotenv from 'dotenv';
-import { version } from '../package.json';
+import packageJson from '../package.json' with { type: 'json' };
+
+const { version } = packageJson;
 
 interface UploadOptions {
   endpoint: string;
