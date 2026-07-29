@@ -1,6 +1,9 @@
 import path from 'path';
 import fs from 'fs';
 import { describe, expect, test } from '@jest/globals';
+import { fileURLToPath } from 'url';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * Path A (plan §1b): assert a release `.map` from `react-native bundle` shape
@@ -9,7 +12,7 @@ import { describe, expect, test } from '@jest/globals';
 describe('Path A release source map fixture', () => {
   test('parses as JSON v3 with non-empty sources and bundle file field', () => {
     const mapPath = path.join(
-      __dirname,
+      dirname,
       'fixtures',
       'path-a-release.index.android.bundle.map'
     );

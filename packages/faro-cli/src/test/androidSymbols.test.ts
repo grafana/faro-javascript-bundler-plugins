@@ -1,16 +1,19 @@
-import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { jest } from '@jest/globals';
 
-import { buildAndroidSymbolsUploadRequests, runAndroidSymbolsUpload } from '../androidSymbols';
 import { buildTestAgpZip } from './helpers/buildTestAgpZip';
 
-jest.mock('child_process', () => ({
+jest.unstable_mockModule('child_process', () => ({
   execFileSync: jest.fn(),
+  execSync: jest.fn(() => { throw new Error('git not available'); }),
 }));
 
-const mockedExecFileSync = execFileSync as jest.MockedFunction<typeof execFileSync>;
+const { execFileSync } = await import('child_process');
+const { buildAndroidSymbolsUploadRequests, runAndroidSymbolsUpload } = await import('../androidSymbols');
+
+const mockedExecFileSync = execFileSync as jest.MockedFunction<typeof import('child_process').execFileSync>;
 
 const baseConnection = {
   endpoint: 'https://e.test/',

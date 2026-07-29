@@ -1,19 +1,21 @@
 import * as esbuild from 'esbuild';
-import faroEsbuildPlugin from '../index';
-import { ProxyAgent, RequestInit, Response } from 'undici';
+import type { RequestInit, Response } from 'undici';
 import path from 'path';
 import fs from 'fs';
 import { jest } from '@jest/globals';
-import { Mock } from 'jest-mock';
+import type { Mock } from 'jest-mock';
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
-jest.mock('child_process', () => ({
-  ...jest.requireActual<object>('child_process'),
+jest.unstable_mockModule('child_process', () => ({
   execSync: jest.fn(() => { throw new Error('git not available'); }),
 }));
 
 // Mock undici fetch and ProxyAgent
 const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+const mockProxyAgent = jest.fn().mockImplementation((proxyUrl: unknown) => ({
+  proxyUrl,
+  options: { proxy: proxyUrl },
+}));
 mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   return {
     ok: true,
@@ -23,13 +25,13 @@ mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   } as Response;
 });
 
-jest.mock('undici', () => ({
+jest.unstable_mockModule('undici', () => ({
   fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
-  ProxyAgent: jest.fn().mockImplementation((proxyUrl: unknown) => ({
-    proxyUrl,
-    options: { proxy: proxyUrl },
-  })),
+  ProxyAgent: mockProxyAgent,
 }));
+
+const { default: faroEsbuildPlugin } = await import('../index');
+const { ProxyAgent } = await import('undici');
 
 // helper to run esbuild with custom config
 const runEsbuild = async (customConfig: Record<string, unknown> = {}, buildOptions: Record<string, unknown> = {}) => {

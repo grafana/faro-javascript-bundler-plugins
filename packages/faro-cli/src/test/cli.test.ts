@@ -1,15 +1,39 @@
-import fs from 'fs';
-import path from 'path';
 import { jest } from '@jest/globals';
-import { consoleInfoOrange } from '@grafana/faro-bundlers-shared';
-import { uploadSourceMaps, generateCurlCommand } from '../index';
-import { version } from '../../package.json';
+import packageJson from '../../package.json' with { type: 'json' };
+
+const { version } = packageJson;
 
 // Mock dependencies
-jest.mock('fs');
-jest.mock('path');
-jest.mock('@grafana/faro-bundlers-shared');
-jest.mock('../index');
+const mockFs = {
+  existsSync: jest.fn(),
+};
+const mockPath = {
+  resolve: jest.fn(),
+};
+const mockConsoleInfoOrange = jest.fn();
+const mockUploadSourceMaps = jest.fn();
+const mockGenerateCurlCommand = jest.fn();
+
+jest.unstable_mockModule('fs', () => ({
+  default: mockFs,
+  ...mockFs,
+}));
+jest.unstable_mockModule('path', () => ({
+  default: mockPath,
+  ...mockPath,
+}));
+jest.unstable_mockModule('@grafana/faro-bundlers-shared', () => ({
+  consoleInfoOrange: mockConsoleInfoOrange,
+}));
+jest.unstable_mockModule('../index', () => ({
+  uploadSourceMaps: mockUploadSourceMaps,
+  generateCurlCommand: mockGenerateCurlCommand,
+}));
+
+const fs = (await import('fs')).default;
+const path = (await import('path')).default;
+const { consoleInfoOrange } = await import('@grafana/faro-bundlers-shared');
+const { uploadSourceMaps, generateCurlCommand } = await import('../index');
 
 // Mock console methods
 const originalConsoleLog = console.log;
