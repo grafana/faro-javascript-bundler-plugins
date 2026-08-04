@@ -5684,10 +5684,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-uri@npm:4.1.1":
-  version: 4.1.1
-  resolution: "fast-uri@npm:4.1.1"
-  checksum: 10/f8a186718e360ffb0888b812892dc2930902c4200b9a35ab15923678b4cbcece04a155d36edc74f1ed3e5a9f60893095cf195b6e0a2351282f7714bac0993445
+"fast-uri@npm:4.1.2":
+  version: 4.1.2
+  resolution: "fast-uri@npm:4.1.2"
+  checksum: 10/e5e049fabd47930669c1af4642e6205a18683138cbc984673317e1ccb88d46de20e66b4ae6bc2e9ee70011eff263cc0f745daeaa7f841835d12c1e0d8d558f11
   languageName: node
   linkType: hard
 
