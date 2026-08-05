@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.11.0...faro-rollup-plugin-v0.11.1) (2026-08-04)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.11.0 to ^0.11.1
+
 ## [0.11.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.10.1...faro-rollup-plugin-v0.11.0) (2026-06-01)
 
 
