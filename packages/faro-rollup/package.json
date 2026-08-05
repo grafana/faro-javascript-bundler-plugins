@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.11.1",
-    "magic-string": "^0.30.5",
+    "magic-string": "^1.0.0",
     "rollup": "^4.22.4"
   },
   "devDependencies": {
