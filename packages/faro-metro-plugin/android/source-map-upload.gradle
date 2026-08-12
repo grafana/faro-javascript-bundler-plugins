@@ -26,7 +26,7 @@
  *   2. Run `hermesc` and `compose-source-maps.js` → produces the composed map at
  *      `app/build/generated/sourcemaps/react/release/index.android.bundle.map`.
  *   3. Finalise the bundle task with:
- *        node node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.js \
+ *        node node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.cjs \
  *          --verbose \
  *          --map        <composed map path> \
  *          --endpoint   "$FARO_SOURCEMAP_ENDPOINT" \
@@ -34,7 +34,7 @@
  *          --stack-id   "$FARO_SOURCEMAP_STACK_ID" \
  *          --api-key    "$FARO_SOURCEMAP_API_KEY" \
  *          --bundle-id  "$FARO_BUNDLE_ID"
- *      The shim at `bin/faro-upload-source-map.js` forwards the call to
+ *      The shim at `bin/faro-upload-source-map.cjs` forwards the call to
  *      `faro-cli metro upload`. Gradle reads every required setting from env
  *      vars and passes them as **explicit CLI arguments**, so the CLI never
  *      relies on its own env-var resolution from this entry point.
@@ -60,7 +60,7 @@
  */
 
 ext.faroComposedAndroidMap = file("$projectDir/build/generated/sourcemaps/react/release/index.android.bundle.map")
-ext.faroAndroidUploadCli = file("$projectDir/../../node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.js")
+ext.faroAndroidUploadCli = file("$projectDir/../../node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.cjs")
 ext.faroAndroidJsRoot = file("$projectDir/../..")
 
 def faroUploadComposedSourceMap = tasks.register("faroUploadComposedSourceMapAndroidRelease", Exec) {

@@ -4,9 +4,6 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=22.13.0"
-  },
   "workspaces": [
     "packages/*"
   ],
@@ -14,7 +11,7 @@
     "build": "lerna run build && yarn typecheck",
     "publish": "lerna publish",
     "test": "lerna run test",
-    "typecheck": "lerna exec -- tsc --noEmit"
+    "typecheck": "lerna run typecheck"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",

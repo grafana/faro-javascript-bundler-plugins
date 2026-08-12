@@ -20,6 +20,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "build": "rollup --config rollup.config.ts",
+    "typecheck": "tsc --noEmit",
     "test": "echo \"No tests yet...\" && exit 0"
   },
   "devDependencies": {

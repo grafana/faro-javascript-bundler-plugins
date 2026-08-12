@@ -12,6 +12,10 @@
       "types": "./dist/cjs/index.d.ts",
       "import": "./dist/esm/index.mjs",
       "require": "./dist/cjs/index.cjs"
+    },
+    "./cli": {
+      "import": "./dist/cjs/cli.cjs",
+      "require": "./dist/cjs/cli.cjs"
     }
   },
   "repository": {
@@ -23,6 +27,7 @@
   "author": "Grafana Labs",
   "scripts": {
     "build": "rollup --config rollup.config.ts",
+    "typecheck": "tsc --noEmit",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --watch"
   },

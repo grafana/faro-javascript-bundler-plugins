@@ -16,7 +16,7 @@
 'use strict';
 
 const { spawnSync } = require('child_process');
-const cliPath = require.resolve('@grafana/faro-cli/dist/cjs/cli.cjs');
+const cliPath = require.resolve('@grafana/faro-cli/cli');
 const result = spawnSync('node', [cliPath, 'metro', 'upload', ...process.argv.slice(2)], {
   stdio: 'inherit',
 });
