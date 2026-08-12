@@ -44,7 +44,7 @@
     "@types/node": "24.13.3",
     "babel-jest": "30.4.1",
     "jest": "30.4.2",
-    "rollup": "4.62.2",
+    "rollup": "4.62.4",
     "ts-jest": "29.4.12",
     "typescript": "6.0.3"
   },

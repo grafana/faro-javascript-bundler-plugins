@@ -33,7 +33,7 @@
     "@rollup/plugin-node-resolve": "16.0.3",
     "@rollup/plugin-typescript": "12.3.0",
     "@types/tar": "7.0.87",
-    "rollup": "4.62.2",
+    "rollup": "4.62.4",
     "typescript": "6.0.3",
     "undici-types": "8.10.0"
   },
