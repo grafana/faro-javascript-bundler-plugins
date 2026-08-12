@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-esbuild-plugin",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Upload a source map to the Faro source map API from an esbuild build pipeline",
   "type": "module",
   "main": "dist/cjs/index.cjs",
@@ -26,7 +26,7 @@
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "^0.11.0",
+    "@grafana/faro-bundlers-shared": "^0.11.1",
     "esbuild": "^0.28.0"
   },
   "devDependencies": {
@@ -42,7 +42,7 @@
     "@types/jest": "30.0.0",
     "jest": "30.4.2",
     "rollup": "4.62.2",
-    "ts-jest": "29.4.11",
+    "ts-jest": "29.4.12",
     "typescript": "6.0.3"
   },
   "files": [

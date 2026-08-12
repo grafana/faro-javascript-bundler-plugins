@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-bundlers-shared",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "type": "module",
   "main": "dist/cjs/index.cjs",
   "types": "dist/cjs/index.d.ts",
@@ -35,7 +35,7 @@
     "@types/tar": "7.0.87",
     "rollup": "4.62.2",
     "typescript": "6.0.3",
-    "undici-types": "8.5.0"
+    "undici-types": "8.10.0"
   },
   "dependencies": {
     "ansis": "^4.0.0",
