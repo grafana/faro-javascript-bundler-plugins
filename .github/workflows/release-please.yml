@@ -142,14 +142,13 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Build and validate packages
+        run: yarn build
+
       - name: Run tests
         run: |
-          yarn build
           # Retry tests 3 times
           yarn test || yarn test || yarn test
-
-      - name: Build production bundle
-        run: yarn build
 
       # Trusted Publishing requires npm >= 11.5.1. Pin to the 11.x range
       # rather than `npm@latest` so a future npm major (with potentially
