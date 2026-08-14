@@ -10,15 +10,16 @@ export default defineConfig([
     outputOptions: {
       exports: 'named',
     },
-    outExtensions: () => ({
-      dts: '.d.ts',
-    }),
   },
   {
     format: 'esm',
     outDir: 'dist/esm',
     target: 'esnext',
     sourcemap: true,
-    dts: false,
+    publint: true,
+    attw: {
+      level: 'error',
+      profile: 'node16',
+    },
   },
 ]);

@@ -2,20 +2,24 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig([
   {
+    entry: {
+      index: 'src/index.cjs.ts',
+    },
     format: 'cjs',
     outDir: 'dist/cjs',
     target: 'esnext',
     sourcemap: true,
     clean: ['dist'],
-    outExtensions: () => ({
-      dts: '.d.ts',
-    }),
   },
   {
     format: 'esm',
     outDir: 'dist/esm',
     target: 'esnext',
     sourcemap: true,
-    dts: false,
+    publint: true,
+    attw: {
+      level: 'error',
+      profile: 'node16',
+    },
   },
 ]);

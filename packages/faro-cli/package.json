@@ -4,18 +4,29 @@
   "description": "CLI for uploading sourcemaps to the Faro source map API",
   "type": "module",
   "main": "dist/cjs/index.cjs",
-  "types": "dist/cjs/index.d.ts",
+  "types": "dist/cjs/index.d.cts",
   "module": "dist/esm/index.mjs",
   "bin": "dist/cjs/cli.cjs",
   "exports": {
     ".": {
-      "types": "./dist/cjs/index.d.ts",
-      "import": "./dist/esm/index.mjs",
-      "require": "./dist/cjs/index.cjs"
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
     },
     "./cli": {
-      "import": "./dist/cjs/cli.cjs",
-      "require": "./dist/cjs/cli.cjs"
+      "import": {
+        "types": "./dist/cjs/cli.d.cts",
+        "default": "./dist/cjs/cli.cjs"
+      },
+      "require": {
+        "types": "./dist/cjs/cli.d.cts",
+        "default": "./dist/cjs/cli.cjs"
+      }
     }
   },
   "repository": {

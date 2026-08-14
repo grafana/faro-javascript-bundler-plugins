@@ -12,15 +12,21 @@ export default defineConfig([
         neverBundle: true,
       },
     },
-    outExtensions: () => ({
-      dts: '.d.ts',
-    }),
   },
   {
     format: 'esm',
     outDir: 'dist/esm',
     target: 'esnext',
     sourcemap: true,
-    dts: false,
+    deps: {
+      dts: {
+        neverBundle: true,
+      },
+    },
+    publint: true,
+    attw: {
+      level: 'error',
+      profile: 'node16',
+    },
   },
 ]);

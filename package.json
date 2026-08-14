@@ -8,15 +8,18 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "lerna run build && yarn typecheck",
+    "build": "lerna run build && yarn typecheck && yarn smoke:packages",
     "publish": "lerna publish",
+    "smoke:packages": "node development/smoke-package-exports.mjs",
     "test": "lerna run test",
     "typecheck": "lerna run typecheck"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
-    "lerna": "10.0.0"
+    "@arethetypeswrong/core": "^0.18.1",
+    "lerna": "10.0.0",
+    "publint": "^0.3.8"
   },
   "resolutions": {
     "axios": "1.19.0",
