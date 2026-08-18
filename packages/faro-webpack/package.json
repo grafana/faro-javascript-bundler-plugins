@@ -41,7 +41,7 @@
     "@grafana/tsconfig": "2.2.0",
     "@jest/globals": "30.4.1",
     "@types/jest": "30.0.0",
-    "@types/node": "24.13.3",
+    "@types/node": "26.2.0",
     "babel-jest": "30.4.1",
     "jest": "30.4.2",
     "ts-jest": "29.4.12",
