@@ -19,7 +19,7 @@
     }
   },
   "bin": {
-    "faro-upload-source-map": "bin/faro-upload-source-map.cjs"
+    "faro-upload-source-map": "bin/faro-upload-source-map.js"
   },
   "repository": {
     "type": "git",

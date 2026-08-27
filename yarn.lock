@@ -1898,7 +1898,7 @@ __metadata:
   peerDependencies:
     metro: ">=0.81.0"
   bin:
-    faro-upload-source-map: bin/faro-upload-source-map.cjs
+    faro-upload-source-map: bin/faro-upload-source-map.js
   languageName: unknown
   linkType: soft
 
@@ -4688,7 +4688,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"brace-expansion@npm:5.0.9, brace-expansion@npm:^5.0.8":
+"brace-expansion@npm:5.0.9, brace-expansion@npm:^5.0.9":
   version: 5.0.9
   resolution: "brace-expansion@npm:5.0.9"
   dependencies:
@@ -4697,7 +4697,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"brace-expansion@npm:^1.1.16":
+"brace-expansion@npm:^1.1.18":
   version: 1.1.18
   resolution: "brace-expansion@npm:1.1.18"
   dependencies:
@@ -4707,7 +4707,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"brace-expansion@npm:^2.1.2":
+"brace-expansion@npm:^2.1.4":
   version: 2.1.4
   resolution: "brace-expansion@npm:2.1.4"
   dependencies:

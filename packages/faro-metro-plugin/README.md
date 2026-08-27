@@ -138,7 +138,7 @@ React Native autolinks the SDK’s Android library. Its **`android/build.gradle`
 
 You **do not** edit `android/app/build.gradle` for this path.
 
-The task runs **`node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.cjs`**, which invokes **`faro-cli metro upload`** with `--map` pointing at:
+The task runs **`node_modules/@grafana/faro-metro-plugin/bin/faro-upload-source-map.js`**, which invokes **`faro-cli metro upload`** with `--map` pointing at:
 
 `android/app/build/generated/sourcemaps/react/release/index.android.bundle.map`
 
