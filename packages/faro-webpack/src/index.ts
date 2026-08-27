@@ -1,4 +1,4 @@
-import * as webpack from "webpack";
+import webpack from "webpack";
 import fs from "fs";
 
 import {
@@ -16,8 +16,9 @@ import {
   shouldProcessFile,
   normalizePrefix,
 } from "@grafana/faro-bundlers-shared";
-import { sources } from "webpack";
 import path from "path";
+
+const { sources } = webpack;
 
 interface BannerPluginOptions {
   hash?: string;
@@ -298,5 +299,3 @@ export default class FaroSourceMapUploaderPlugin
     });
   }
 }
-
-module.exports = FaroSourceMapUploaderPlugin;

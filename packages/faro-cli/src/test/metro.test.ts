@@ -4,13 +4,13 @@ import path from 'path';
 import { jest } from '@jest/globals';
 import { THIRTY_MB_IN_BYTES } from '@grafana/faro-bundlers-shared';
 
-jest.mock('../index', () => ({
+jest.unstable_mockModule('../index', () => ({
   uploadCompressedSourceMaps: jest.fn(),
   uploadSourceMap: jest.fn(),
 }));
 
-import * as faroIndex from '../index';
-import { runMetroUpload, validateSourceMap } from '../metro';
+const faroIndex = await import('../index');
+const { runMetroUpload, validateSourceMap } = await import('../metro');
 
 const FARO_ENV_VARS = [
   'FARO_BUNDLE_ID',

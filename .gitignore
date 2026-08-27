@@ -1,5 +1,6 @@
 node_modules
 dist
+.test-output
 src/index.js.map
 src/index.js
 src/index.d.ts

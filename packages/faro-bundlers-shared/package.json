@@ -1,9 +1,22 @@
 {
   "name": "@grafana/faro-bundlers-shared",
   "version": "0.11.1",
-  "main": "dist/cjs/index.js",
-  "types": "dist/cjs/index.d.ts",
+  "type": "module",
+  "main": "dist/cjs/index.cjs",
+  "types": "dist/cjs/index.d.cts",
   "module": "dist/esm/index.mjs",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.mts",
+        "default": "./dist/esm/index.mjs"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.cts",
+        "default": "./dist/cjs/index.cjs"
+      }
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/grafana/faro-javascript-bundler-plugins",
@@ -11,12 +24,17 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "build": "rollup --config rollup.config.mjs",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
     "test": "echo \"No tests yet...\" && exit 0"
   },
   "devDependencies": {
-    "@rollup/plugin-typescript": "12.3.0",
+    "@babel/core": "8.0.1",
+    "@babel/preset-typescript": "8.0.1",
+    "@grafana/tsconfig": "2.2.0",
     "@types/tar": "7.0.87",
+    "tsdown": "0.22.14",
+    "typescript": "6.0.3",
     "undici-types": "8.10.0"
   },
   "dependencies": {

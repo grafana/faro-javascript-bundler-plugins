@@ -17,14 +17,9 @@ export function loadMetroDeps(): {
 } {
   try {
     // ESM consumers don't have a global `require`; anchor createRequire to this
-    // module via __filename (CJS, including Jest's CJS test runtime) or
-    // import.meta.url (ESM build at runtime). Direct eval keeps `import.meta`
-    // out of the source AST so ts-jest's CJS compile stays happy — the eval
-    // branch only runs in ESM, where direct eval inherits the module scope
-    // and `import.meta` is syntactically valid.
-    // eslint-disable-next-line no-eval -- see comment above; rollup warns but the warning is informational.
+    // module via __filename in CJS output or import.meta.url in ESM output.
     const anchor: string =
-      typeof __filename === 'string' ? __filename : (eval('import.meta.url') as string);
+      typeof __filename === 'string' ? __filename : import.meta.url;
     const requireFromHere = createRequire(anchor);
     const metroPkg = requireFromHere.resolve('metro/package.json');
     const requireMetro = createRequire(metroPkg);

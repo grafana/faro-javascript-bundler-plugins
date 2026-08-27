@@ -33,11 +33,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Build and validate packages
+        run: yarn build
+
       - name: Run tests
         run: |
-          yarn build
           # Retry tests 3 times
           yarn test || yarn test || yarn test
-
-      - name: Build production bundle
-        run: yarn build

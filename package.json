@@ -3,29 +3,23 @@
   "name": "faro-javascript-bundler-plugins",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "build": "lerna run build && yarn typecheck",
+    "build": "lerna run build && yarn typecheck && yarn smoke:packages",
     "publish": "lerna publish",
+    "smoke:packages": "node development/smoke-package-exports.mjs",
     "test": "lerna run test",
-    "typecheck": "lerna exec -- tsc --noEmit"
+    "typecheck": "lerna run typecheck"
   },
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@babel/core": "8.0.1",
-    "@babel/preset-env": "8.0.2",
-    "@babel/preset-typescript": "8.0.1",
-    "@grafana/tsconfig": "2.2.0",
-    "@rollup/plugin-babel": "7.1.0",
-    "@rollup/plugin-commonjs": "29.0.3",
-    "@rollup/plugin-json": "6.1.0",
-    "@rollup/plugin-typescript": "12.3.0",
+    "@arethetypeswrong/core": "^0.18.1",
     "lerna": "10.0.0",
-    "rollup": "4.62.4",
-    "typescript": "6.0.3"
+    "publint": "^0.3.8"
   },
   "resolutions": {
     "axios": "1.19.0",
