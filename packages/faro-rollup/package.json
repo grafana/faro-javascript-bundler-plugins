@@ -28,23 +28,19 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+    "test": "vitest run"
   },
   "dependencies": {
     "@grafana/faro-bundlers-shared": "^0.12.0",
     "magic-string": "^0.30.5"
   },
   "devDependencies": {
-    "@babel/core": "8.0.1",
-    "@babel/preset-typescript": "8.0.1",
     "@grafana/tsconfig": "2.2.0",
-    "@jest/globals": "30.4.1",
-    "@types/jest": "30.0.0",
-    "jest": "30.4.2",
+    "@types/node": "24.13.3",
     "rollup": "4.62.4",
-    "ts-jest": "29.4.12",
     "tsdown": "0.22.14",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "4.1.11"
   },
   "files": [
     "dist",

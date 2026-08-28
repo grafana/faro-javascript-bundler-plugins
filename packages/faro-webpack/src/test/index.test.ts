@@ -4,9 +4,9 @@ import {
   describe,
   expect,
   test,
-  jest,
-} from "@jest/globals";
-import type { Mock } from 'jest-mock';
+  vi,
+  type Mock,
+} from "vitest";
 import fs from "fs/promises";
 import os from "os";
 import path from "path";
@@ -15,13 +15,13 @@ import webpack from "webpack";
 import type { Configuration, Stats } from "webpack";
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
-jest.unstable_mockModule('child_process', () => ({
-  execSync: jest.fn(() => { throw new Error('git not available'); }),
+vi.doMock('child_process', () => ({
+  execSync: vi.fn(() => { throw new Error('git not available'); }),
 }));
 
 // Mock undici fetch and ProxyAgent
-const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
-const mockProxyAgent = jest.fn().mockImplementation((proxyUrl: unknown) => ({
+const mockFetch = vi.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+const mockProxyAgent = vi.fn().mockImplementation((proxyUrl: unknown) => ({
   proxyUrl,
   options: { proxy: proxyUrl },
 }));
@@ -53,7 +53,7 @@ mockFetch.mockImplementation(async (_url: string, options?: RequestInit) => {
   } as Response;
 });
 
-jest.unstable_mockModule('undici', () => ({
+vi.doMock('undici', () => ({
   fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
   ProxyAgent: mockProxyAgent,
 }));
@@ -129,7 +129,7 @@ describe("Faro Webpack Plugin", () => {
     await Promise.all(tempDirectories.map(cleanupTempDir));
     uploadedFiles.length = 0;
     tempDirectories.length = 0;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   // Test the default bundleId injection
@@ -486,7 +486,7 @@ describe("Faro Webpack Plugin", () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 
     // Clear previous calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
     (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
@@ -514,7 +514,7 @@ describe("Faro Webpack Plugin", () => {
 
   test("no proxy agent is used when proxy option is not provided", async () => {
     // Clear previous calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
     (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
@@ -541,7 +541,7 @@ describe("Faro Webpack Plugin", () => {
   });
 
   test("proxy validation rejects invalid proxy URLs", async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // Test invalid proxy URLs
     const invalidProxies = [
@@ -589,7 +589,7 @@ describe("Faro Webpack Plugin", () => {
     ];
 
     for (const validProxy of validProxies) {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       mockFetch.mockClear();
       (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
