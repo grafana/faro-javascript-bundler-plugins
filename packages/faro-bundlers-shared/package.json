@@ -26,16 +26,16 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet...\" && exit 0"
+    "test": "vitest run"
   },
   "devDependencies": {
-    "@babel/core": "8.0.1",
-    "@babel/preset-typescript": "8.0.1",
     "@grafana/tsconfig": "2.2.0",
+    "@types/node": "24.13.3",
     "@types/tar": "7.0.87",
     "tsdown": "0.22.14",
     "typescript": "6.0.3",
-    "undici-types": "8.10.0"
+    "undici-types": "8.10.0",
+    "vitest": "4.1.11"
   },
   "dependencies": {
     "ansis": "^4.0.0",

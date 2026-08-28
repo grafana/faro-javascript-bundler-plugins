@@ -11,8 +11,8 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "resolveJsonModule": true,
-    "types": ["jest", "node"]
+    "types": ["node"]
   },
-  "include": ["src/**/*.ts", "tsdown.config.ts", "jest.config.ts"],
+  "include": ["src/**/*.ts", "tsdown.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

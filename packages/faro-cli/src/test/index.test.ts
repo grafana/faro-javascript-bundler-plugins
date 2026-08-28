@@ -1,4 +1,4 @@
-import { jest } from '@jest/globals';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import type { Stats } from 'fs';
 import type {
   UploadSourceMapOptions,
@@ -8,52 +8,52 @@ import type {
 
 // Mock dependencies
 const mockFs = {
-  existsSync: jest.fn(),
-  statSync: jest.fn(),
-  readFileSync: jest.fn(),
-  writeFileSync: jest.fn(),
-  unlinkSync: jest.fn(),
-  readdirSync: jest.fn(),
+  existsSync: vi.fn(),
+  statSync: vi.fn(),
+  readFileSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  unlinkSync: vi.fn(),
+  readdirSync: vi.fn(),
 };
 const mockPath = {
-  basename: jest.fn(),
-  join: jest.fn(),
-  resolve: jest.fn(),
+  basename: vi.fn(),
+  join: vi.fn(),
+  resolve: vi.fn(),
 };
 const mockTar = {
-  create: jest.fn(() => Promise.resolve()),
+  create: vi.fn(() => Promise.resolve()),
 };
-const mockExecFileSync = jest.fn();
-const mockGzipSync = jest.fn();
-const mockTmpdir = jest.fn();
-const mockConsoleInfoOrange = jest.fn();
-const mockEnsureSourceMapFileProperties = jest.fn();
+const mockExecFileSync = vi.fn();
+const mockGzipSync = vi.fn();
+const mockTmpdir = vi.fn();
+const mockConsoleInfoOrange = vi.fn();
+const mockEnsureSourceMapFileProperties = vi.fn();
 
-jest.unstable_mockModule('fs', () => ({
+vi.doMock('fs', () => ({
   default: mockFs,
   ...mockFs,
 }));
-jest.unstable_mockModule('path', () => ({
+vi.doMock('path', () => ({
   default: mockPath,
   ...mockPath,
 }));
-jest.unstable_mockModule('tar', () => mockTar);
-jest.unstable_mockModule('child_process', () => ({
+vi.doMock('tar', () => mockTar);
+vi.doMock('child_process', () => ({
   execFileSync: mockExecFileSync,
 }));
-jest.unstable_mockModule('zlib', () => ({
+vi.doMock('zlib', () => ({
   gzipSync: mockGzipSync,
 }));
-jest.unstable_mockModule('os', () => ({
+vi.doMock('os', () => ({
   tmpdir: mockTmpdir,
 }));
-jest.unstable_mockModule('@grafana/faro-bundlers-shared', () => ({
+vi.doMock('@grafana/faro-bundlers-shared', () => ({
   consoleInfoOrange: mockConsoleInfoOrange,
   THIRTY_MB_IN_BYTES: 30 * 1024 * 1024,
-  faroBundleIdSnippet: jest.fn((bundleId: string, appName: string) => `bundle:${appName}:${bundleId}`),
-  faroGitHashSnippet: jest.fn((gitHash: string, appName: string) => `git:${appName}:${gitHash}`),
+  faroBundleIdSnippet: vi.fn((bundleId: string, appName: string) => `bundle:${appName}:${bundleId}`),
+  faroGitHashSnippet: vi.fn((gitHash: string, appName: string) => `git:${appName}:${gitHash}`),
   ensureSourceMapFileProperties: mockEnsureSourceMapFileProperties,
-  isLocalEndpoint: jest.fn(() => false),
+  isLocalEndpoint: vi.fn(() => false),
 }));
 
 const fs = (await import('fs')).default;
@@ -84,20 +84,20 @@ describe('faro-cli', () => {
   // Mock console methods
   const originalConsoleError = console.error;
   const originalConsoleWarn = console.warn;
-  const mockConsoleError = jest.fn();
-  const mockConsoleWarn = jest.fn();
+  const mockConsoleError = vi.fn();
+  const mockConsoleWarn = vi.fn();
 
   beforeEach(() => {
     // Reset all mocks before each test
-    jest.resetAllMocks();
+    vi.resetAllMocks();
 
     // Mock console methods
     console.error = mockConsoleError;
     console.warn = mockConsoleWarn;
 
     // Mock fs methods
-    jest.mocked(fs.existsSync).mockReturnValue(true);
-    jest.mocked(fs.statSync).mockReturnValue({
+    vi.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.statSync).mockReturnValue({
       size: 1024 * 1024,
       isFile: () => true,
       isDirectory: () => false,
@@ -107,25 +107,25 @@ describe('faro-cli', () => {
       isFIFO: () => false,
       isSocket: () => false
     } as unknown as Stats);
-    jest.mocked(fs.readFileSync).mockReturnValue(Buffer.from('mock file content'));
-    jest.mocked(fs.writeFileSync).mockImplementation(() => {});
-    jest.mocked(fs.unlinkSync).mockImplementation(() => {});
+    vi.mocked(fs.readFileSync).mockReturnValue(Buffer.from('mock file content'));
+    vi.mocked(fs.writeFileSync).mockImplementation(() => {});
+    vi.mocked(fs.unlinkSync).mockImplementation(() => {});
 
     // Mock path methods
-    jest.mocked(path.basename).mockImplementation((filePath: string) => filePath.split('/').pop() || '');
-    jest.mocked(path.join).mockImplementation((...args: string[]) => args.join('/'));
+    vi.mocked(path.basename).mockImplementation((filePath: string) => filePath.split('/').pop() || '');
+    vi.mocked(path.join).mockImplementation((...args: string[]) => args.join('/'));
 
     // Mock child_process
-    jest.mocked(execFileSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
+    vi.mocked(execFileSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
 
     // Mock zlib
-    jest.mocked(gzipSync).mockReturnValue(Buffer.from('gzipped content'));
+    vi.mocked(gzipSync).mockReturnValue(Buffer.from('gzipped content'));
 
     // Mock os
-    jest.mocked(tmpdir).mockReturnValue('/tmp');
+    vi.mocked(tmpdir).mockReturnValue('/tmp');
 
     // Mock shared functions
-    jest.mocked(consoleInfoOrange).mockImplementation(() => {});
+    vi.mocked(consoleInfoOrange).mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -135,15 +135,15 @@ describe('faro-cli', () => {
   });
 
   afterAll(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
 
-    jest.unmock('fs');
-    jest.unmock('path');
-    jest.unmock('tar');
-    jest.unmock('child_process');
-    jest.unmock('zlib');
-    jest.unmock('os');
-    jest.unmock('@grafana/faro-bundlers-shared');
+    vi.doUnmock('fs');
+    vi.doUnmock('path');
+    vi.doUnmock('tar');
+    vi.doUnmock('child_process');
+    vi.doUnmock('zlib');
+    vi.doUnmock('os');
+    vi.doUnmock('@grafana/faro-bundlers-shared');
   });
 
   describe('uploadSourceMap', () => {
@@ -187,7 +187,7 @@ describe('faro-cli', () => {
     });
 
     it('should handle files that exceed the size limit', async () => {
-      (fs.statSync as jest.Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
+      (fs.statSync as Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
 
       const result = await uploadSourceMap(mockOptions);
 
@@ -200,7 +200,7 @@ describe('faro-cli', () => {
 
 
     it('should report non-2xx HTTP status as upload failure', async () => {
-      jest.mocked(execFileSync).mockReturnValue('Unauthorized\n__FARO_HTTP_STATUS__:401');
+      vi.mocked(execFileSync).mockReturnValue('Unauthorized\n__FARO_HTTP_STATUS__:401');
 
       const result = await uploadSourceMap(mockOptions);
 
@@ -211,7 +211,7 @@ describe('faro-cli', () => {
     });
 
     it('should handle curl execution errors', async () => {
-      jest.mocked(execFileSync).mockImplementation(() => {
+      vi.mocked(execFileSync).mockImplementation(() => {
         throw new Error('curl error');
       });
 
@@ -278,9 +278,9 @@ describe('faro-cli', () => {
 
     it('should handle oversized tarballs by splitting into chunks', async () => {
       // First check is for the tarball size
-      (fs.statSync as jest.Mock).mockReturnValueOnce({ size: THIRTY_MB_IN_BYTES + 1 });
+      (fs.statSync as Mock).mockReturnValueOnce({ size: THIRTY_MB_IN_BYTES + 1 });
       // Second check is for the individual file size
-      (fs.statSync as jest.Mock).mockReturnValueOnce({ size: 1024 * 1024 });
+      (fs.statSync as Mock).mockReturnValueOnce({ size: 1024 * 1024 });
 
       const result = await uploadCompressedSourceMaps(mockCompressedOptions);
 
@@ -317,10 +317,10 @@ describe('faro-cli', () => {
         path: mockOutputPath,
       });
 
-      (fs.readdirSync as jest.Mock).mockReturnValue([
+      (fs.readdirSync as Mock).mockReturnValue([
         makeDirent('a.js.map'),
       ]);
-      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 } as Stats);
+      vi.mocked(fs.statSync).mockReturnValue({ size: 1024 } as Stats);
 
       await uploadSourceMaps(
         mockEndpoint,
@@ -340,7 +340,7 @@ describe('faro-cli', () => {
     });
 
     it('should handle oversized files', async () => {
-      (fs.statSync as jest.Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
+      (fs.statSync as Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
 
       const result = await uploadSourceMaps(
         mockEndpoint,
@@ -379,7 +379,7 @@ describe('faro-cli', () => {
     });
 
     const setupReaddirMock = (filenames: string[]) => {
-      (fs.readdirSync as jest.Mock).mockReturnValue(
+      (fs.readdirSync as Mock).mockReturnValue(
         filenames.map(name => makeDirent(name, true))
       );
     };
@@ -387,7 +387,7 @@ describe('faro-cli', () => {
     it('should split files into batches by batchSize with gzipContents', async () => {
       setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map', 'd.js.map', 'e.js.map']);
       // Each file is 1MB — well under 30MB size limit, so only batchSize should cause splitting
-      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 * 1024 } as Stats);
+      vi.mocked(fs.statSync).mockReturnValue({ size: 1024 * 1024 } as Stats);
 
       const result = await uploadSourceMaps(
         mockEndpoint,
@@ -407,7 +407,7 @@ describe('faro-cli', () => {
 
     it('should upload all files in a single batch when batchSize exceeds file count', async () => {
       setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map']);
-      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 * 1024 } as Stats);
+      vi.mocked(fs.statSync).mockReturnValue({ size: 1024 * 1024 } as Stats);
 
       const result = await uploadSourceMaps(
         mockEndpoint,
@@ -428,7 +428,7 @@ describe('faro-cli', () => {
     it('should split files into batches by maxUploadSize', async () => {
       setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map']);
       // Each file is 20MB — two files would exceed 30MB limit
-      jest.mocked(fs.statSync).mockReturnValue({ size: 20 * 1024 * 1024 } as Stats);
+      vi.mocked(fs.statSync).mockReturnValue({ size: 20 * 1024 * 1024 } as Stats);
 
       const result = await uploadSourceMaps(
         mockEndpoint,
@@ -449,7 +449,7 @@ describe('faro-cli', () => {
     it('should respect whichever limit is hit first: batchSize or maxUploadSize', async () => {
       setupReaddirMock(['a.js.map', 'b.js.map', 'c.js.map', 'd.js.map']);
       // Each file is 5MB — well under 30MB, but batchSize=1 should force one file per batch
-      jest.mocked(fs.statSync).mockReturnValue({ size: 5 * 1024 * 1024 } as Stats);
+      vi.mocked(fs.statSync).mockReturnValue({ size: 5 * 1024 * 1024 } as Stats);
 
       const result = await uploadSourceMaps(
         mockEndpoint,
@@ -470,7 +470,7 @@ describe('faro-cli', () => {
     it('should use batchSize for non-gzip chunked uploads (>10 files)', async () => {
       const manyFiles = Array.from({ length: 12 }, (_, i) => `file${i}.js.map`);
       setupReaddirMock(manyFiles);
-      jest.mocked(fs.statSync).mockReturnValue({ size: 1024 } as Stats);
+      vi.mocked(fs.statSync).mockReturnValue({ size: 1024 } as Stats);
 
       const result = await uploadSourceMaps(
         mockEndpoint,
@@ -491,9 +491,9 @@ describe('faro-cli', () => {
 
     it('should work with batchSize on uploadCompressedSourceMaps fallback', async () => {
       // First call to fs.statSync checks the tarball size — make it oversized to trigger chunking
-      (fs.statSync as jest.Mock).mockReturnValueOnce({ size: THIRTY_MB_IN_BYTES + 1 });
+      (fs.statSync as Mock).mockReturnValueOnce({ size: THIRTY_MB_IN_BYTES + 1 });
       // Subsequent calls are for individual file sizes during chunking
-      (fs.statSync as jest.Mock).mockReturnValue({ size: 1024 * 1024 } as Stats);
+      (fs.statSync as Mock).mockReturnValue({ size: 1024 * 1024 } as Stats);
 
       const result = await uploadCompressedSourceMaps({
         endpoint: mockEndpoint,
@@ -552,7 +552,7 @@ describe('faro-cli', () => {
     });
 
     it('should include a warning for oversized files', () => {
-      (fs.statSync as jest.Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
+      (fs.statSync as Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
 
       generateCurlCommand(
         mockEndpoint,
@@ -569,7 +569,7 @@ describe('faro-cli', () => {
     });
 
     it('should upload a large file when maxUploadSize is set', () => {
-      (fs.statSync as jest.Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
+      (fs.statSync as Mock).mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 });
 
       const command = generateCurlCommand(
         mockEndpoint,
