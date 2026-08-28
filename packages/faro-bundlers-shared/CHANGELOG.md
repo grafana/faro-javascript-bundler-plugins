@@ -6,6 +6,17 @@
 
 * `shouldProcessFile` / `JS_SOURCEMAP_PATTERN`: accept React Native Android/iOS bundle maps (`*.bundle.map`, `*.jsbundle.map`) so Metro uploads are not silently skipped when `sourceMapFile` uses names like `index.android.bundle`.
 
+## [0.12.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.11.1...faro-bundlers-shared-v0.12.0) (2026-08-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* convert to ESM with correct dual-build types and package entrypoints ([#603](https://github.com/grafana/faro-javascript-bundler-plugins/issues/603))
+
+### Features
+
+* convert to ESM with correct dual-build types and package entrypoints ([#603](https://github.com/grafana/faro-javascript-bundler-plugins/issues/603)) ([7dba4ca](https://github.com/grafana/faro-javascript-bundler-plugins/commit/7dba4ca00bc1c15138c25243c05bbb6d7d81ed5a))
+
 ## [0.11.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-bundlers-shared-v0.11.0...faro-bundlers-shared-v0.11.1) (2026-08-04)
 
 

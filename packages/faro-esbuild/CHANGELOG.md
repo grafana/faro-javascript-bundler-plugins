@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.7.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.6.1...faro-esbuild-plugin-v0.7.0) (2026-08-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* convert to ESM with correct dual-build types and package entrypoints ([#603](https://github.com/grafana/faro-javascript-bundler-plugins/issues/603))
+
+### Features
+
+* convert to ESM with correct dual-build types and package entrypoints ([#603](https://github.com/grafana/faro-javascript-bundler-plugins/issues/603)) ([7dba4ca](https://github.com/grafana/faro-javascript-bundler-plugins/commit/7dba4ca00bc1c15138c25243c05bbb6d7d81ed5a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.11.1 to ^0.12.0
+
 ## [0.6.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.6.0...faro-esbuild-plugin-v0.6.1) (2026-08-04)
 
 
