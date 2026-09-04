@@ -17,16 +17,16 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@arethetypeswrong/core": "^0.18.1",
-    "lerna": "10.0.0",
-    "publint": "^0.3.8"
+    "@arethetypeswrong/core": "0.18.5",
+    "lerna": "10.0.1",
+    "publint": "0.3.23"
   },
   "resolutions": {
-    "axios": "1.19.0",
+    "axios": "1.20.0",
     "fast-uri": "4.1.2",
     "form-data": "4.0.6",
     "tar": "7.5.22",
-    "js-yaml": "5.2.3",
+    "js-yaml": "5.4.1",
     "tmp": "^0.2.7",
     "brace-expansion@npm:^1.1.7": "^1.1.18",
     "brace-expansion@npm:1.1.15": "1.1.18",
