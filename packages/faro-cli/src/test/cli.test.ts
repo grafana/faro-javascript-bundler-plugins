@@ -1,31 +1,31 @@
-import { jest } from '@jest/globals';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import packageJson from '../../package.json' with { type: 'json' };
 
 const { version } = packageJson;
 
 // Mock dependencies
 const mockFs = {
-  existsSync: jest.fn(),
+  existsSync: vi.fn(),
 };
 const mockPath = {
-  resolve: jest.fn(),
+  resolve: vi.fn(),
 };
-const mockConsoleInfoOrange = jest.fn();
-const mockUploadSourceMaps = jest.fn();
-const mockGenerateCurlCommand = jest.fn();
+const mockConsoleInfoOrange = vi.fn();
+const mockUploadSourceMaps = vi.fn();
+const mockGenerateCurlCommand = vi.fn();
 
-jest.unstable_mockModule('fs', () => ({
+vi.doMock('fs', () => ({
   default: mockFs,
   ...mockFs,
 }));
-jest.unstable_mockModule('path', () => ({
+vi.doMock('path', () => ({
   default: mockPath,
   ...mockPath,
 }));
-jest.unstable_mockModule('@grafana/faro-bundlers-shared', () => ({
+vi.doMock('@grafana/faro-bundlers-shared', () => ({
   consoleInfoOrange: mockConsoleInfoOrange,
 }));
-jest.unstable_mockModule('../index', () => ({
+vi.doMock('../index', () => ({
   uploadSourceMaps: mockUploadSourceMaps,
   generateCurlCommand: mockGenerateCurlCommand,
 }));
@@ -38,11 +38,11 @@ const { uploadSourceMaps, generateCurlCommand } = await import('../index');
 // Mock console methods
 const originalConsoleLog = console.log;
 const originalConsoleError = console.error;
-const mockConsoleLog = jest.fn();
-const mockConsoleError = jest.fn();
+const mockConsoleLog = vi.fn();
+const mockConsoleError = vi.fn();
 
 // Mock process.exit
-const mockExit = jest.spyOn(process, 'exit').mockImplementation((code) => {
+const mockExit = vi.spyOn(process, 'exit').mockImplementation((code) => {
   throw new Error(`Process.exit called with code: ${code}`);
 });
 
@@ -174,24 +174,24 @@ describe('CLI', () => {
 
   beforeEach(() => {
     // Reset all mocks before each test
-    jest.resetAllMocks();
+    vi.resetAllMocks();
 
     // Mock console methods
     console.log = mockConsoleLog;
     console.error = mockConsoleError;
 
     // Mock fs methods
-    jest.mocked(fs.existsSync).mockReturnValue(true);
+    vi.mocked(fs.existsSync).mockReturnValue(true);
 
     // Mock path methods
-    jest.mocked(path.resolve).mockImplementation((...args) => args.join('/'));
+    vi.mocked(path.resolve).mockImplementation((...args) => args.join('/'));
 
     // Mock index functions
-    jest.mocked(uploadSourceMaps).mockResolvedValue(true);
-    jest.mocked(generateCurlCommand).mockReturnValue('mock curl command');
+    vi.mocked(uploadSourceMaps).mockResolvedValue(true);
+    vi.mocked(generateCurlCommand).mockReturnValue('mock curl command');
 
     // Mock consoleInfoOrange
-    jest.mocked(consoleInfoOrange).mockImplementation(() => {});
+    vi.mocked(consoleInfoOrange).mockImplementation(() => {});
 
     // Reset process.env
     process.env = { ...originalEnv };
@@ -322,7 +322,7 @@ describe('CLI', () => {
 
     it('should handle non-existent output path', async () => {
       // Mock fs.existsSync to return false
-      jest.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(fs.existsSync).mockReturnValue(false);
 
       // Create options object
       const options = {
@@ -349,7 +349,7 @@ describe('CLI', () => {
 
     it('should handle upload failure', async () => {
       // Mock uploadSourceMaps to return false
-      jest.mocked(uploadSourceMaps).mockResolvedValue(false);
+      vi.mocked(uploadSourceMaps).mockResolvedValue(false);
 
       // Create options object
       const options = {
@@ -376,7 +376,7 @@ describe('CLI', () => {
 
     it('should handle exceptions', async () => {
       // Mock uploadSourceMaps to throw an error
-      jest.mocked(uploadSourceMaps).mockRejectedValue(new Error('Test error'));
+      vi.mocked(uploadSourceMaps).mockRejectedValue(new Error('Test error'));
 
       // Create options object
       const options = {
@@ -578,7 +578,7 @@ describe('CLI', () => {
 
     it('should handle non-existent file', async () => {
       // Mock fs.existsSync to return false
-      jest.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(fs.existsSync).mockReturnValue(false);
 
       // Create options object
       const options = {
@@ -603,7 +603,7 @@ describe('CLI', () => {
 
     it('should handle exceptions', async () => {
       // Mock generateCurlCommand to throw an error
-      jest.mocked(generateCurlCommand).mockImplementation(() => {
+      vi.mocked(generateCurlCommand).mockImplementation(() => {
         throw new Error('Test error');
       });
 

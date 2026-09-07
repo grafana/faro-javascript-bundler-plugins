@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 import { SourceMapConsumer, SourceMapGenerator, type RawSourceMap } from 'source-map';
 import { flattenMapForHermes } from '../flattenMapForHermes';
 

@@ -1,12 +1,12 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { THIRTY_MB_IN_BYTES } from '@grafana/faro-bundlers-shared';
 
-jest.unstable_mockModule('../index', () => ({
-  uploadCompressedSourceMaps: jest.fn(),
-  uploadSourceMap: jest.fn(),
+vi.doMock('../index', () => ({
+  uploadCompressedSourceMaps: vi.fn(),
+  uploadSourceMap: vi.fn(),
 }));
 
 const faroIndex = await import('../index');
@@ -62,7 +62,7 @@ afterEach(() => {
       process.env[key] = stashedEnv[key];
     }
   }
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe('validateSourceMap', () => {
@@ -154,8 +154,8 @@ describe('validateSourceMap', () => {
 
 describe('runMetroUpload — config resolution', () => {
   let tempDir: string;
-  let stdoutSpy: jest.SpiedFunction<typeof process.stdout.write>;
-  let stderrSpy: jest.SpiedFunction<typeof process.stderr.write>;
+  let stdoutSpy: MockInstance;
+  let stderrSpy: MockInstance;
 
   const baseCliOpts = {
     gzip: true,
@@ -165,10 +165,10 @@ describe('runMetroUpload — config resolution', () => {
 
   beforeEach(() => {
     tempDir = createTempDir();
-    stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    jest.mocked(faroIndex.uploadCompressedSourceMaps).mockClear();
-    jest.mocked(faroIndex.uploadSourceMap).mockClear();
+    stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    vi.mocked(faroIndex.uploadCompressedSourceMaps).mockClear();
+    vi.mocked(faroIndex.uploadSourceMap).mockClear();
   });
 
   afterEach(() => {
@@ -294,14 +294,14 @@ describe('runMetroUpload — config resolution', () => {
 
 describe('runMetroUpload — validation errors (integration)', () => {
   let tempDir: string;
-  let stderrSpy: jest.SpiedFunction<typeof process.stderr.write>;
+  let stderrSpy: MockInstance;
 
   beforeEach(() => {
     tempDir = createTempDir();
-    jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    jest.mocked(faroIndex.uploadCompressedSourceMaps).mockClear();
-    jest.mocked(faroIndex.uploadSourceMap).mockClear();
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    vi.mocked(faroIndex.uploadCompressedSourceMaps).mockClear();
+    vi.mocked(faroIndex.uploadSourceMap).mockClear();
   });
 
   afterEach(() => {
@@ -375,14 +375,14 @@ describe('runMetroUpload — validation errors (integration)', () => {
 
 describe('runMetroUpload — file size limit', () => {
   let tempDir: string;
-  let stderrSpy: jest.SpiedFunction<typeof process.stderr.write>;
+  let stderrSpy: MockInstance;
 
   beforeEach(() => {
     tempDir = createTempDir();
-    jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    jest.mocked(faroIndex.uploadCompressedSourceMaps).mockClear().mockResolvedValue(true);
-    jest.mocked(faroIndex.uploadSourceMap).mockClear().mockResolvedValue(true);
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    vi.mocked(faroIndex.uploadCompressedSourceMaps).mockClear().mockResolvedValue(true);
+    vi.mocked(faroIndex.uploadSourceMap).mockClear().mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -391,7 +391,7 @@ describe('runMetroUpload — file size limit', () => {
 
   it('returns exit code 2 when the map exceeds the default max size', async () => {
     const mapPath = writeValidMap(tempDir);
-    jest.spyOn(fs, 'statSync').mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 } as fs.Stats);
+    vi.spyOn(fs, 'statSync').mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 } as fs.Stats);
 
     const code = await runMetroUpload({
       gzip: true,
@@ -409,7 +409,7 @@ describe('runMetroUpload — file size limit', () => {
 
   it('returns exit code 2 when the map exceeds a custom maxUploadSize', async () => {
     const mapPath = writeValidMap(tempDir);
-    jest.spyOn(fs, 'statSync').mockReturnValue({ size: 500 } as fs.Stats);
+    vi.spyOn(fs, 'statSync').mockReturnValue({ size: 500 } as fs.Stats);
 
     const code = await runMetroUpload({
       gzip: true,
@@ -426,7 +426,7 @@ describe('runMetroUpload — file size limit', () => {
 
   it('uses default limit when maxUploadSize is zero', async () => {
     const mapPath = writeValidMap(tempDir);
-    jest.spyOn(fs, 'statSync').mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 } as fs.Stats);
+    vi.spyOn(fs, 'statSync').mockReturnValue({ size: THIRTY_MB_IN_BYTES + 1 } as fs.Stats);
 
     const code = await runMetroUpload({
       gzip: true,
@@ -445,15 +445,15 @@ describe('runMetroUpload — file size limit', () => {
 
 describe('runMetroUpload — upload delegation', () => {
   let tempDir: string;
-  let stdoutSpy: jest.SpiedFunction<typeof process.stdout.write>;
-  let stderrSpy: jest.SpiedFunction<typeof process.stderr.write>;
+  let stdoutSpy: MockInstance;
+  let stderrSpy: MockInstance;
 
   beforeEach(() => {
     tempDir = createTempDir();
-    stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    jest.mocked(faroIndex.uploadCompressedSourceMaps).mockReset().mockResolvedValue(true);
-    jest.mocked(faroIndex.uploadSourceMap).mockReset().mockResolvedValue(true);
+    stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    vi.mocked(faroIndex.uploadCompressedSourceMaps).mockReset().mockResolvedValue(true);
+    vi.mocked(faroIndex.uploadSourceMap).mockReset().mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -561,7 +561,7 @@ describe('runMetroUpload — upload delegation', () => {
 
   it('returns exit code 1 when upload returns false', async () => {
     const mapPath = writeValidMap(tempDir);
-    jest.mocked(faroIndex.uploadCompressedSourceMaps).mockResolvedValueOnce(false);
+    vi.mocked(faroIndex.uploadCompressedSourceMaps).mockResolvedValueOnce(false);
 
     const code = await runMetroUpload({
       gzip: true,

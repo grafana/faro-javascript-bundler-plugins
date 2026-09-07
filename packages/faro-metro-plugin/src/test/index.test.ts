@@ -1,4 +1,4 @@
-import { describe, expect, test, afterEach } from '@jest/globals';
+import { describe, expect, test, afterEach } from 'vitest';
 import defaultWithFaroConfig, {
   createFaroMetroCustomSerializer,
   computeSkipUpload,

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { tmpdir } from 'os';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { injectBundleId } from '../index';
 import { faroBundleIdSnippet } from '@grafana/faro-bundlers-shared';
 
