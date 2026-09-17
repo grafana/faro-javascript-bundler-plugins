@@ -11,7 +11,6 @@ import {
   ensureSourceMapFileProperty,
   ensureSourceMapFileProperties,
   isLocalEndpoint,
-  cleanAppName,
 } from '../index';
 
 
@@ -110,9 +109,9 @@ describe('Bundlers Shared Utilities', () => {
 
     exportBundleIdToFile(bundleId, appName, false);
 
-    const cleanName = cleanAppName(appName);
-
-    expect(fs.readFileSync(path.resolve(process.cwd(), `.env.${cleanName}`), 'utf8')).toBe(`FARO_BUNDLE_ID_${cleanName}=${bundleId}\n`);
+    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP_WITH_SPECIAL_CHARS___'), 'utf8')).toBe(
+      `FARO_BUNDLE_ID_TEST_APP_WITH_SPECIAL_CHARS___=${bundleId}\n`
+    );
   });
 
   test('normalizePrefix adds trailing slash when missing', () => {
