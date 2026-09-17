@@ -1,18 +1,17 @@
-import type { Mock } from 'jest-mock';
 import { ModuleFormat, rollup } from 'rollup';
 import type { RequestInit, Response } from 'undici';
 import path from 'path';
 import fs from 'fs';
-import { afterEach, jest } from '@jest/globals';
+import { afterEach, describe, expect, test, vi, type Mock } from 'vitest';
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
-jest.unstable_mockModule('child_process', () => ({
-  execSync: jest.fn(() => { throw new Error('git not available'); }),
+vi.doMock('child_process', () => ({
+  execSync: vi.fn(() => { throw new Error('git not available'); }),
 }));
 
 // Mock undici fetch and ProxyAgent
-const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
-const mockProxyAgent = jest.fn().mockImplementation((proxyUrl: unknown) => ({
+const mockFetch = vi.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+const mockProxyAgent = vi.fn().mockImplementation((proxyUrl: unknown) => ({
   proxyUrl,
   options: { proxy: proxyUrl },
 }));
@@ -25,7 +24,7 @@ mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   } as Response;
 });
 
-jest.unstable_mockModule('undici', () => ({
+vi.doMock('undici', () => ({
   fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
   ProxyAgent: mockProxyAgent,
 }));
@@ -148,7 +147,7 @@ describe('Faro Rollup Plugin', () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 
     // Clear previous calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
     (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
@@ -175,7 +174,7 @@ describe('Faro Rollup Plugin', () => {
 
   test('no proxy agent is used when proxy option is not provided', async () => {
     // Clear previous calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
     (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
@@ -202,7 +201,7 @@ describe('Faro Rollup Plugin', () => {
   });
 
   test('proxy validation rejects invalid proxy URLs', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // Test invalid proxy URLs
     const invalidProxies = [
@@ -249,7 +248,7 @@ describe('Faro Rollup Plugin', () => {
     ];
 
     for (const validProxy of validProxies) {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       mockFetch.mockClear();
       (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 

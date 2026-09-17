@@ -1,4 +1,4 @@
-import { describe, expect, test, afterEach, jest } from '@jest/globals';
+import { describe, expect, test, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -35,7 +35,7 @@ describe('resolveBundleId Android Gradle', () => {
     fs.writeFileSync(path.join(root, 'metro.config.js'), 'module.exports = {};\n');
     const androidDir = path.join(root, 'android');
     fs.mkdirSync(androidDir);
-    const cwdSpy = jest.spyOn(process, 'cwd').mockReturnValue(androidDir);
+    const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue(androidDir);
     try {
       expect(resolveRnProjectRoot()).toBe(root);
     } finally {

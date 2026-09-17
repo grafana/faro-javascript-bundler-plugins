@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -26,6 +26,12 @@ beforeEach(() => {
 afterEach(() => {
   // Restore original environment variables
   process.env = originalEnv;
+  for (const envFile of ['.env.TEST_APP', '.env.TEST_APP_WITH_SPECIAL_CHARS___']) {
+    const envFilePath = path.resolve(process.cwd(), envFile);
+    if (fs.existsSync(envFilePath)) {
+      fs.unlinkSync(envFilePath);
+    }
+  }
 });
 
 describe('Bundlers Shared Utilities', () => {
@@ -94,7 +100,7 @@ describe('Bundlers Shared Utilities', () => {
 
     exportBundleIdToFile(bundleId, appName, false);
 
-    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP'), 'utf8')).toBe(`FARO_BUNDLE_ID_TEST_APP=${bundleId}`);
+    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP'), 'utf8')).toBe(`FARO_BUNDLE_ID_TEST_APP=${bundleId}\n`);
   });
 
   test('exportBundleIdToFile sanitizes app name for environment variable', () => {
@@ -103,7 +109,9 @@ describe('Bundlers Shared Utilities', () => {
 
     exportBundleIdToFile(bundleId, appName, false);
 
-    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP_WITH_SPECIAL_CHARS'), 'utf8')).toBe(`FARO_BUNDLE_ID_TEST_APP_WITH_SPECIAL_CHARS=${bundleId}`);
+    expect(fs.readFileSync(path.resolve(process.cwd(), '.env.TEST_APP_WITH_SPECIAL_CHARS___'), 'utf8')).toBe(
+      `FARO_BUNDLE_ID_TEST_APP_WITH_SPECIAL_CHARS___=${bundleId}\n`
+    );
   });
 
   test('normalizePrefix adds trailing slash when missing', () => {

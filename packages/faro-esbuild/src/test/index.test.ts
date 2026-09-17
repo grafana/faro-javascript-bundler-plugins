@@ -2,17 +2,16 @@ import * as esbuild from 'esbuild';
 import type { RequestInit, Response } from 'undici';
 import path from 'path';
 import fs from 'fs';
-import { jest } from '@jest/globals';
-import type { Mock } from 'jest-mock';
+import { afterEach, describe, expect, test, vi, type Mock } from 'vitest';
 
 // Prevent git rev-parse from auto-injecting a hash in test environments
-jest.unstable_mockModule('child_process', () => ({
-  execSync: jest.fn(() => { throw new Error('git not available'); }),
+vi.doMock('child_process', () => ({
+  execSync: vi.fn(() => { throw new Error('git not available'); }),
 }));
 
 // Mock undici fetch and ProxyAgent
-const mockFetch = jest.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
-const mockProxyAgent = jest.fn().mockImplementation((proxyUrl: unknown) => ({
+const mockFetch = vi.fn() as Mock<(url: string, options?: RequestInit) => Promise<Response>>;
+const mockProxyAgent = vi.fn().mockImplementation((proxyUrl: unknown) => ({
   proxyUrl,
   options: { proxy: proxyUrl },
 }));
@@ -25,7 +24,7 @@ mockFetch.mockImplementation(async (_url: string, _options?: RequestInit) => {
   } as Response;
 });
 
-jest.unstable_mockModule('undici', () => ({
+vi.doMock('undici', () => ({
   fetch: (url: string, options?: RequestInit) => mockFetch(url, options),
   ProxyAgent: mockProxyAgent,
 }));
@@ -78,7 +77,7 @@ describe('Faro Esbuild Plugin', () => {
     if (fs.existsSync(TEST_OUTPUT_DIR)) {
       fs.rmSync(TEST_OUTPUT_DIR, { recursive: true, force: true });
     }
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test('basic bundleId injection test', async () => {
@@ -195,7 +194,7 @@ describe('Faro Esbuild Plugin', () => {
     const mockProxyUrl = "http://user:pass@proxy.example.com:8080";
 
     // clear previous calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
     (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
@@ -220,7 +219,7 @@ describe('Faro Esbuild Plugin', () => {
 
   test('no proxy agent is used when proxy option is not provided', async () => {
     // clear previous calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockFetch.mockClear();
     (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 
@@ -245,7 +244,7 @@ describe('Faro Esbuild Plugin', () => {
   });
 
   test('proxy validation rejects invalid proxy URLs', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // test invalid proxy URLs
     const invalidProxies = [
@@ -290,7 +289,7 @@ describe('Faro Esbuild Plugin', () => {
     ];
 
     for (const validProxy of validProxies) {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       mockFetch.mockClear();
       (ProxyAgent as unknown as Mock<(url: string) => object>).mockClear();
 

@@ -1,19 +1,19 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockedFunction, type MockInstance } from 'vitest';
 
 import { buildTestAgpZip } from './helpers/buildTestAgpZip';
 
-jest.unstable_mockModule('child_process', () => ({
-  execFileSync: jest.fn(),
-  execSync: jest.fn(() => { throw new Error('git not available'); }),
+vi.doMock('child_process', () => ({
+  execFileSync: vi.fn(),
+  execSync: vi.fn(() => { throw new Error('git not available'); }),
 }));
 
 const { execFileSync } = await import('child_process');
 const { buildAndroidSymbolsUploadRequests, runAndroidSymbolsUpload } = await import('../androidSymbols');
 
-const mockedExecFileSync = execFileSync as jest.MockedFunction<typeof import('child_process').execFileSync>;
+const mockedExecFileSync = execFileSync as MockedFunction<typeof import('child_process').execFileSync>;
 
 const baseConnection = {
   endpoint: 'https://e.test/',
@@ -28,15 +28,15 @@ const baseConnection = {
 describe('runAndroidSymbolsUpload', () => {
   let tempDir: string;
   let mappingPath: string;
-  let stdoutSpy: jest.SpiedFunction<typeof process.stdout.write>;
-  let stderrSpy: jest.SpiedFunction<typeof process.stderr.write>;
+  let stdoutSpy: MockInstance;
+  let stderrSpy: MockInstance;
 
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'faro-android-'));
     mappingPath = path.join(tempDir, 'mapping.txt');
     fs.writeFileSync(mappingPath, 'com.example.Foo -> a:\n');
-    stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-    stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     mockedExecFileSync.mockReset();
     // Mock successful curl response by default
     mockedExecFileSync.mockReturnValue('{"uploaded": true}\n201');
