@@ -1,5 +1,4 @@
 import * as esbuild from "esbuild";
-import fs from "fs";
 import path from "path";
 import {
   ESBUILD_PLUGIN_NAME,
@@ -9,13 +8,13 @@ import {
   resolveGitHash,
   randomString,
   consoleInfoOrange,
-  uploadSourceMap,
   uploadCompressedSourceMaps,
+  uploadIndividualSourceMaps,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
-  shouldProcessFile,
   modifySourceMapFileProperty,
   ensureSourceMapFileProperty,
+  findSourceMapFiles,
 } from "@grafana/faro-bundlers-shared";
 
 export default function faroEsbuildPlugin(
@@ -38,6 +37,7 @@ export default function faroEsbuildPlugin(
     proxy,
     prefixPath,
     prefixPathBasenameOnly,
+    uploadConcurrency,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -103,54 +103,32 @@ export default function faroEsbuildPlugin(
           return;
         }
 
-        // ensure all source maps have a file property (do this regardless of skipUpload or prefixPath)
+        let sourceMapFiles: ReturnType<typeof findSourceMapFiles>;
+
         try {
-          const filenames = fs.readdirSync(outputDir, {
-            recursive: recursive || false,
-          });
+          sourceMapFiles = findSourceMapFiles(
+            outputDir,
+            outputFiles,
+            recursive,
+            Boolean(gzipContents && !skipUpload)
+          );
+        } catch (e) {
+          console.error('Error reading source maps:', e);
+          return;
+        }
 
-          for (let filename of filenames) {
-            // ensure filename is a string (fs.readdirSync with recursive can return Buffer)
-            const filenameStr = filename.toString();
-            const file = path.join(outputDir, filenameStr);
-
-            // only include javascript-related source maps or match the outputFiles regex
-            if (!shouldProcessFile(filenameStr, outputFiles)) {
-              continue;
-            }
-
-            if (fs.existsSync(file)) {
-              ensureSourceMapFileProperty(file, verbose);
+        // ensure all source maps have a file property, and optionally prefix it,
+        // regardless of whether upload is skipped.
+        try {
+          for (const { filePath } of sourceMapFiles) {
+            if (prefixPath) {
+              modifySourceMapFileProperty(filePath, prefixPath, verbose, prefixPathBasenameOnly);
+            } else {
+              ensureSourceMapFileProperty(filePath, verbose);
             }
           }
         } catch (e) {
-          console.error('Error ensuring source map file properties:', e);
-        }
-
-        // modify source map file properties if prefixPath is provided (do this regardless of skipUpload)
-        if (prefixPath) {
-          try {
-            const filenames = fs.readdirSync(outputDir, {
-              recursive: recursive || false,
-            });
-
-            for (let filename of filenames) {
-              // ensure filename is a string (fs.readdirSync with recursive can return Buffer)
-              const filenameStr = filename.toString();
-              const file = path.join(outputDir, filenameStr);
-
-              // only include javascript-related source maps or match the outputFiles regex
-              if (!shouldProcessFile(filenameStr, outputFiles)) {
-                continue;
-              }
-
-              if (fs.existsSync(file)) {
-                modifySourceMapFileProperty(file, prefixPath, verbose, prefixPathBasenameOnly);
-              }
-            }
-          } catch (e) {
-            console.error('Error modifying source maps:', e);
-          }
+          console.error('Error processing source maps:', e);
         }
 
         // skip uploading if skipUpload is true
@@ -169,28 +147,28 @@ export default function faroEsbuildPlugin(
           const filesToUpload: string[] = [];
           let totalSize = 0;
 
-          // read all files from output directory
-          const filenames = fs.readdirSync(outputDir, {
-            recursive: recursive || false,
-          });
+          if (!gzipContents) {
+            uploadedSourcemaps.push(
+              ...(await uploadIndividualSourceMaps({
+                sourcemapEndpoint,
+                apiKey,
+                stackId,
+                files: sourceMapFiles,
+                keepSourcemaps: !!keepSourcemaps,
+                verbose: verbose,
+                proxy: proxy,
+                uploadConcurrency,
+              }))
+            );
+          }
 
-          for (let filename of filenames) {
-            // ensure filename is a string (fs.readdirSync with recursive can return Buffer)
-            const filenameStr = filename.toString();
-            const file = path.join(outputDir, filenameStr);
-
-            // only include javascript-related source maps or match the outputFiles regex
-            if (!shouldProcessFile(filenameStr, outputFiles)) {
-              continue;
-            }
-
-            // if we are tar/gzipping contents, collect N files and upload them all at once
-            // total size of all files uploaded at once must be less than the configured max size (uncompressed)
-            if (gzipContents && fs.existsSync(file)) {
-              const { size } = fs.statSync(file);
-
-              filesToUpload.push(file);
-              totalSize += size;
+          if (gzipContents) {
+            for (const { filePath, size } of sourceMapFiles) {
+              // if we are tar/gzipping contents, collect N files and upload them all at once
+              // total size of all files uploaded at once must be less than the configured max size (uncompressed)
+              const fileSize = size ?? 0;
+              filesToUpload.push(filePath);
+              totalSize += fileSize;
 
               if (totalSize > maxSize) {
                 filesToUpload.pop();
@@ -210,26 +188,8 @@ export default function faroEsbuildPlugin(
                 }
 
                 filesToUpload.length = 0;
-                filesToUpload.push(file);
-                totalSize = size;
-              }
-            }
-
-            // if we are not compressing, upload each file individually
-            if (!gzipContents) {
-              const result = await uploadSourceMap({
-                sourcemapEndpoint,
-                apiKey,
-                stackId,
-                filename: filenameStr,
-                filePath: file,
-                keepSourcemaps: !!keepSourcemaps,
-                verbose: verbose,
-                proxy: proxy,
-              });
-
-              if (result) {
-                uploadedSourcemaps.push(filenameStr);
+                filesToUpload.push(filePath);
+                totalSize = fileSize;
               }
             }
           }

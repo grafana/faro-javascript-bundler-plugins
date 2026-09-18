@@ -10,6 +10,8 @@ import {
   modifySourceMapFileProperty,
   ensureSourceMapFileProperty,
   ensureSourceMapFileProperties,
+  findSourceMapFiles,
+  createSourceMapFileFilter,
   isLocalEndpoint,
 } from '../index';
 
@@ -92,6 +94,23 @@ describe('Bundlers Shared Utilities', () => {
     expect(shouldProcessFile('bundle.js.map', arrayFilter)).toBeTruthy();
     expect(shouldProcessFile('app.js.map', arrayFilter)).toBeTruthy();
     expect(shouldProcessFile('module.js.map', arrayFilter)).toBeFalsy();
+  });
+
+  test('createSourceMapFileFilter respects array filter', () => {
+    const filter = createSourceMapFileFilter(['bundle.js', 'app.js']);
+
+    expect(filter('bundle.js.map')).toBeTruthy();
+    expect(filter('app.js.map')).toBeTruthy();
+    expect(filter('module.js.map')).toBeFalsy();
+    expect(filter('bundle.js')).toBeFalsy();
+  });
+
+  test('createSourceMapFileFilter respects regex filter', () => {
+    const filter = createSourceMapFileFilter(/app\..*\.map$/);
+
+    expect(filter('app.js.map')).toBeTruthy();
+    expect(filter('bundle.js.map')).toBeFalsy();
+    expect(filter('styles.css.map')).toBeFalsy();
   });
 
   test('exportBundleIdToFile sets environment variable', () => {
@@ -214,6 +233,27 @@ describe('Bundlers Shared Utilities', () => {
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
+  test('modifySourceMapFileProperty derives missing file property before prefixing', () => {
+    const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+    const sourceMapPath = path.join(tempDir, 'bundle.js.map');
+
+    const sourceMap = {
+      version: 3,
+      sources: ['test.ts'],
+      mappings: 'AAAA',
+    };
+
+    fs.writeFileSync(sourceMapPath, JSON.stringify(sourceMap, null, 2));
+
+    modifySourceMapFileProperty(sourceMapPath, 'robo/assets', false);
+
+    const modifiedSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf8'));
+    expect(modifiedSourceMap.file).toBe('robo/assets/bundle.js');
+
+    // cleanup
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
   test('modifySourceMapFileProperty preserves directory path when prefixPathBasenameOnly is false', () => {
     const tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
     const sourceMapPath = path.join(tempDir, 'index-DWRl9wIG.js.map');
@@ -278,6 +318,61 @@ describe('Bundlers Shared Utilities', () => {
 
     // cleanup
     fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+});
+
+describe('findSourceMapFiles', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('finds JavaScript source maps', () => {
+    fs.writeFileSync(path.join(tempDir, 'bundle.js.map'), '{}');
+    fs.writeFileSync(path.join(tempDir, 'styles.css.map'), '{}');
+
+    const result = findSourceMapFiles(tempDir, undefined);
+
+    expect(result).toEqual([
+      {
+        filename: 'bundle.js.map',
+        filePath: path.join(tempDir, 'bundle.js.map'),
+      },
+    ]);
+  });
+
+  test('includes source map sizes when requested', () => {
+    fs.writeFileSync(path.join(tempDir, 'bundle.js.map'), '{}');
+
+    const result = findSourceMapFiles(tempDir, undefined, false, true);
+
+    expect(result).toEqual([
+      {
+        filename: 'bundle.js.map',
+        filePath: path.join(tempDir, 'bundle.js.map'),
+        size: 2,
+      },
+    ]);
+  });
+
+  test('finds source maps recursively when requested', () => {
+    const nestedDir = path.join(tempDir, 'nested');
+    fs.mkdirSync(nestedDir);
+    fs.writeFileSync(path.join(nestedDir, 'bundle.js.map'), '{}');
+
+    const result = findSourceMapFiles(tempDir, undefined, true);
+
+    expect(result).toEqual([
+      {
+        filename: path.join('nested', 'bundle.js.map'),
+        filePath: path.join(tempDir, 'nested', 'bundle.js.map'),
+      },
+    ]);
   });
 });
 

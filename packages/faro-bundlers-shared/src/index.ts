@@ -25,6 +25,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   prefixPath?: string; // Prefix to prepend to the file property in source maps (e.g., "_next/" or "robo/assets/")
   prefixPathBasenameOnly?: boolean; // When true, strips the directory path from the file property before prepending prefixPath (useful for flat CDN uploads)
   gitHash?: string;
+  uploadConcurrency?: number; // Maximum number of individual source map uploads to run at once
 }
 
 interface UploadSourceMapOptions {
@@ -48,6 +49,33 @@ interface UploadCompressedSourceMapsOptions {
   verbose?: boolean;
   proxy?: string;
 }
+
+export interface SourceMapFile {
+  filename: string;
+  filePath: string;
+  size?: number;
+}
+
+interface UploadIndividualSourceMapsOptions {
+  sourcemapEndpoint: string;
+  apiKey: string;
+  stackId: string;
+  files: SourceMapFile[];
+  keepSourcemaps: boolean;
+  verbose?: boolean;
+  proxy?: string;
+  uploadConcurrency?: number;
+}
+
+const DEFAULT_UPLOAD_CONCURRENCY = 5;
+
+const normalizeUploadConcurrency = (uploadConcurrency?: number): number => {
+  if (!uploadConcurrency || uploadConcurrency < 1) {
+    return DEFAULT_UPLOAD_CONCURRENCY;
+  }
+
+  return Math.floor(uploadConcurrency);
+};
 
 
 /**
@@ -270,6 +298,53 @@ export const uploadCompressedSourceMaps = async (
   return success;
 };
 
+export const uploadIndividualSourceMaps = async (
+  options: UploadIndividualSourceMapsOptions
+): Promise<string[]> => {
+  const {
+    sourcemapEndpoint,
+    apiKey,
+    stackId,
+    files,
+    keepSourcemaps,
+    verbose,
+    proxy,
+    uploadConcurrency,
+  } = options;
+  const uploadedSourcemaps: string[] = [];
+  let nextIndex = 0;
+  const workerCount = Math.min(
+    normalizeUploadConcurrency(uploadConcurrency),
+    files.length
+  );
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < files.length) {
+        const file = files[nextIndex];
+        nextIndex += 1;
+
+        const result = await uploadSourceMap({
+          sourcemapEndpoint,
+          apiKey,
+          stackId,
+          filename: file.filename,
+          filePath: file.filePath,
+          keepSourcemaps,
+          verbose,
+          proxy,
+        });
+
+        if (result) {
+          uploadedSourcemaps.push(file.filename);
+        }
+      }
+    })
+  );
+
+  return uploadedSourcemaps;
+};
+
 export const shouldProcessFile = (filename: string, outputFiles: string[] | RegExp | undefined) => {
   // Must be a JavaScript sourcemap
   if (!JS_SOURCEMAP_PATTERN.test(filename)) {
@@ -301,6 +376,60 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
 
   return false;
 }
+
+export const createSourceMapFileFilter = (
+  outputFiles: string[] | RegExp | undefined
+): ((filename: string) => boolean) => {
+  if (outputFiles instanceof RegExp) {
+    return (filename: string) =>
+      JS_SOURCEMAP_PATTERN.test(filename) && outputFiles.test(filename);
+  }
+
+  if (Array.isArray(outputFiles) && outputFiles.length) {
+    const outputFilesSet = new Set(outputFiles.map((o) => `${o}.map`));
+
+    return (filename: string) =>
+      JS_SOURCEMAP_PATTERN.test(filename) && outputFilesSet.has(filename);
+  }
+
+  return (filename: string) => JS_SOURCEMAP_PATTERN.test(filename);
+};
+
+export const findSourceMapFiles = (
+  outputDir: string,
+  outputFiles: string[] | RegExp | undefined,
+  recursive?: boolean,
+  includeSize?: boolean
+): SourceMapFile[] => {
+  const files: SourceMapFile[] = [];
+  const filenames = fs.readdirSync(outputDir, { recursive: recursive || false });
+  const shouldIncludeFile = createSourceMapFileFilter(outputFiles);
+
+  for (const filename of filenames) {
+    const filenameStr = filename.toString();
+
+    if (!shouldIncludeFile(filenameStr)) {
+      continue;
+    }
+
+    const filePath = path.join(outputDir, filenameStr);
+
+    if (!includeSize) {
+      files.push({ filename: filenameStr, filePath });
+      continue;
+    }
+
+    try {
+      const { size } = fs.statSync(filePath);
+      files.push({ filename: filenameStr, filePath, size });
+    } catch {
+      // The output directory can change between directory listing and stat in watch/build
+      // integrations. Ignore disappeared files and continue with the remaining maps.
+    }
+  }
+
+  return files;
+};
 
 /**
  * Prepend to JS bundles so `getBundleId(appName)` in `@grafana/faro-core` can read `meta.app.bundleId`.
@@ -539,12 +668,14 @@ export const modifySourceMapFileProperty = (
   basenameOnly?: boolean
 ): void => {
   try {
-    // ensure file property exists before modifying
-    ensureSourceMapFileProperty(filePath, false);
-
     const normalizedPrefix = normalizePrefix(prefix);
     const sourceMapContent = fs.readFileSync(filePath, "utf-8");
     const sourceMap = JSON.parse(sourceMapContent);
+
+    if (!sourceMap.file) {
+      const mapFileName = path.basename(filePath);
+      sourceMap.file = mapFileName.replace(/\.map$/, "");
+    }
 
     if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
       const fileValue = basenameOnly ? path.basename(sourceMap.file) : sourceMap.file;
