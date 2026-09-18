@@ -51,9 +51,7 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "2.2.0",
-    "@types/glob": "9.0.0",
     "@types/node": "24.13.3",
-    "@types/tar": "7.0.87",
     "tsdown": "0.22.14",
     "typescript": "6.0.3",
     "vite": "8.2.2",
