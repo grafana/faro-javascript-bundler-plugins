@@ -49,6 +49,12 @@ interface UploadCompressedSourceMapsOptions {
   proxy?: string;
 }
 
+export interface SourceMapFile {
+  filename: string;
+  filePath: string;
+  size?: number;
+}
+
 
 /**
  * Detect a source map endpoint that points at a local/development receiver — i.e. one
@@ -302,6 +308,41 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
   return false;
 }
 
+export const findSourceMapFiles = (
+  outputDir: string,
+  outputFiles: string[] | RegExp | undefined,
+  recursive?: boolean,
+  includeSize?: boolean
+): SourceMapFile[] => {
+  const files: SourceMapFile[] = [];
+  const filenames = fs.readdirSync(outputDir, { recursive: recursive || false });
+
+  for (const filename of filenames) {
+    const filenameStr = filename.toString();
+
+    if (!shouldProcessFile(filenameStr, outputFiles)) {
+      continue;
+    }
+
+    const filePath = path.join(outputDir, filenameStr);
+
+    if (!includeSize) {
+      files.push({ filename: filenameStr, filePath });
+      continue;
+    }
+
+    try {
+      const { size } = fs.statSync(filePath);
+      files.push({ filename: filenameStr, filePath, size });
+    } catch {
+      // The output directory can change between directory listing and stat in watch/build
+      // integrations. Ignore disappeared files and continue with the remaining maps.
+    }
+  }
+
+  return files;
+};
+
 /**
  * Prepend to JS bundles so `getBundleId(appName)` in `@grafana/faro-core` can read `meta.app.bundleId`.
  * Must resolve the **same** global as `globalObject` in faro-core (`globalThis` first). A previous
@@ -539,12 +580,14 @@ export const modifySourceMapFileProperty = (
   basenameOnly?: boolean
 ): void => {
   try {
-    // ensure file property exists before modifying
-    ensureSourceMapFileProperty(filePath, false);
-
     const normalizedPrefix = normalizePrefix(prefix);
     const sourceMapContent = fs.readFileSync(filePath, "utf-8");
     const sourceMap = JSON.parse(sourceMapContent);
+
+    if (!sourceMap.file) {
+      const mapFileName = path.basename(filePath);
+      sourceMap.file = mapFileName.replace(/\.map$/, "");
+    }
 
     if (sourceMap.file && !sourceMap.file.startsWith(normalizedPrefix)) {
       const fileValue = basenameOnly ? path.basename(sourceMap.file) : sourceMap.file;

@@ -14,6 +14,7 @@ import {
   exportBundleIdToFile,
   shouldProcessFile,
   modifySourceMapFileProperty,
+  findSourceMapFiles,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
@@ -90,17 +91,9 @@ export default function faroUploader(
       // and those files may not appear as separate entries in the OutputBundle.
       if (prefixPath) {
         try {
-          const filenames = fs.readdirSync(outputPath, { recursive: true });
-          for (const filename of filenames) {
-            const filenameStr = filename.toString();
-            // Only include JavaScript-related source maps or match the outputFiles regex
-            if (!shouldProcessFile(filenameStr, outputFiles)) {
-              continue;
-            }
-            const filePath = path.join(outputPath, filenameStr);
-            if (fs.existsSync(filePath)) {
-              modifySourceMapFileProperty(filePath, prefixPath, verbose, prefixPathBasenameOnly);
-            }
+          const sourceMapFiles = findSourceMapFiles(outputPath, outputFiles, true);
+          for (const { filePath } of sourceMapFiles) {
+            modifySourceMapFileProperty(filePath, prefixPath, verbose, prefixPathBasenameOnly);
           }
         } catch (e) {
           console.error('Error modifying source maps:', e);

@@ -1,5 +1,4 @@
 import webpack from "webpack";
-import fs from "fs";
 
 import {
   WEBPACK_PLUGIN_NAME,
@@ -13,8 +12,8 @@ import {
   consoleInfoOrange,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
-  shouldProcessFile,
   normalizePrefix,
+  findSourceMapFiles,
 } from "@grafana/faro-bundlers-shared";
 import path from "path";
 
@@ -201,28 +200,23 @@ export default class FaroSourceMapUploaderPlugin
       }
 
       try {
-        const filenames = fs.readdirSync(outputPath, { recursive: this.recursive });
+        const sourceMapFiles = findSourceMapFiles(
+          outputPath,
+          this.outputFiles,
+          this.recursive,
+          this.gzipContents
+        );
         const sourcemapEndpoint = `${this.endpoint}${this.bundleId}`;
         const filesToUpload = [];
         let totalSize = 0;
 
-        for (let filename of filenames) {
-          // Ensure filename is a string (fs.readdirSync with recursive can return Buffer)
-          const filenameStr = filename.toString();
-          const file = path.join(outputPath, filenameStr);
-
-          // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!shouldProcessFile(filenameStr, this.outputFiles)) {
-            continue;
-          }
-
+        for (const { filename, filePath, size } of sourceMapFiles) {
           // if we are tar/gzipping contents, collect N files and upload them all at once
           // total size of all files uploaded at once must be less than the configured max size (uncompressed)
-          if (this.gzipContents && fs.existsSync(file)) {
-            const { size } = fs.statSync(file);
-
-            filesToUpload.push(file);
-            totalSize += size;
+          if (this.gzipContents) {
+            const fileSize = size ?? 0;
+            filesToUpload.push(filePath);
+            totalSize += fileSize;
 
             if (totalSize > this.maxUploadSize) {
               filesToUpload.pop();
@@ -242,8 +236,8 @@ export default class FaroSourceMapUploaderPlugin
               }
 
               filesToUpload.length = 0;
-              filesToUpload.push(file);
-              totalSize = size;
+              filesToUpload.push(filePath);
+              totalSize = fileSize;
             }
           }
 
@@ -253,15 +247,15 @@ export default class FaroSourceMapUploaderPlugin
               sourcemapEndpoint,
               apiKey: this.apiKey,
               stackId: this.stackId,
-              filename: filenameStr,
-              filePath: `${outputPath}/${filenameStr}`,
+              filename,
+              filePath,
               keepSourcemaps: !!this.keepSourcemaps,
               verbose: this.verbose,
               proxy: this.proxy,
             });
 
             if (result) {
-              uploadedSourcemaps.push(filenameStr);
+              uploadedSourcemaps.push(filename);
             }
           }
         }
