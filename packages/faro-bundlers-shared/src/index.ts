@@ -377,6 +377,24 @@ const includedInOutputFiles = (filename: string, outputFiles: string[] | undefin
   return false;
 }
 
+export const createSourceMapFileFilter = (
+  outputFiles: string[] | RegExp | undefined
+): ((filename: string) => boolean) => {
+  if (outputFiles instanceof RegExp) {
+    return (filename: string) =>
+      JS_SOURCEMAP_PATTERN.test(filename) && outputFiles.test(filename);
+  }
+
+  if (Array.isArray(outputFiles) && outputFiles.length) {
+    const outputFilesSet = new Set(outputFiles.map((o) => `${o}.map`));
+
+    return (filename: string) =>
+      JS_SOURCEMAP_PATTERN.test(filename) && outputFilesSet.has(filename);
+  }
+
+  return (filename: string) => JS_SOURCEMAP_PATTERN.test(filename);
+};
+
 export const findSourceMapFiles = (
   outputDir: string,
   outputFiles: string[] | RegExp | undefined,
@@ -385,11 +403,12 @@ export const findSourceMapFiles = (
 ): SourceMapFile[] => {
   const files: SourceMapFile[] = [];
   const filenames = fs.readdirSync(outputDir, { recursive: recursive || false });
+  const shouldIncludeFile = createSourceMapFileFilter(outputFiles);
 
   for (const filename of filenames) {
     const filenameStr = filename.toString();
 
-    if (!shouldProcessFile(filenameStr, outputFiles)) {
+    if (!shouldIncludeFile(filenameStr)) {
       continue;
     }
 

@@ -12,9 +12,9 @@ import {
   uploadIndividualSourceMaps,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
-  shouldProcessFile,
   modifySourceMapFileProperty,
   findSourceMapFiles,
+  createSourceMapFileFilter,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
@@ -113,12 +113,19 @@ export default function faroUploader(
         const sourcemapEndpoint = uploadEndpoint + bundleId;
         const filesToUpload = [];
         let totalSize = 0;
-        const sourceMapFiles = Object.keys(bundle)
-          .filter((filename) => shouldProcessFile(filename, outputFiles))
-          .map((filename) => ({
+        const shouldIncludeFile = createSourceMapFileFilter(outputFiles);
+        const sourceMapFiles = [];
+
+        for (const filename of Object.keys(bundle)) {
+          if (!shouldIncludeFile(filename)) {
+            continue;
+          }
+
+          sourceMapFiles.push({
             filename,
             filePath: path.join(outputPath, filename),
-          }));
+          });
+        }
 
         if (!gzipContents) {
           uploadedSourcemaps.push(

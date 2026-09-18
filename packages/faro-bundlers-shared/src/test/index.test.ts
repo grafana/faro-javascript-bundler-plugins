@@ -11,6 +11,7 @@ import {
   ensureSourceMapFileProperty,
   ensureSourceMapFileProperties,
   findSourceMapFiles,
+  createSourceMapFileFilter,
   isLocalEndpoint,
 } from '../index';
 
@@ -93,6 +94,23 @@ describe('Bundlers Shared Utilities', () => {
     expect(shouldProcessFile('bundle.js.map', arrayFilter)).toBeTruthy();
     expect(shouldProcessFile('app.js.map', arrayFilter)).toBeTruthy();
     expect(shouldProcessFile('module.js.map', arrayFilter)).toBeFalsy();
+  });
+
+  test('createSourceMapFileFilter respects array filter', () => {
+    const filter = createSourceMapFileFilter(['bundle.js', 'app.js']);
+
+    expect(filter('bundle.js.map')).toBeTruthy();
+    expect(filter('app.js.map')).toBeTruthy();
+    expect(filter('module.js.map')).toBeFalsy();
+    expect(filter('bundle.js')).toBeFalsy();
+  });
+
+  test('createSourceMapFileFilter respects regex filter', () => {
+    const filter = createSourceMapFileFilter(/app\..*\.map$/);
+
+    expect(filter('app.js.map')).toBeTruthy();
+    expect(filter('bundle.js.map')).toBeFalsy();
+    expect(filter('styles.css.map')).toBeFalsy();
   });
 
   test('exportBundleIdToFile sets environment variable', () => {
