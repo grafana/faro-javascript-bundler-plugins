@@ -4,7 +4,6 @@ import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
 import {
-  ensureSourceMapFileProperty,
   findSourceMapFiles,
   modifySourceMapFileProperty,
   shouldProcessFile,
@@ -14,6 +13,7 @@ const runs = Number(process.env.BENCH_RUNS ?? 5);
 const sourcemapCount = Number(process.env.BENCH_SOURCEMAPS ?? 1000);
 const jsCount = Number(process.env.BENCH_JS ?? sourcemapCount);
 const fillerCount = Number(process.env.BENCH_FILLER ?? 1000);
+const mapPayloadBytes = Number(process.env.BENCH_MAP_PAYLOAD_BYTES ?? 4096);
 const prefixPath = 'cdn/assets';
 
 function median(values) {
@@ -50,7 +50,7 @@ function writeFixture(root) {
       ...(hasFile ? { file: `assets/chunk-${i}.js` } : {}),
       sources: [`src/chunk-${i}.ts`],
       names: [],
-      mappings: 'AAAA',
+      mappings: 'A'.repeat(mapPayloadBytes),
     };
     fs.writeFileSync(path.join(root, `chunk-${i}.js.map`), JSON.stringify(map));
   }
@@ -60,8 +60,17 @@ function writeFixture(root) {
   }
 }
 
+function oldEnsureSourceMapFileProperty(filePath) {
+  const sourceMap = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  if (!sourceMap.file) {
+    sourceMap.file = path.basename(filePath).replace(/\.map$/, '');
+    fs.writeFileSync(filePath, JSON.stringify(sourceMap));
+  }
+}
+
 function oldModifySourceMapFileProperty(filePath, prefix) {
-  ensureSourceMapFileProperty(filePath, false);
+  oldEnsureSourceMapFileProperty(filePath);
 
   const normalizedPrefix = normalizePrefix(prefix);
   const sourceMap = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -84,7 +93,7 @@ function oldEsbuildPrefixProcessing(outputDir) {
     }
 
     if (fs.existsSync(filePath)) {
-      ensureSourceMapFileProperty(filePath, false);
+      oldEnsureSourceMapFileProperty(filePath);
     }
   }
 
@@ -239,6 +248,7 @@ console.log(
       sourcemapCount,
       jsCount,
       fillerCount,
+      mapPayloadBytes,
       scenarios,
     },
     null,

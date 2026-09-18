@@ -8,8 +8,8 @@ import {
   resolveGitHash,
   randomString,
   consoleInfoOrange,
-  uploadSourceMap,
   uploadCompressedSourceMaps,
+  uploadIndividualSourceMaps,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
   modifySourceMapFileProperty,
@@ -37,6 +37,7 @@ export default function faroEsbuildPlugin(
     proxy,
     prefixPath,
     prefixPathBasenameOnly,
+    uploadConcurrency,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -146,10 +147,25 @@ export default function faroEsbuildPlugin(
           const filesToUpload: string[] = [];
           let totalSize = 0;
 
-          for (const { filename, filePath, size } of sourceMapFiles) {
-            // if we are tar/gzipping contents, collect N files and upload them all at once
-            // total size of all files uploaded at once must be less than the configured max size (uncompressed)
-            if (gzipContents) {
+          if (!gzipContents) {
+            uploadedSourcemaps.push(
+              ...(await uploadIndividualSourceMaps({
+                sourcemapEndpoint,
+                apiKey,
+                stackId,
+                files: sourceMapFiles,
+                keepSourcemaps: !!keepSourcemaps,
+                verbose: verbose,
+                proxy: proxy,
+                uploadConcurrency,
+              }))
+            );
+          }
+
+          if (gzipContents) {
+            for (const { filePath, size } of sourceMapFiles) {
+              // if we are tar/gzipping contents, collect N files and upload them all at once
+              // total size of all files uploaded at once must be less than the configured max size (uncompressed)
               const fileSize = size ?? 0;
               filesToUpload.push(filePath);
               totalSize += fileSize;
@@ -174,24 +190,6 @@ export default function faroEsbuildPlugin(
                 filesToUpload.length = 0;
                 filesToUpload.push(filePath);
                 totalSize = fileSize;
-              }
-            }
-
-            // if we are not compressing, upload each file individually
-            if (!gzipContents) {
-              const result = await uploadSourceMap({
-                sourcemapEndpoint,
-                apiKey,
-                stackId,
-                filename,
-                filePath,
-                keepSourcemaps: !!keepSourcemaps,
-                verbose: verbose,
-                proxy: proxy,
-              });
-
-              if (result) {
-                uploadedSourcemaps.push(filename);
               }
             }
           }

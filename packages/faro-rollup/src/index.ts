@@ -8,8 +8,8 @@ import {
   resolveGitHash,
   randomString,
   consoleInfoOrange,
-  uploadSourceMap,
   uploadCompressedSourceMaps,
+  uploadIndividualSourceMaps,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
   shouldProcessFile,
@@ -37,6 +37,7 @@ export default function faroUploader(
     proxy,
     prefixPath,
     prefixPathBasenameOnly,
+    uploadConcurrency,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -112,20 +113,35 @@ export default function faroUploader(
         const sourcemapEndpoint = uploadEndpoint + bundleId;
         const filesToUpload = [];
         let totalSize = 0;
+        const sourceMapFiles = Object.keys(bundle)
+          .filter((filename) => shouldProcessFile(filename, outputFiles))
+          .map((filename) => ({
+            filename,
+            filePath: path.join(outputPath, filename),
+          }));
 
-        for (let filename in bundle) {
-          // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!shouldProcessFile(filename, outputFiles)) {
-            continue;
-          }
+        if (!gzipContents) {
+          uploadedSourcemaps.push(
+            ...(await uploadIndividualSourceMaps({
+              sourcemapEndpoint,
+              apiKey,
+              stackId,
+              files: sourceMapFiles,
+              keepSourcemaps: !!keepSourcemaps,
+              verbose: verbose,
+              proxy: proxy,
+              uploadConcurrency,
+            }))
+          );
+        }
 
-          // if we are tar/gzipping contents, collect N files and upload them all at once
-          // total size of all files uploaded at once must be less than the configured max size (uncompressed)
-          if (gzipContents) {
-            const file = path.join(outputPath, filename);
-            const { size } = fs.statSync(file);
+        if (gzipContents) {
+          for (const { filePath } of sourceMapFiles) {
+            // if we are tar/gzipping contents, collect N files and upload them all at once
+            // total size of all files uploaded at once must be less than the configured max size (uncompressed)
+            const { size } = fs.statSync(filePath);
 
-            filesToUpload.push(file);
+            filesToUpload.push(filePath);
             totalSize += size;
 
             if (totalSize > maxSize) {
@@ -146,26 +162,8 @@ export default function faroUploader(
               }
 
               filesToUpload.length = 0;
-              filesToUpload.push(file);
+              filesToUpload.push(filePath);
               totalSize = size;
-            }
-          }
-
-          // if we are not compressing, upload each file individually
-          if (!gzipContents) {
-            const result = await uploadSourceMap({
-              sourcemapEndpoint,
-              apiKey,
-              stackId,
-              filename,
-              filePath: path.join(outputPath, filename),
-              keepSourcemaps: !!keepSourcemaps,
-              verbose: verbose,
-              proxy: proxy,
-            });
-
-            if (result) {
-              uploadedSourcemaps.push(filename);
             }
           }
         }

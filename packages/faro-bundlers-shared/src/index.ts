@@ -25,6 +25,7 @@ export interface FaroSourceMapUploaderPluginOptions {
   prefixPath?: string; // Prefix to prepend to the file property in source maps (e.g., "_next/" or "robo/assets/")
   prefixPathBasenameOnly?: boolean; // When true, strips the directory path from the file property before prepending prefixPath (useful for flat CDN uploads)
   gitHash?: string;
+  uploadConcurrency?: number; // Maximum number of individual source map uploads to run at once
 }
 
 interface UploadSourceMapOptions {
@@ -54,6 +55,27 @@ export interface SourceMapFile {
   filePath: string;
   size?: number;
 }
+
+interface UploadIndividualSourceMapsOptions {
+  sourcemapEndpoint: string;
+  apiKey: string;
+  stackId: string;
+  files: SourceMapFile[];
+  keepSourcemaps: boolean;
+  verbose?: boolean;
+  proxy?: string;
+  uploadConcurrency?: number;
+}
+
+const DEFAULT_UPLOAD_CONCURRENCY = 5;
+
+const normalizeUploadConcurrency = (uploadConcurrency?: number): number => {
+  if (!uploadConcurrency || uploadConcurrency < 1) {
+    return DEFAULT_UPLOAD_CONCURRENCY;
+  }
+
+  return Math.floor(uploadConcurrency);
+};
 
 
 /**
@@ -274,6 +296,53 @@ export const uploadCompressedSourceMaps = async (
     });
 
   return success;
+};
+
+export const uploadIndividualSourceMaps = async (
+  options: UploadIndividualSourceMapsOptions
+): Promise<string[]> => {
+  const {
+    sourcemapEndpoint,
+    apiKey,
+    stackId,
+    files,
+    keepSourcemaps,
+    verbose,
+    proxy,
+    uploadConcurrency,
+  } = options;
+  const uploadedSourcemaps: string[] = [];
+  let nextIndex = 0;
+  const workerCount = Math.min(
+    normalizeUploadConcurrency(uploadConcurrency),
+    files.length
+  );
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < files.length) {
+        const file = files[nextIndex];
+        nextIndex += 1;
+
+        const result = await uploadSourceMap({
+          sourcemapEndpoint,
+          apiKey,
+          stackId,
+          filename: file.filename,
+          filePath: file.filePath,
+          keepSourcemaps,
+          verbose,
+          proxy,
+        });
+
+        if (result) {
+          uploadedSourcemaps.push(file.filename);
+        }
+      }
+    })
+  );
+
+  return uploadedSourcemaps;
 };
 
 export const shouldProcessFile = (filename: string, outputFiles: string[] | RegExp | undefined) => {

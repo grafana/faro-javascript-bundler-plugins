@@ -7,8 +7,8 @@ import {
   faroGitHashSnippet,
   resolveGitHash,
   randomString,
-  uploadSourceMap,
   uploadCompressedSourceMaps,
+  uploadIndividualSourceMaps,
   consoleInfoOrange,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
@@ -100,6 +100,7 @@ export default class FaroSourceMapUploaderPlugin
   private prefixPath?: string;
   private prefixPathBasenameOnly?: boolean;
   private gitHash?: string;
+  private uploadConcurrency?: number;
 
   constructor(options: WebpackFaroSourceMapUploaderPluginOptions) {
     this.appName = options.appName;
@@ -117,6 +118,7 @@ export default class FaroSourceMapUploaderPlugin
     this.nextjs = options.nextjs;
     this.prefixPath = options.prefixPath;
     this.prefixPathBasenameOnly = options.prefixPathBasenameOnly;
+    this.uploadConcurrency = options.uploadConcurrency;
     this.maxUploadSize =
       options.maxUploadSize && options.maxUploadSize > 0
         ? options.maxUploadSize
@@ -210,10 +212,25 @@ export default class FaroSourceMapUploaderPlugin
         const filesToUpload = [];
         let totalSize = 0;
 
-        for (const { filename, filePath, size } of sourceMapFiles) {
-          // if we are tar/gzipping contents, collect N files and upload them all at once
-          // total size of all files uploaded at once must be less than the configured max size (uncompressed)
-          if (this.gzipContents) {
+        if (!this.gzipContents) {
+          uploadedSourcemaps.push(
+            ...(await uploadIndividualSourceMaps({
+              sourcemapEndpoint,
+              apiKey: this.apiKey,
+              stackId: this.stackId,
+              files: sourceMapFiles,
+              keepSourcemaps: !!this.keepSourcemaps,
+              verbose: this.verbose,
+              proxy: this.proxy,
+              uploadConcurrency: this.uploadConcurrency,
+            }))
+          );
+        }
+
+        if (this.gzipContents) {
+          for (const { filePath, size } of sourceMapFiles) {
+            // if we are tar/gzipping contents, collect N files and upload them all at once
+            // total size of all files uploaded at once must be less than the configured max size (uncompressed)
             const fileSize = size ?? 0;
             filesToUpload.push(filePath);
             totalSize += fileSize;
@@ -238,24 +255,6 @@ export default class FaroSourceMapUploaderPlugin
               filesToUpload.length = 0;
               filesToUpload.push(filePath);
               totalSize = fileSize;
-            }
-          }
-
-          // if we are not compresing, upload each file individually
-          if (!this.gzipContents) {
-            const result = await uploadSourceMap({
-              sourcemapEndpoint,
-              apiKey: this.apiKey,
-              stackId: this.stackId,
-              filename,
-              filePath,
-              keepSourcemaps: !!this.keepSourcemaps,
-              verbose: this.verbose,
-              proxy: this.proxy,
-            });
-
-            if (result) {
-              uploadedSourcemaps.push(filename);
             }
           }
         }
