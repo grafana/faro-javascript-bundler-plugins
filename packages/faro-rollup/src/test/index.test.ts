@@ -29,7 +29,7 @@ vi.doMock('undici', () => ({
   ProxyAgent: mockProxyAgent,
 }));
 
-const { default: faroUploader } = await import('@grafana/faro-rollup-plugin');
+const { default: faroUploader } = await import('../index');
 const { ProxyAgent } = await import('undici');
 
 const TEST_OUTPUT_DIR = path.resolve(process.cwd(), '.test-output');
@@ -78,6 +78,14 @@ describe('Faro Rollup Plugin', () => {
         `(function(){try{var g=typeof globalThis!=="undefined"?globalThis:typeof global!=="undefined"?global:typeof window!=="undefined"?window:typeof self!=="undefined"?self:{};g["__faroBundleId_rollup-test-app"]="test"`
       )
     ).toBeTruthy();
+  });
+
+  test('emits a source map with the injected bundle ID when sourcemaps are enabled', async () => {
+    const output = await runRollup({ bundleId: 'source-map-test' }, { sourcemap: true });
+
+    expect(output.output[0].map).toMatchObject({ file: 'bundle.js' });
+    expect(output.output[0].map?.sources).toHaveLength(1);
+    expect(output.output[0].code).toContain('"__faroBundleId_rollup-test-app"]="source-map-test"');
   });
 
   test('custom bundleId is correctly injected', async () => {

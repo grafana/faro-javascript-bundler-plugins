@@ -74,7 +74,7 @@ export default function faroUploader(
 
         return {
           code: newCode.toString(),
-          map,
+          map: map.toString(),
         };
       }
 
