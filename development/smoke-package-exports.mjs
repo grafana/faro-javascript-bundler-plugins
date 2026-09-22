@@ -78,6 +78,22 @@ for (const pkg of packages) {
   pkg.importShape(await import(pkg.name));
 }
 
+const faroRollupUploader = require('@grafana/faro-rollup-plugin');
+const faroRollupPlugin = faroRollupUploader({
+  appName: 'smoke-test',
+  endpoint: 'http://localhost:8000/faro/api/v1',
+  apiKey: 'smoke-test-api-key',
+  stackId: 'smoke-test-stack-id',
+  appId: '1',
+  bundleId: 'smoke-test-bundle-id',
+  gitHash: 'smoke-test-git-hash',
+  skipUpload: true,
+});
+const renderedChunk = faroRollupPlugin.renderChunk('export const smokeTest = true;', { fileName: 'bundle.js' });
+
+assert.equal(typeof renderedChunk, 'object');
+assert.match(renderedChunk.code, /__faroBundleId_smoke-test/);
+
 const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'faro-package-exports-'));
 
 try {

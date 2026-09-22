@@ -1,5 +1,5 @@
 import type { Plugin, OutputOptions, OutputBundle } from "rollup";
-import MagicString from "magic-string";
+import { MagicString } from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
   FaroSourceMapUploaderPluginOptions,
@@ -74,7 +74,7 @@ export default function faroUploader(
 
         return {
           code: newCode.toString(),
-          map,
+          map: map.toString(),
         };
       }
 
