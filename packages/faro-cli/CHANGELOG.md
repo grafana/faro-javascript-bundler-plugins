@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.13.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.12.0...faro-cli-v0.13.0) (2026-09-21)
+
+
+### Features
+
+* replaced jest with vitest ([#668](https://github.com/grafana/faro-javascript-bundler-plugins/issues/668)) ([dc9a247](https://github.com/grafana/faro-javascript-bundler-plugins/commit/dc9a2470ab7901539b6ca4305c77020e9263249f))
+
+
+### Bug Fixes
+
+* **deps:** update dependency dotenv to v18 ([#674](https://github.com/grafana/faro-javascript-bundler-plugins/issues/674)) ([2c4f476](https://github.com/grafana/faro-javascript-bundler-plugins/commit/2c4f476af68a5eb79fc776b8981382c348514889))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.12.0 to ^0.13.0
+
 ## [0.12.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.11.1...faro-cli-v0.12.0) (2026-08-27)
 
 
