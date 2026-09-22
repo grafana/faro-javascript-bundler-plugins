@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-rollup-plugin",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Upload a source map to the Faro source map API from a Rollup build pipeline",
   "type": "module",
   "main": "dist/cjs/index.cjs",
@@ -31,7 +31,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "^0.12.0",
+    "@grafana/faro-bundlers-shared": "^0.13.0",
     "magic-string": "^1.0.0"
   },
   "devDependencies": {

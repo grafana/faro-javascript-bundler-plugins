@@ -1,5 +1,5 @@
 import type { Plugin, OutputOptions, OutputBundle } from "rollup";
-import MagicString from "magic-string";
+import { MagicString } from "magic-string";
 import {
   ROLLUP_PLUGIN_NAME,
   FaroSourceMapUploaderPluginOptions,
