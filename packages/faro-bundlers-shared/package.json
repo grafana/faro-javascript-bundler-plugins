@@ -30,13 +30,13 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "2.2.0",
-    "@types/node": "24.13.3",
+    "@types/node": "24.13.5",
     "@types/tar": "7.0.87",
-    "tsdown": "0.22.14",
+    "tsdown": "0.23.0",
     "typescript": "6.0.3",
-    "undici-types": "8.10.0",
-    "vite": "8.2.2",
-    "vitest": "5.0.0"
+    "undici-types": "8.10.2",
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
   },
   "dependencies": {
     "ansis": "^4.0.0",
