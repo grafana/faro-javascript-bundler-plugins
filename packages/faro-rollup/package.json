@@ -36,8 +36,8 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "2.2.0",
-    "@types/node": "24.13.5",
-    "rollup": "4.63.3",
+    "@types/node": "24.13.6",
+    "rollup": "4.63.4",
     "tsdown": "0.23.0",
     "typescript": "6.0.3",
     "vite": "8.3.0",
