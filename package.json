@@ -19,7 +19,7 @@
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.5",
     "lerna": "10.0.1",
-    "publint": "0.3.23"
+    "publint": "0.3.24"
   },
   "resolutions": {
     "axios": "1.20.0",

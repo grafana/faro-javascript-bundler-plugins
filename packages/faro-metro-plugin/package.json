@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "2.2.0",
-    "@types/node": "24.13.5",
+    "@types/node": "24.13.6",
     "metro": "0.87.1",
     "tsdown": "0.23.0",
     "tslib": "2.8.1",
