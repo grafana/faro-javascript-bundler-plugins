@@ -182,33 +182,33 @@ export const uploadSourceMap = async (
   if (isLocalEndpoint(sourcemapEndpoint)) {
     headers["X-Scope-OrgID"] = String(stackId);
   }
-  await fetch(sourcemapEndpoint, {
-    method: "POST",
-    headers,
-    body: fs.readFileSync(filePath),
-    dispatcher: proxy ? new ProxyAgent(proxy) : undefined,
-  })
-    .then((res) => {
-      if (res.ok) {
-        verbose &&
-          consoleInfoOrange(`Uploaded ${filename} to ${sourcemapEndpoint}`);
-      } else {
-        success = false;
-        consoleInfoOrange(
-          `Upload of ${filename} failed with status: ${res.status}`
-        );
-      }
-
-      // delete source map
-      if (!keepSourcemaps && fs.existsSync(filePath)) {
-        verbose && consoleInfoOrange(`Deleting ${filename}`);
-        fs.unlinkSync(filePath);
-      }
-    })
-    .catch((err) => {
-      success = false;
-      console.error(err);
+  try {
+    const res = await fetch(sourcemapEndpoint, {
+      method: "POST",
+      headers,
+      body: fs.readFileSync(filePath),
+      dispatcher: proxy ? new ProxyAgent(proxy) : undefined,
     });
+
+    if (res.ok) {
+      verbose &&
+        consoleInfoOrange(`Uploaded ${filename} to ${sourcemapEndpoint}`);
+    } else {
+      success = false;
+      consoleInfoOrange(
+        `Upload of ${filename} failed with status: ${res.status}`
+      );
+    }
+
+    // delete source map
+    if (!keepSourcemaps && fs.existsSync(filePath)) {
+      verbose && consoleInfoOrange(`Deleting ${filename}`);
+      fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    success = false;
+    console.error(err);
+  }
 
   return success;
 };

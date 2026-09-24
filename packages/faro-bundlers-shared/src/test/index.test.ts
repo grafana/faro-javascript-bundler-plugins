@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -13,7 +13,17 @@ import {
   findSourceMapFiles,
   createSourceMapFileFilter,
   isLocalEndpoint,
+  uploadIndividualSourceMaps,
+  type SourceMapFile,
 } from '../index';
+
+vi.mock('undici', () => ({
+  fetch: vi.fn(),
+  ProxyAgent: vi.fn(),
+}));
+
+const { fetch } = await import('undici');
+const fetchMock = vi.mocked(fetch);
 
 
 
@@ -28,12 +38,173 @@ beforeEach(() => {
 afterEach(() => {
   // Restore original environment variables
   process.env = originalEnv;
+  vi.clearAllMocks();
   for (const envFile of ['.env.TEST_APP', '.env.TEST_APP_WITH_SPECIAL_CHARS___']) {
     const envFilePath = path.resolve(process.cwd(), envFile);
     if (fs.existsSync(envFilePath)) {
       fs.unlinkSync(envFilePath);
     }
   }
+});
+
+const createSourceMapFiles = (tempDir: string, count: number): SourceMapFile[] =>
+  Array.from({ length: count }, (_, index) => {
+    const filename = `bundle-${index}.js.map`;
+    const filePath = path.join(tempDir, filename);
+    fs.writeFileSync(filePath, filename);
+
+    return { filename, filePath };
+  });
+
+const uploadSourceMaps = (
+  files: SourceMapFile[],
+  uploadConcurrency?: number
+): Promise<string[]> =>
+  uploadIndividualSourceMaps({
+    sourcemapEndpoint: 'https://example.com/faro/api/v1/sourcemaps',
+    apiKey: 'api-key',
+    stackId: 'stack-id',
+    files,
+    keepSourcemaps: true,
+    uploadConcurrency,
+  });
+
+const sorted = (values: string[]): string[] => [...values].sort();
+
+const trackConcurrentUploads = (successfulFilenames = new Set<string>()) => {
+  let activeUploads = 0;
+  let maxActiveUploads = 0;
+  const uploadedFilenames: string[] = [];
+
+  fetchMock.mockImplementation(async (_url, options) => {
+    activeUploads += 1;
+    maxActiveUploads = Math.max(maxActiveUploads, activeUploads);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const filename = options?.body?.toString() ?? '';
+    uploadedFilenames.push(filename);
+    activeUploads -= 1;
+    const ok = successfulFilenames.size === 0 || successfulFilenames.has(filename);
+
+    return {
+      ok,
+      status: ok ? 200 : 500,
+    } as Awaited<ReturnType<typeof fetch>>;
+  });
+
+  return {
+    getMaxActiveUploads: () => maxActiveUploads,
+    uploadedFilenames,
+  };
+};
+
+describe('uploadIndividualSourceMaps', () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = fs.mkdtempSync(path.join(process.cwd(), 'test-temp-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  test('honors the upload concurrency cap and uploads every source map once', async () => {
+    const files = createSourceMapFiles(tempDir, 7);
+    const tracker = trackConcurrentUploads();
+
+    const uploadedFilenames = await uploadSourceMaps(files, 2);
+
+    expect(fetchMock).toHaveBeenCalledTimes(files.length);
+    expect(tracker.getMaxActiveUploads()).toBe(2);
+    expect(sorted(tracker.uploadedFilenames)).toEqual(
+      sorted(files.map((file) => file.filename))
+    );
+    expect(new Set(tracker.uploadedFilenames)).toHaveLength(files.length);
+    expect(sorted(uploadedFilenames)).toEqual(
+      sorted(files.map((file) => file.filename))
+    );
+  });
+
+  test.each([undefined, 0, -1, Number.NaN])(
+    'falls back to the default concurrency for %s',
+    async (uploadConcurrency) => {
+      const files = createSourceMapFiles(tempDir, 8);
+      const tracker = trackConcurrentUploads();
+
+      await uploadSourceMaps(files, uploadConcurrency);
+
+      expect(tracker.getMaxActiveUploads()).toBe(5);
+    }
+  );
+
+  test('floors fractional upload concurrency values', async () => {
+    const files = createSourceMapFiles(tempDir, 5);
+    const tracker = trackConcurrentUploads();
+
+    await uploadSourceMaps(files, 2.9);
+
+    expect(tracker.getMaxActiveUploads()).toBe(2);
+  });
+
+  test('does not create more workers than there are source maps', async () => {
+    const files = createSourceMapFiles(tempDir, 3);
+    const tracker = trackConcurrentUploads();
+
+    await uploadSourceMaps(files, 20);
+
+    expect(tracker.getMaxActiveUploads()).toBe(files.length);
+  });
+
+  test('returns only successfully uploaded filenames', async () => {
+    const consoleInfoSpy = vi
+      .spyOn(console, 'info')
+      .mockImplementation(() => undefined);
+    const files = createSourceMapFiles(tempDir, 4);
+    const successfulFilenames = new Set([
+      files[0].filename,
+      files[2].filename,
+    ]);
+    const tracker = trackConcurrentUploads(successfulFilenames);
+
+    const uploadedFilenames = await uploadSourceMaps(files, 3);
+
+    expect(sorted(tracker.uploadedFilenames)).toEqual(
+      sorted(files.map((file) => file.filename))
+    );
+    expect(sorted(uploadedFilenames)).toEqual(
+      sorted([...successfulFilenames])
+    );
+
+    consoleInfoSpy.mockRestore();
+  });
+
+  test('waits for remaining workers and returns successful filenames when one file disappears', async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const files = createSourceMapFiles(tempDir, 4);
+    fs.unlinkSync(files[1].filePath);
+    const tracker = trackConcurrentUploads();
+
+    const uploadedFilenames = await uploadSourceMaps(files, 2);
+    const expectedUploadedFilenames = [
+      files[0].filename,
+      files[2].filename,
+      files[3].filename,
+    ];
+
+    expect(fetchMock).toHaveBeenCalledTimes(expectedUploadedFilenames.length);
+    expect(sorted(tracker.uploadedFilenames)).toEqual(
+      sorted(expectedUploadedFilenames)
+    );
+    expect(sorted(uploadedFilenames)).toEqual(
+      sorted(expectedUploadedFilenames)
+    );
+
+    consoleErrorSpy.mockRestore();
+  });
 });
 
 describe('Bundlers Shared Utilities', () => {
