@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-bundlers-shared",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "type": "module",
   "main": "dist/cjs/index.cjs",
   "types": "dist/cjs/index.d.cts",
@@ -30,11 +30,11 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "2.2.0",
-    "@types/node": "24.13.3",
-    "tsdown": "0.22.14",
+    "@types/node": "24.13.6",
+    "tsdown": "0.23.0",
     "typescript": "6.0.3",
-    "vite": "8.2.2",
-    "vitest": "5.0.0"
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
   },
   "dependencies": {
     "ansis": "^4.0.0",
