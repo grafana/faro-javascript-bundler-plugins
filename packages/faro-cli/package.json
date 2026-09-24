@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-cli",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "CLI for uploading sourcemaps to the Faro source map API",
   "type": "module",
   "main": "dist/cjs/index.cjs",
@@ -43,21 +43,21 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "^0.12.0",
+    "@grafana/faro-bundlers-shared": "^0.13.0",
     "commander": "^15.0.0",
-    "dotenv": "^17.0.1",
+    "dotenv": "^18.0.0",
     "glob": "^13.0.0",
     "tar": "^7.5.21"
   },
   "devDependencies": {
     "@grafana/tsconfig": "2.2.0",
     "@types/glob": "9.0.0",
-    "@types/node": "24.13.3",
+    "@types/node": "24.13.6",
     "@types/tar": "7.0.87",
-    "tsdown": "0.22.14",
+    "tsdown": "0.23.0",
     "typescript": "6.0.3",
-    "vite": "8.2.2",
-    "vitest": "5.0.0"
+    "vite": "8.3.0",
+    "vitest": "5.0.1"
   },
   "files": [
     "dist",
