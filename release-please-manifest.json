@@ -2,7 +2,7 @@
   "packages/faro-bundlers-shared": "0.13.0",
   "packages/faro-cli": "0.13.0",
   "packages/faro-esbuild": "0.8.0",
-  "packages/faro-rollup": "0.13.0",
+  "packages/faro-rollup": "0.13.1",
   "packages/faro-webpack": "0.14.0",
   "packages/faro-metro-plugin": "0.5.0"
 }

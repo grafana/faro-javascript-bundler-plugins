@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.13.0...faro-rollup-plugin-v0.13.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency magic-string to v1 ([#638](https://github.com/grafana/faro-javascript-bundler-plugins/issues/638)) ([42ff325](https://github.com/grafana/faro-javascript-bundler-plugins/commit/42ff32517f9e3079703559e5bdf54b0e070dec35))
+
 ## [0.13.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-rollup-plugin-v0.12.0...faro-rollup-plugin-v0.13.0) (2026-09-21)
 
 
