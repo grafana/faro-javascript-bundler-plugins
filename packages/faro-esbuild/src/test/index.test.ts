@@ -310,6 +310,47 @@ describe('Faro Esbuild Plugin', () => {
     }
   });
 
+  test('gzip upload skips maps that disappear during size collection', async () => {
+    const originalStatSync = fs.statSync;
+    const statSyncSpy = vi.spyOn(fs, 'statSync').mockImplementation(((
+      filePath: fs.PathLike,
+      options?: fs.StatSyncOptions
+    ) => {
+      if (typeof filePath === 'string' && filePath.endsWith('main.js.map')) {
+        throw new Error('ENOENT: no such file or directory');
+      }
+
+      return originalStatSync(filePath, options as fs.StatSyncOptions);
+    }) as typeof fs.statSync);
+
+    try {
+      await runEsbuild(
+        {
+          bundleId: 'gzip-disappearing-map-test',
+          gzipContents: true,
+          keepSourcemaps: true,
+        },
+        {
+          entryPoints: {
+            main: path.resolve(process.cwd(), 'src/test/main.js'),
+            other: path.resolve(process.cwd(), 'src/test/main.js'),
+          },
+        }
+      );
+
+      await waitFor(() => {
+        const compressedUpload = mockFetch.mock.calls.find((call) => {
+          const headers = call[1]?.headers as Record<string, string> | undefined;
+          return headers?.['Content-Type'] === 'application/gzip';
+        });
+
+        expect(compressedUpload).toBeDefined();
+      });
+    } finally {
+      statSyncSpy.mockRestore();
+    }
+  });
+
   test('prefixPath is prepended to the file property of the sourcemap when prefixPath is provided', async () => {
     const { mapCode, outdir } = await runEsbuild({
       bundleId: 'prefixpath-test',
@@ -364,3 +405,22 @@ describe('Faro Esbuild Plugin', () => {
     }
   });
 });
+
+function waitFor(callback: () => void, timeout = 5000) {
+  return new Promise<void>((resolve, reject) => {
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      try {
+        callback();
+        clearInterval(interval);
+        resolve();
+      } catch (error) {
+        if (Date.now() - startTime > timeout) {
+          clearInterval(interval);
+          reject(error);
+        }
+      }
+    }, 50);
+  });
+}
