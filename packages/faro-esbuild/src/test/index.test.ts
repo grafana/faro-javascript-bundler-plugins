@@ -311,17 +311,12 @@ describe('Faro Esbuild Plugin', () => {
   });
 
   test('gzip upload skips maps that disappear during size collection', async () => {
-    const originalStatSync = fs.statSync;
-    const statSyncSpy = vi.spyOn(fs, 'statSync').mockImplementation(((
-      filePath: fs.PathLike,
-      options?: fs.StatSyncOptions
-    ) => {
-      if (typeof filePath === 'string' && filePath.endsWith('main.js.map')) {
-        throw new Error('ENOENT: no such file or directory');
-      }
-
-      return originalStatSync(filePath, options as fs.StatSyncOptions);
-    }) as typeof fs.statSync);
+    const originalExistsSync = fs.existsSync;
+    const existsSyncSpy = vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+      return typeof filePath === 'string' && filePath.endsWith('main.js.map')
+        ? false
+        : originalExistsSync(filePath);
+    });
 
     try {
       await runEsbuild(
@@ -346,6 +341,46 @@ describe('Faro Esbuild Plugin', () => {
 
         expect(compressedUpload).toBeDefined();
       });
+    } finally {
+      existsSyncSpy.mockRestore();
+    }
+  });
+
+  test('gzip upload sizes maps after file property rewrites', async () => {
+    const originalStatSync = fs.statSync;
+    const prefixPath = 'rewritten-prefix';
+    let statSawRewrittenMap = false;
+    const statSyncSpy = vi.spyOn(fs, 'statSync').mockImplementation(((
+      filePath: fs.PathLike,
+      options?: fs.StatSyncOptions
+    ) => {
+      if (typeof filePath === 'string' && filePath.endsWith('.js.map')) {
+        const sourceMap = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        statSawRewrittenMap ||= sourceMap.file.startsWith(`${prefixPath}/`);
+      }
+
+      const stats = originalStatSync(filePath, options as fs.StatSyncOptions);
+      return stats;
+    }) as typeof fs.statSync);
+
+    try {
+      await runEsbuild({
+        bundleId: 'gzip-post-rewrite-size-test',
+        gzipContents: true,
+        keepSourcemaps: true,
+        prefixPath,
+      });
+
+      await waitFor(() => {
+        const compressedUpload = mockFetch.mock.calls.find((call) => {
+          const headers = call[1]?.headers as Record<string, string> | undefined;
+          return headers?.['Content-Type'] === 'application/gzip';
+        });
+
+        expect(compressedUpload).toBeDefined();
+      });
+
+      expect(statSawRewrittenMap).toBe(true);
     } finally {
       statSyncSpy.mockRestore();
     }

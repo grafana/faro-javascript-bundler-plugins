@@ -1,4 +1,5 @@
 import * as esbuild from "esbuild";
+import fs from "fs";
 import path from "path";
 import {
   ESBUILD_PLUGIN_NAME,
@@ -109,8 +110,7 @@ export default function faroEsbuildPlugin(
           sourceMapFiles = findSourceMapFiles(
             outputDir,
             outputFiles,
-            recursive,
-            gzipContents
+            recursive
           );
         } catch (e) {
           console.error('Error reading source maps:', e);
@@ -163,12 +163,17 @@ export default function faroEsbuildPlugin(
           }
 
           if (gzipContents) {
-            for (const { filePath, size } of sourceMapFiles) {
+            for (const { filePath } of sourceMapFiles) {
               // if we are tar/gzipping contents, collect N files and upload them all at once
               // total size of all files uploaded at once must be less than the configured max size (uncompressed)
-              const fileSize = size ?? 0;
+              if (!fs.existsSync(filePath)) {
+                continue;
+              }
+
+              const { size } = fs.statSync(filePath);
+
               filesToUpload.push(filePath);
-              totalSize += fileSize;
+              totalSize += size;
 
               if (totalSize > maxSize) {
                 filesToUpload.pop();
@@ -189,7 +194,7 @@ export default function faroEsbuildPlugin(
 
                 filesToUpload.length = 0;
                 filesToUpload.push(filePath);
-                totalSize = fileSize;
+                totalSize = size;
               }
             }
           }
