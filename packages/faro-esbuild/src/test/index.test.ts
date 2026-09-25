@@ -310,6 +310,82 @@ describe('Faro Esbuild Plugin', () => {
     }
   });
 
+  test('gzip upload skips maps that disappear during size collection', async () => {
+    const originalExistsSync = fs.existsSync;
+    const existsSyncSpy = vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+      return typeof filePath === 'string' && filePath.endsWith('main.js.map')
+        ? false
+        : originalExistsSync(filePath);
+    });
+
+    try {
+      await runEsbuild(
+        {
+          bundleId: 'gzip-disappearing-map-test',
+          gzipContents: true,
+          keepSourcemaps: true,
+        },
+        {
+          entryPoints: {
+            main: path.resolve(process.cwd(), 'src/test/main.js'),
+            other: path.resolve(process.cwd(), 'src/test/main.js'),
+          },
+        }
+      );
+
+      await waitFor(() => {
+        const compressedUpload = mockFetch.mock.calls.find((call) => {
+          const headers = call[1]?.headers as Record<string, string> | undefined;
+          return headers?.['Content-Type'] === 'application/gzip';
+        });
+
+        expect(compressedUpload).toBeDefined();
+      });
+    } finally {
+      existsSyncSpy.mockRestore();
+    }
+  });
+
+  test('gzip upload sizes maps after file property rewrites', async () => {
+    const originalStatSync = fs.statSync;
+    const prefixPath = 'rewritten-prefix';
+    let statSawRewrittenMap = false;
+    const statSyncSpy = vi.spyOn(fs, 'statSync').mockImplementation(((
+      filePath: fs.PathLike,
+      options?: fs.StatSyncOptions
+    ) => {
+      if (typeof filePath === 'string' && filePath.endsWith('.js.map')) {
+        const sourceMap = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        statSawRewrittenMap ||= sourceMap.file.startsWith(`${prefixPath}/`);
+      }
+
+      const stats = originalStatSync(filePath, options as fs.StatSyncOptions);
+      return stats;
+    }) as typeof fs.statSync);
+
+    try {
+      await runEsbuild({
+        bundleId: 'gzip-post-rewrite-size-test',
+        gzipContents: true,
+        keepSourcemaps: true,
+        prefixPath,
+      });
+
+      await waitFor(() => {
+        const compressedUpload = mockFetch.mock.calls.find((call) => {
+          const headers = call[1]?.headers as Record<string, string> | undefined;
+          return headers?.['Content-Type'] === 'application/gzip';
+        });
+
+        expect(compressedUpload).toBeDefined();
+      });
+
+      expect(statSawRewrittenMap).toBe(true);
+    } finally {
+      statSyncSpy.mockRestore();
+    }
+  });
+
   test('prefixPath is prepended to the file property of the sourcemap when prefixPath is provided', async () => {
     const { mapCode, outdir } = await runEsbuild({
       bundleId: 'prefixpath-test',
@@ -364,3 +440,22 @@ describe('Faro Esbuild Plugin', () => {
     }
   });
 });
+
+function waitFor(callback: () => void, timeout = 5000) {
+  return new Promise<void>((resolve, reject) => {
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      try {
+        callback();
+        clearInterval(interval);
+        resolve();
+      } catch (error) {
+        if (Date.now() - startTime > timeout) {
+          clearInterval(interval);
+          reject(error);
+        }
+      }
+    }, 50);
+  });
+}
