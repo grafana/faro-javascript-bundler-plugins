@@ -3208,11 +3208,11 @@ __metadata:
   linkType: hard
 
 "dotenv@npm:^18.0.0":
-  version: 18.0.1
-  resolution: "dotenv@npm:18.0.1"
+  version: 18.0.3
+  resolution: "dotenv@npm:18.0.3"
   bin:
     dotenv: dist/index.cjs
-  checksum: 10/8ac4676bfaa39ffc6fd874af0e0f2eb879265a78f3056ad09f2ed0d2402cd4e011c0477b8e4c1cd5d05167a8d7e881975bead18814feae578fbf8132c8730fc7
+  checksum: 10/20743855e5f2a778d96208dc2fbe620312904518943ca1e8bee25813087c7640302135bc94f1959a783295d9feca8264fe5591a89f2ee97674928e07e1db7881
   languageName: node
   linkType: hard
 
@@ -4791,11 +4791,11 @@ __metadata:
   linkType: hard
 
 "magic-string@npm:^1.0.0, magic-string@npm:^1.2.3":
-  version: 1.4.1
-  resolution: "magic-string@npm:1.4.1"
+  version: 1.4.2
+  resolution: "magic-string@npm:1.4.2"
   dependencies:
     "@jridgewell/sourcemap-codec": "npm:^1.6.0"
-  checksum: 10/e24599bdd37e2bd4d3bed3e52739791d47652ce16a13f31c2fc7cc760912549a3af4db2625c4a26d4d7cd9ef573fea96c9470fea5b9deddd296ada896b6c44a3
+  checksum: 10/5cc39a384fbf2edc2b76ff2e2a4efbe0a15c2dc0e8251d09c0f2337dce53870034ed2dffdb90ac45e51847a0d92a4e565e726d1e6ea2bab9765713928194cb9c
   languageName: node
   linkType: hard
 
@@ -6639,10 +6639,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"smol-toml@npm:1.7.1":
-  version: 1.7.1
-  resolution: "smol-toml@npm:1.7.1"
-  checksum: 10/7f3aea1c7dbbd844de95e8f9b84d8bc77280873adf3bc42a7618e8693b65b9bf844e7412883c02f4999a67e4a3155f8179df5b19806263af6abeea7ddc78ac0f
+"smol-toml@npm:1.9.0":
+  version: 1.9.0
+  resolution: "smol-toml@npm:1.9.0"
+  checksum: 10/b9953e9b6470eed13c368e0e6674b21fd7a3917c1cdb492570d8dfa568b36e9705b5d072a64052e4375895bc6daef4e76528016c9f13045e81c0d3e092d53e3b
   languageName: node
   linkType: hard
 
@@ -7160,9 +7160,9 @@ __metadata:
   linkType: hard
 
 "undici@npm:^8.5.0":
-  version: 8.10.2
-  resolution: "undici@npm:8.10.2"
-  checksum: 10/90f7ba3d3e9543f25d47552282239faa395eaa66d0db7272ebf57055c8ced34e4c948923c734be5571bfce0cc56080e93c0e2f960e9c5fba163759fce112bab4
+  version: 8.11.0
+  resolution: "undici@npm:8.11.0"
+  checksum: 10/340ef9eab46b3361aef0ac6f90949d192c819e30208f2382ea011404cb731960a6ce12fccbfe4614b3a2a9710a0b34075acf6dd2b5a889daa3c4cbc89611c5bc
   languageName: node
   linkType: hard
 
