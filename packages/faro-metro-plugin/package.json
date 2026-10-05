@@ -40,12 +40,12 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "2.2.0",
-    "@types/node": "24.13.6",
+    "@types/node": "24.19.1",
     "metro": "0.87.1",
     "tsdown": "0.23.0",
     "typescript": "6.0.3",
-    "vite": "8.3.0",
-    "vitest": "5.0.1"
+    "vite": "8.3.2",
+    "vitest": "5.0.3"
   },
   "peerDependencies": {
     "metro": ">=0.81.0"
