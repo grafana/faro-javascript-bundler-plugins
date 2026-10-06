@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.8.0...faro-esbuild-plugin-v0.8.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **release:** publish packages with patched pacote resolution ([#684](https://github.com/grafana/faro-javascript-bundler-plugins/issues/684)) ([4535f4e](https://github.com/grafana/faro-javascript-bundler-plugins/commit/4535f4efd15c33531348439f8422473bed979040))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.13.0 to ^0.13.1
+
 ## [0.8.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.7.0...faro-esbuild-plugin-v0.8.0) (2026-09-21)
 
 
