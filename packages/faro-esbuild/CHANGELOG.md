@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.8.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.8.1...faro-esbuild-plugin-v0.8.2) (2026-10-07)
+
+
+### Performance Improvements
+
+* sourcemap discovery speed up & concurrent sourcemap upload ([#672](https://github.com/grafana/faro-javascript-bundler-plugins/issues/672)) ([78b564b](https://github.com/grafana/faro-javascript-bundler-plugins/commit/78b564bdd785c87bda3e5390134384bd8aed5e68))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.13.1 to ^0.13.2
+
 ## [0.8.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-esbuild-plugin-v0.8.0...faro-esbuild-plugin-v0.8.1) (2026-10-06)
 
 
