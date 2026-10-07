@@ -87,6 +87,7 @@ The following options are available for the Faro JavaScript bundler plugins:
 - `gitHash: string` *optional*: Git commit hash to inject into the bundle as `window.__faroGitHash_<appName>`. Auto-detected via `git rev-parse HEAD` if not provided. Use this to supply an explicit value when Git is unavailable at build time (for example, `process.env.GITHUB_SHA`). If unresolvable, no git hash is injected.
 - `keepSourcemaps: boolean` *optional*: Whether to keep the source maps in your generated bundle after uploading, default `false`
 - `gzipContents: boolean` *optional*: Whether to archive and compress the source maps before uploading, default `true`
+- `uploadConcurrency: number` *optional*: Maximum number of individual source map uploads to run at once, default `5`. Only applies when `gzipContents` is `false`.
 - `verbose: boolean` *optional*: Whether to log verbose output during the upload process, default `false`
 - `skipUpload: boolean` *optional*: Whether to skip uploading source maps and only export the bundleId to an environment file, default `false`
 - `maxUploadSize: number` *optional*: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.

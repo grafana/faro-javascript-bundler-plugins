@@ -8,12 +8,13 @@ import {
   resolveGitHash,
   randomString,
   consoleInfoOrange,
-  uploadSourceMap,
   uploadCompressedSourceMaps,
+  uploadIndividualSourceMaps,
   THIRTY_MB_IN_BYTES,
   exportBundleIdToFile,
-  shouldProcessFile,
   modifySourceMapFileProperty,
+  findSourceMapFiles,
+  createSourceMapFileFilter,
 } from "@grafana/faro-bundlers-shared";
 
 import fs from "fs";
@@ -36,6 +37,7 @@ export default function faroUploader(
     proxy,
     prefixPath,
     prefixPathBasenameOnly,
+    uploadConcurrency,
   } = pluginOptions;
   const bundleId =
     pluginOptions.bundleId ?? String(Date.now() + randomString(5));
@@ -90,17 +92,9 @@ export default function faroUploader(
       // and those files may not appear as separate entries in the OutputBundle.
       if (prefixPath) {
         try {
-          const filenames = fs.readdirSync(outputPath, { recursive: true });
-          for (const filename of filenames) {
-            const filenameStr = filename.toString();
-            // Only include JavaScript-related source maps or match the outputFiles regex
-            if (!shouldProcessFile(filenameStr, outputFiles)) {
-              continue;
-            }
-            const filePath = path.join(outputPath, filenameStr);
-            if (fs.existsSync(filePath)) {
-              modifySourceMapFileProperty(filePath, prefixPath, verbose, prefixPathBasenameOnly);
-            }
+          const sourceMapFiles = findSourceMapFiles(outputPath, outputFiles, true);
+          for (const { filePath } of sourceMapFiles) {
+            modifySourceMapFileProperty(filePath, prefixPath, verbose, prefixPathBasenameOnly);
           }
         } catch (e) {
           console.error('Error modifying source maps:', e);
@@ -119,20 +113,42 @@ export default function faroUploader(
         const sourcemapEndpoint = uploadEndpoint + bundleId;
         const filesToUpload = [];
         let totalSize = 0;
+        const shouldIncludeFile = createSourceMapFileFilter(outputFiles);
+        const sourceMapFiles = [];
 
-        for (let filename in bundle) {
-          // Only include JavaScript-related source maps or match the outputFiles regex
-          if (!shouldProcessFile(filename, outputFiles)) {
+        for (const filename of Object.keys(bundle)) {
+          if (!shouldIncludeFile(filename)) {
             continue;
           }
 
-          // if we are tar/gzipping contents, collect N files and upload them all at once
-          // total size of all files uploaded at once must be less than the configured max size (uncompressed)
-          if (gzipContents) {
-            const file = path.join(outputPath, filename);
-            const { size } = fs.statSync(file);
+          sourceMapFiles.push({
+            filename,
+            filePath: path.join(outputPath, filename),
+          });
+        }
 
-            filesToUpload.push(file);
+        if (!gzipContents) {
+          uploadedSourcemaps.push(
+            ...(await uploadIndividualSourceMaps({
+              sourcemapEndpoint,
+              apiKey,
+              stackId,
+              files: sourceMapFiles,
+              keepSourcemaps: !!keepSourcemaps,
+              verbose: verbose,
+              proxy: proxy,
+              uploadConcurrency,
+            }))
+          );
+        }
+
+        if (gzipContents) {
+          for (const { filePath } of sourceMapFiles) {
+            // if we are tar/gzipping contents, collect N files and upload them all at once
+            // total size of all files uploaded at once must be less than the configured max size (uncompressed)
+            const { size } = fs.statSync(filePath);
+
+            filesToUpload.push(filePath);
             totalSize += size;
 
             if (totalSize > maxSize) {
@@ -153,26 +169,8 @@ export default function faroUploader(
               }
 
               filesToUpload.length = 0;
-              filesToUpload.push(file);
+              filesToUpload.push(filePath);
               totalSize = size;
-            }
-          }
-
-          // if we are not compressing, upload each file individually
-          if (!gzipContents) {
-            const result = await uploadSourceMap({
-              sourcemapEndpoint,
-              apiKey,
-              stackId,
-              filename,
-              filePath: path.join(outputPath, filename),
-              keepSourcemaps: !!keepSourcemaps,
-              verbose: verbose,
-              proxy: proxy,
-            });
-
-            if (result) {
-              uploadedSourcemaps.push(filename);
             }
           }
         }
