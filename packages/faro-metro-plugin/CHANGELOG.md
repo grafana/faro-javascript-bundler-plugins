@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.5.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-metro-plugin-v0.5.1...faro-metro-plugin-v0.5.2) (2026-10-07)
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @grafana/faro-bundlers-shared bumped from ^0.13.1 to ^0.13.2
+    * @grafana/faro-cli bumped from ^0.13.1 to ^0.13.2
+
 ## [0.5.1](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-metro-plugin-v0.5.0...faro-metro-plugin-v0.5.1) (2026-10-06)
 
 
