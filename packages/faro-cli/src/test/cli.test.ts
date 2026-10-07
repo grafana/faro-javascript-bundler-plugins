@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import packageJson from '../../package.json' with { type: 'json' };
+import { resolveApiKey } from '../apiKey';
 
 const { version } = packageJson;
 
@@ -68,6 +69,12 @@ const mockUploadHandler = async (options: any) => {
       options.verbose && consoleInfoOrange(`Using bundleId ${bundleId} from environment variable ${envVarName}`);
     }
 
+    const apiKey = resolveApiKey(options.apiKey);
+    if (!apiKey) {
+      console.error('Error: API key is required. Provide --api-key or set FARO_SOURCEMAP_API_KEY');
+      throw new Error(`Process.exit called with code: 1`);
+    }
+
     // Resolve output path
     const outputPath = path.resolve(process.cwd(), options.outputPath);
 
@@ -83,7 +90,7 @@ const mockUploadHandler = async (options: any) => {
     const success = await uploadSourceMaps(
       options.endpoint,
       options.appId,
-      options.apiKey,
+      apiKey,
       options.stackId,
       bundleId,
       outputPath,
@@ -196,6 +203,7 @@ describe('CLI', () => {
     // Reset process.env
     process.env = { ...originalEnv };
     delete process.env.FARO_BUNDLE_ID_TEST_APP;
+    delete process.env.FARO_SOURCEMAP_API_KEY;
   });
 
   afterEach(() => {
@@ -249,6 +257,80 @@ describe('CLI', () => {
 
       // Verify success message was displayed
       expect(consoleInfoOrange).toHaveBeenCalledWith('Sourcemaps uploaded successfully');
+    });
+
+    it('should load the API key from the environment when the flag is omitted', async () => {
+      process.env.FARO_SOURCEMAP_API_KEY = 'env-api-key';
+
+      await mockUploadHandler({
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        outputPath: mockOutputPath,
+        keepSourcemaps: false,
+        gzipContents: false,
+        gzipPayload: false,
+        verbose: false,
+      });
+
+      expect(uploadSourceMaps).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        'env-api-key',
+        mockStackId,
+        mockBundleId,
+        expect.any(String),
+        expect.anything()
+      );
+    });
+
+    it('should fail when no API key is provided', async () => {
+      await expect(
+        mockUploadHandler({
+          endpoint: mockEndpoint,
+          appId: mockAppId,
+          stackId: mockStackId,
+          bundleId: mockBundleId,
+          outputPath: mockOutputPath,
+          keepSourcemaps: false,
+          gzipContents: false,
+          gzipPayload: false,
+          verbose: false,
+        })
+      ).rejects.toThrow('Process.exit called with code: 1');
+
+      expect(uploadSourceMaps).not.toHaveBeenCalled();
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('FARO_SOURCEMAP_API_KEY')
+      );
+    });
+
+    it('should prefer the API key flag over the environment', async () => {
+      process.env.FARO_SOURCEMAP_API_KEY = 'env-api-key';
+
+      await mockUploadHandler({
+        endpoint: mockEndpoint,
+        appId: mockAppId,
+        apiKey: mockApiKey,
+        stackId: mockStackId,
+        bundleId: mockBundleId,
+        outputPath: mockOutputPath,
+        keepSourcemaps: false,
+        gzipContents: false,
+        gzipPayload: false,
+        verbose: false,
+      });
+
+      expect(uploadSourceMaps).toHaveBeenCalledWith(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        mockBundleId,
+        expect.any(String),
+        expect.anything()
+      );
     });
 
     it('should handle bundleId from environment variable', async () => {
