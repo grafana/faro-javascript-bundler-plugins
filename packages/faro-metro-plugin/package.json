@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-metro-plugin",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Upload React Native (Metro + Hermes) source maps to the Faro source map API and inject Faro bundle id preamble",
   "type": "module",
   "main": "dist/cjs/index.cjs",
@@ -34,8 +34,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@grafana/faro-bundlers-shared": "^0.13.1",
-    "@grafana/faro-cli": "^0.13.1",
+    "@grafana/faro-bundlers-shared": "^0.13.2",
+    "@grafana/faro-cli": "^0.13.2",
     "source-map": "^0.8.0"
   },
   "devDependencies": {
