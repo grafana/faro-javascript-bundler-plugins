@@ -236,6 +236,8 @@ npx faro-cli upload \
   --verbose
 ```
 
+For CI, set `FARO_SOURCEMAP_API_KEY` in the environment and omit `--api-key`; the flag remains supported and takes precedence.
+
 **React Native (Metro):** pass one `.map` with `--map` (your Gradle/Xcode hook or CI supplies the path). `--bundle-id` must match the id `@grafana/faro-metro-plugin` baked into the shipped bundle.
 
 ```bash
