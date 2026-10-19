@@ -37,6 +37,8 @@ npx faro-cli upload \
   --verbose
 ```
 
+For CI, set `FARO_SOURCEMAP_API_KEY` in the environment and omit `--api-key`. The explicit flag takes precedence when both are set.
+
 **React Native (Metro):**
 
 ```bash
@@ -379,7 +381,7 @@ This will output a curl command that you can copy and run manually.
 
 - `-e, --endpoint <url>`: Faro API endpoint URL (required) - find this value in the Frontend Observability plugin under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `-a, --app-id <id>`: Faro application ID (required)
-- `-k, --api-key <key>`: Faro API key (required)
+- `-k, --api-key <key>`: Faro API key. Falls back to `FARO_SOURCEMAP_API_KEY` when omitted.
 - `-s, --stack-id <id>`: Faro stack ID (required) - find this value in the Frontend Observability plugin under **Settings** -> **Source Maps** -> **Configure source map uploads**
 - `-b, --bundle-id <id>`: Bundle ID (required, can be set to "env" to read from environment variable)
 - `-o, --output-path <path>`: Path to the directory containing source maps (required)
