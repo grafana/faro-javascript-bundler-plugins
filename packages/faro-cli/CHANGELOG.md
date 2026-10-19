@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.3](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.13.2...faro-cli-v0.13.3) (2026-10-19)
+
+
+### Bug Fixes
+
+* **faro-cli:** load API key from environment ([#687](https://github.com/grafana/faro-javascript-bundler-plugins/issues/687)) ([2221498](https://github.com/grafana/faro-javascript-bundler-plugins/commit/22214984ffbc1e8e6dc343a9150a8607e1dde20c))
+
 ## [0.13.2](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.13.1...faro-cli-v0.13.2) (2026-10-15)
 
 
