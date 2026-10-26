@@ -1,6 +1,6 @@
 {
   "name": "@grafana/faro-cli",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "CLI for uploading sourcemaps to the Faro source map API",
   "type": "module",
   "main": "dist/cjs/index.cjs",
