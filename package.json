@@ -22,7 +22,7 @@
     "publint": "0.3.25"
   },
   "resolutions": {
-    "axios": "1.20.0",
+    "axios": "1.21.0",
     "fast-uri": "4.2.2",
     "form-data": "4.0.6",
     "tar": "7.5.22",
@@ -35,7 +35,7 @@
     "brace-expansion@npm:^5.0.5": "^5.0.9",
     "brace-expansion@npm:5.0.6": "5.0.12",
     "brace-expansion@npm:5.0.8": "5.0.12",
-    "pacote@npm:21.0.1": "21.5.1",
+    "pacote@npm:21.0.1": "21.5.2",
     "smol-toml@npm:1.6.1": "1.9.1",
     "undici@npm:7.29.0": "7.30.1"
   }
