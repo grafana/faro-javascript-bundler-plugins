@@ -186,8 +186,8 @@ function createDeflateZip(entries: Array<[string, Buffer]>): Buffer {
     const local = Buffer.alloc(30 + nameBuf.length);
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(20, 4);
-    local.writeUInt16LE(8, 6);
-    local.writeUInt16LE(0, 8);
+    local.writeUInt16LE(0, 6);
+    local.writeUInt16LE(8, 8);
     local.writeUInt16LE(0, 10);
     local.writeUInt32LE(crc, 14);
     local.writeUInt32LE(compressed.length, 18);
@@ -200,8 +200,8 @@ function createDeflateZip(entries: Array<[string, Buffer]>): Buffer {
     centralEntry.writeUInt32LE(0x02014b50, 0);
     centralEntry.writeUInt16LE(20, 4);
     centralEntry.writeUInt16LE(20, 6);
-    centralEntry.writeUInt16LE(8, 8);
-    centralEntry.writeUInt16LE(0, 10);
+    centralEntry.writeUInt16LE(0, 8);
+    centralEntry.writeUInt16LE(8, 10);
     centralEntry.writeUInt16LE(0, 12);
     centralEntry.writeUInt32LE(crc, 16);
     centralEntry.writeUInt32LE(compressed.length, 20);
