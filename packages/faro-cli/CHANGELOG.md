@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.4](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.13.3...faro-cli-v0.13.4) (2026-11-06)
+
+
+### Bug Fixes
+
+* **cli:** set deflate method on android ABI symbol ZIPs ([#701](https://github.com/grafana/faro-javascript-bundler-plugins/issues/701)) ([02725f3](https://github.com/grafana/faro-javascript-bundler-plugins/commit/02725f31857b7959c5405666ecd012d806bf3a68))
+
 ## [0.13.3](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.13.2...faro-cli-v0.13.3) (2026-10-26)
 
 
