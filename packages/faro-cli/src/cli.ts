@@ -368,6 +368,9 @@ metro
     '-b, --bundle-id <id>',
     'Bundle id matching the shipped JS bundle (env: FARO_BUNDLE_ID). On Android React Native with com.grafana.faro.android-symbols, omit — Gradle supplies applicationId@versionCode@versionName via @grafana/faro-metro-plugin.',
   )
+  .option('--application-id <id>', 'Android applicationId to construct bundleId (env: FARO_ANDROID_APPLICATION_ID)')
+  .option('--version-code <code>', 'Android versionCode to construct bundleId (env: FARO_ANDROID_VERSION_CODE)')
+  .option('--version-name <name>', 'Android versionName to construct bundleId (env: FARO_ANDROID_VERSION_NAME)')
   .option('--no-gzip', 'POST the raw .map JSON instead of a gzipped tarball')
   .option('-v, --verbose', 'Verbose logging', false)
   .option('--dry-run', 'Show what would be uploaded and exit', false)
@@ -401,6 +404,9 @@ matches R8 symbol uploads without exporting FARO_BUNDLE_ID.`)
     stackId?: string;
     apiKey?: string;
     bundleId?: string;
+    applicationId?: string;
+    versionCode?: string;
+    versionName?: string;
     gzip: boolean;
     verbose: boolean;
     dryRun: boolean;
@@ -416,6 +422,9 @@ matches R8 symbol uploads without exporting FARO_BUNDLE_ID.`)
         stackId: options.stackId,
         apiKey: options.apiKey,
         bundleId: options.bundleId,
+        applicationId: options.applicationId,
+        versionCode: options.versionCode,
+        versionName: options.versionName,
         // Commander's --no-gzip flag flips the implicit boolean to false; default is true.
         gzip: options.gzip !== false,
         verbose: !!options.verbose,

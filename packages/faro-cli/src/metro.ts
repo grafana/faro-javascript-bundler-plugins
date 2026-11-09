@@ -9,6 +9,7 @@ import {
 } from '@grafana/faro-bundlers-shared';
 
 import { uploadCompressedSourceMaps, uploadSourceMap } from './index';
+import { formatBundleId } from './utils';
 
 /**
  * Options for `faro-cli metro upload`.
@@ -22,6 +23,13 @@ import { uploadCompressedSourceMaps, uploadSourceMap } from './index';
  *   - --api-key    / FARO_SOURCEMAP_API_KEY
  *   - --bundle-id  / FARO_BUNDLE_ID
  *
+ * Alternatively, Android React Native callers can supply the Android release
+ * identity so the CLI builds `{applicationId}@{versionCode}@{versionName}`:
+ *
+ *   - --application-id / FARO_ANDROID_APPLICATION_ID
+ *   - --version-code   / FARO_ANDROID_VERSION_CODE
+ *   - --version-name   / FARO_ANDROID_VERSION_NAME
+ *
  * Resolution is "first non-empty wins": CLI flag > env var. The path to
  * the source map (`--map <path>`) is required; there is no env fallback
  * or autodetect — the caller picks the file.
@@ -34,6 +42,9 @@ export interface MetroUploadOptions {
   stackId?: string;
   apiKey?: string;
   bundleId?: string;
+  applicationId?: string;
+  versionCode?: string;
+  versionName?: string;
   /** Defaults to true (gzipped tarball upload). `--no-gzip` flips it to a single-file POST. */
   gzip: boolean;
   verbose: boolean;
@@ -127,17 +138,44 @@ export const runMetroUpload = async (opts: MetroUploadOptions): Promise<number> 
   const appId = firstNonEmpty(opts.appId, process.env.FARO_SOURCEMAP_APP_ID);
   const stackId = firstNonEmpty(opts.stackId, process.env.FARO_SOURCEMAP_STACK_ID);
   const apiKey = firstNonEmpty(opts.apiKey, process.env.FARO_SOURCEMAP_API_KEY);
-  const bundleId = firstNonEmpty(opts.bundleId, process.env.FARO_BUNDLE_ID);
+  const explicitBundleId = firstNonEmpty(opts.bundleId, process.env.FARO_BUNDLE_ID);
+  const applicationId = firstNonEmpty(opts.applicationId, process.env.FARO_ANDROID_APPLICATION_ID);
+  const versionCode = firstNonEmpty(opts.versionCode, process.env.FARO_ANDROID_VERSION_CODE);
+  const versionName = firstNonEmpty(opts.versionName, process.env.FARO_ANDROID_VERSION_NAME);
+  const hasAnyAndroidIdentity = Boolean(applicationId || versionCode || versionName);
 
   const missing: string[] = [];
   if (!endpoint) missing.push('endpoint (--endpoint or FARO_SOURCEMAP_ENDPOINT)');
   if (!appId) missing.push('appId (--app-id or FARO_SOURCEMAP_APP_ID)');
   if (!stackId) missing.push('stackId (--stack-id or FARO_SOURCEMAP_STACK_ID)');
   if (!apiKey) missing.push('apiKey (--api-key or FARO_SOURCEMAP_API_KEY)');
-  if (!bundleId) missing.push('bundleId (--bundle-id or FARO_BUNDLE_ID)');
+
+  if (!explicitBundleId) {
+    if (hasAnyAndroidIdentity) {
+      if (!applicationId) missing.push('applicationId (--application-id or FARO_ANDROID_APPLICATION_ID)');
+      if (!versionCode) missing.push('versionCode (--version-code or FARO_ANDROID_VERSION_CODE)');
+      if (!versionName) missing.push('versionName (--version-name or FARO_ANDROID_VERSION_NAME)');
+    } else {
+      missing.push(
+        'bundleId (--bundle-id or FARO_BUNDLE_ID, or --application-id + --version-code + --version-name)'
+      );
+    }
+  }
+
   if (missing.length > 0) {
     process.stderr.write(`Missing required settings:\n  - ${missing.join('\n  - ')}\n`);
     return 2;
+  }
+
+  let bundleId = explicitBundleId;
+  if (!bundleId) {
+    try {
+      bundleId = formatBundleId(applicationId, versionCode, versionName);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      process.stderr.write(`${message}\n`);
+      return 2;
+    }
   }
 
   const mapPath = path.resolve(opts.map);

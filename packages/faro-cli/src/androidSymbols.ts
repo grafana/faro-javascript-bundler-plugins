@@ -6,6 +6,7 @@ import path from 'path';
 import { consoleInfoOrange, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
 
 import { AbiZipArtifact, packNativeSymbolsByAbi } from './nativeSymbolsByAbi';
+import { formatBundleId } from './utils';
 
 /**
  * Options for `faro-cli android upload`.
@@ -78,24 +79,6 @@ interface ResolvedConfig {
   nativeSymbolsPath?: string;
 }
 
-/** Encoded Android symbols bundle id: `{applicationId}@{versionCode}@{versionName}`. */
-function formatAndroidSymbolsBundleId(
-  applicationId: string,
-  versionCode: string,
-  versionName: string
-): string {
-  if (applicationId.includes('@')) {
-    throw new Error(`applicationId cannot contain '@': ${applicationId}`);
-  }
-  if (versionName.includes('@')) {
-    throw new Error(`versionName cannot contain '@': ${versionName}`);
-  }
-  if (!/^\d+$/.test(versionCode)) {
-    throw new Error(`versionCode must be an integer: ${versionCode}`);
-  }
-  return `${applicationId}@${versionCode}@${versionName}`;
-}
-
 interface ResolveResult {
   config?: ResolvedConfig;
   /** 0 ok, 2 fatal config/validation. */
@@ -146,7 +129,7 @@ function resolveConfig(opts: AndroidSymbolsUploadOptions): ResolveResult {
 
   let bundleId: string;
   try {
-    bundleId = formatAndroidSymbolsBundleId(applicationId, versionCode, versionName);
+    bundleId = formatBundleId(applicationId, versionCode, versionName);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return { exitCode: 2, reason: message };
