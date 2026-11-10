@@ -1,11 +1,13 @@
-import { execFileSync } from 'child_process';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
 import { consoleInfoOrange, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
 
+import { FormData } from 'undici';
+
 import { AbiZipArtifact, packNativeSymbolsByAbi } from './nativeSymbolsByAbi';
+import { post } from './upload';
 import { formatBundleId } from './utils';
 
 /**
@@ -152,12 +154,15 @@ function resolveConfig(opts: AndroidSymbolsUploadOptions): ResolveResult {
 export interface AndroidSymbolsUploadRequest {
   label: string;
   curlCommand: string; // For verbose/dry-run display only
-  curlArgs: string[];  // Actual args array for execFileSync
+  url: string;
+  headers: Record<string, string>;
+  fields: Record<string, string>;
+  file: { field: string; path: string; type: string };
   localBytes: number;
 }
 
 /**
- * Builds curl args arrays for mapping (optional) and each ABI zip (when native symbols provided).
+ * Builds upload requests for mapping (optional) and each ABI zip (when native symbols provided).
  * Exported for testing.
  */
 export function buildAndroidSymbolsUploadRequests(
@@ -175,7 +180,7 @@ export function buildAndroidSymbolsUploadRequests(
     headers['X-Scope-OrgID'] = config.stackId;
   }
 
-  // Build base curl args array directly (no string concatenation/parsing)
+  // Equivalent curl args, used only for the display command
   const baseArgs: string[] = ['-sS', '-w', `\n%{http_code}`, '-X', 'POST'];
   
   if (opts.proxy) {
@@ -201,8 +206,11 @@ export function buildAndroidSymbolsUploadRequests(
     requests.push({
       label: 'mapping',
       localBytes: mappingBytes,
-      curlArgs: args,
       curlCommand: buildDisplayCommand(args, config, opts),
+      url,
+      headers,
+      fields: {},
+      file: { field: 'mapping', path: config.mappingPath, type: 'text/plain' },
     });
   }
 
@@ -216,8 +224,11 @@ export function buildAndroidSymbolsUploadRequests(
     requests.push({
       label: `native-symbols (${artifact.abi})`,
       localBytes: artifact.bytes,
-      curlArgs: args,
       curlCommand: buildDisplayCommand(args, config, opts),
+      url,
+      headers,
+      fields: { abi: artifact.abi },
+      file: { field: 'native-symbols', path: artifact.zipPath, type: 'application/zip' },
     });
   }
 
@@ -249,19 +260,22 @@ function buildDisplayCommand(args: string[], config: ResolvedConfig, opts: Andro
 }
 
 /**
- * Executes curl with the given args array and parses HTTP status from output.
- * Uses execFileSync to avoid shell interpretation and prevent command injection.
+ * Sends one request as multipart form data, like curl -F.
  */
-function runCurl(args: string[]): { statusCode: number; body: string } {
-  const result = execFileSync('curl', args, { encoding: 'utf8' });
-  const lines = result.trim().split('\n');
-  const statusCode = Number.parseInt(lines[lines.length - 1] ?? '', 10);
-  const body = lines.slice(0, -1).join('\n').trim();
-  return { statusCode, body };
+async function sendRequest(req: AndroidSymbolsUploadRequest, opts: AndroidSymbolsUploadOptions) {
+  const form = new FormData();
+  for (const [name, value] of Object.entries(req.fields)) {
+    form.append(name, value);
+  }
+  const blob = await fs.openAsBlob(req.file.path, { type: req.file.type });
+  form.append(req.file.field, blob, path.basename(req.file.path));
+
+  const { status, body } = await post(req.url, req.headers, form, opts.proxy, opts.proxyUser);
+  return { statusCode: status, body: body.trim() };
 }
 
 /**
- * Resolves config, splits native symbols by ABI, then uploads via sequential curl POSTs.
+ * Resolves config, splits native symbols by ABI, then uploads via sequential POSTs.
  */
 export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions): Promise<number> => {
   const resolved = resolveConfig(opts);
@@ -311,7 +325,7 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
     for (const req of requests) {
       opts.verbose && process.stdout.write(`[Faro] uploading ${req.label} (${req.localBytes} bytes)\n`);
       opts.verbose && process.stdout.write(`[Faro] ${req.curlCommand}\n`);
-      const { statusCode, body } = runCurl(req.curlArgs);
+      const { statusCode, body } = await sendRequest(req, opts);
       if (Number.isNaN(statusCode) || statusCode < 200 || statusCode >= 300) {
         process.stderr.write(`Android symbols upload failed for ${req.label} (HTTP ${statusCode}).\n`);
         if (body) {
@@ -325,7 +339,7 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
     process.stdout.write(`Upload complete (${requests.length} POSTs).\n`);
     return 0;
   } catch (error) {
-    process.stderr.write(`Error executing curl command: ${error instanceof Error ? error.message : String(error)}\n`);
+    process.stderr.write(`Error uploading Android symbols: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   } finally {
     if (tempDir) {
