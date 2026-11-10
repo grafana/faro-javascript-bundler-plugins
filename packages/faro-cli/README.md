@@ -1,6 +1,6 @@
 # Faro CLI
 
-A command-line interface for uploading source maps to the Faro source map API using cURL.
+A command-line interface for uploading source maps to the Faro source map API.
 
 ## Installation
 
@@ -16,13 +16,11 @@ yarn add --dev @grafana/faro-cli
 
 ## Requirements
 
-- cURL must be installed on your system and available in your PATH.
+- Node.js 22.19 or later (required by the `undici` HTTP client). cURL is not required.
 
 ## Usage
 
 ### Uploading Source Maps
-
-The CLI uses cURL under the hood to upload source maps to the Faro API.
 
 **Web (Webpack / Vite / Rollup / Rspack):**
 
@@ -132,7 +130,7 @@ npx faro-cli upload \
   --verbose
 ```
 
-The proxy URL will be passed to cURL using the `--proxy` parameter. If your proxy requires authentication, you can use the `--proxy-user` option (or `-U`) to provide credentials in the format `username:password`. The same `--proxy` and `--proxy-user` flags work identically on `metro upload`.
+A proxy without a scheme is treated as `http://`. Without `--proxy`, the `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` environment variables are used. If your proxy requires authentication, you can use the `--proxy-user` option (or `-U`) to provide credentials in the format `username:password`. The same `--proxy` and `--proxy-user` flags work identically on `metro upload`.
 
 ### Injecting Bundle ID into JavaScript Files
 
@@ -392,7 +390,7 @@ This will output a curl command that you can copy and run manually.
 - `-v, --verbose`: Enable verbose logging (default: false)
 - `-r, --recursive`: Recursively search subdirectories for source maps (default: false)
 - `-i, --max-upload-size <size>`: Maximum upload size in bytes, default is 30MB. The Faro API has a 30MB limit for individual file uploads by default. In special circumstances, this limit may be changed by contacting Grafana Cloud support.
-- `-x, --proxy <url>`: Proxy URL to use for cURL requests (optional)
+- `-x, --proxy <url>`: Proxy URL to use for upload requests (optional)
 - `-U, --proxy-user <user:password>`: Username and password for proxy authentication (optional)
 
 ### inject-git-hash Command
