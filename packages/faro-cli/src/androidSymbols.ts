@@ -271,7 +271,7 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
   }
 
   const config = resolved.config;
-  const targetUrl = `${config.endpoint.replace(/\/$/, '')}/app/${config.appId}/symbols/android/${encodeURIComponent(config.bundleId)}`;
+  const targetUrl = `${config.endpoint.replace(/\/$/, '')}/app/${encodeURIComponent(config.appId)}/symbols/android/${encodeURIComponent(config.bundleId)}`;
 
   let abiArtifacts: AbiZipArtifact[] = [];
   let tempDir: string | undefined;

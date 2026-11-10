@@ -233,6 +233,21 @@ describe('faro-cli', () => {
         expect.any(Object)
       );
     });
+
+    it('URL-encodes bundleId containing @ and query/fragment delimiters', async () => {
+      await uploadSourceMap({
+        ...mockOptions,
+        bundleId: 'com.grafana.quickpizza@42@1.2.0?beta#rc1',
+      });
+
+      expect(execFileSync).toHaveBeenCalledWith(
+        'curl',
+        expect.arrayContaining([
+          `${mockEndpoint}/app/${mockAppId}/sourcemaps/com.grafana.quickpizza%4042%401.2.0%3Fbeta%23rc1`,
+        ]),
+        expect.any(Object)
+      );
+    });
   });
 
   describe('uploadCompressedSourceMaps', () => {
@@ -286,6 +301,21 @@ describe('faro-cli', () => {
 
       expect(result).toBe(true);
       expect(fs.unlinkSync).toHaveBeenCalled(); // Should delete the oversized tarball
+    });
+
+    it('URL-encodes bundleId containing @ and query/fragment delimiters', async () => {
+      await uploadCompressedSourceMaps({
+        ...mockCompressedOptions,
+        bundleId: 'com.grafana.quickpizza@42@1.2.0?beta#rc1',
+      });
+
+      expect(execFileSync).toHaveBeenCalledWith(
+        'curl',
+        expect.arrayContaining([
+          `${mockEndpoint}/app/${mockAppId}/sourcemaps/com.grafana.quickpizza%4042%401.2.0%3Fbeta%23rc1`,
+        ]),
+        expect.any(Object)
+      );
     });
   });
 
@@ -584,6 +614,21 @@ describe('faro-cli', () => {
 
       expect(command).toContain('gzip -c');
       expect(command).toContain('Content-Encoding: gzip');
+    });
+
+    it('URL-encodes bundleId containing @ and query/fragment delimiters', () => {
+      const command = generateCurlCommand(
+        mockEndpoint,
+        mockAppId,
+        mockApiKey,
+        mockStackId,
+        'com.grafana.quickpizza@42@1.2.0?beta#rc1',
+        mockFilePath
+      );
+
+      expect(command).toContain(
+        `${mockEndpoint}/app/${mockAppId}/sourcemaps/com.grafana.quickpizza%4042%401.2.0%3Fbeta%23rc1`
+      );
     });
   });
 });

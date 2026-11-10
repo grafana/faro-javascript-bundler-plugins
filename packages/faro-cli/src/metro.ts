@@ -197,7 +197,7 @@ export const runMetroUpload = async (opts: MetroUploadOptions): Promise<number> 
   }
 
   const normalizedEndpoint = endpoint.replace(/\/$/, '');
-  const sourcemapEndpoint = `${normalizedEndpoint}/app/${appId}/sourcemaps/${bundleId}`;
+  const sourcemapEndpoint = `${normalizedEndpoint}/app/${encodeURIComponent(appId)}/sourcemaps/${encodeURIComponent(bundleId)}`;
   const summary =
     `\nfaro-cli metro upload\n` +
     `  map        : ${mapPath}\n` +
