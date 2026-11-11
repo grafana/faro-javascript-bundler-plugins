@@ -223,7 +223,7 @@ export const uploadSourceMap = async (
     proxyUser,
   } = options;
 
-  const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
+  const sourcemapEndpoint = `${endpoint}/app/${encodeURIComponent(appId)}/sourcemaps/${encodeURIComponent(bundleId)}`;
   let success = true;
 
   // Check file size before attempting to upload
@@ -291,7 +291,7 @@ export const uploadCompressedSourceMaps = async (
     proxyUser,
   } = options;
 
-  const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
+  const sourcemapEndpoint = `${endpoint}/app/${encodeURIComponent(appId)}/sourcemaps/${encodeURIComponent(bundleId)}`;
   let success = true;
 
   try {
@@ -554,7 +554,7 @@ export const generateCurlCommand = (
   proxy?: string,
   proxyUser?: string
 ): string => {
-  const sourcemapEndpoint = `${endpoint}/app/${appId}/sourcemaps/${bundleId}`;
+  const sourcemapEndpoint = `${endpoint}/app/${encodeURIComponent(appId)}/sourcemaps/${encodeURIComponent(bundleId)}`;
 
   // Check file size and warn if it exceeds the limit
   if (exceedsMaxSize(filePath, maxUploadSize)) {

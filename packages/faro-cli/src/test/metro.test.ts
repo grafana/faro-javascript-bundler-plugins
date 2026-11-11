@@ -14,6 +14,9 @@ const { runMetroUpload, validateSourceMap } = await import('../metro');
 
 const FARO_ENV_VARS = [
   'FARO_BUNDLE_ID',
+  'FARO_ANDROID_APPLICATION_ID',
+  'FARO_ANDROID_VERSION_CODE',
+  'FARO_ANDROID_VERSION_NAME',
   'FARO_SOURCEMAP_API_KEY',
   'FARO_SOURCEMAP_APP_ID',
   'FARO_SOURCEMAP_ENDPOINT',
@@ -289,6 +292,91 @@ describe('runMetroUpload — config resolution', () => {
     });
 
     expect(code).toBe(3);
+  });
+
+  it('constructs Android bundleId from --application-id, --version-code, and --version-name when --bundle-id is omitted', async () => {
+    const mapPath = writeValidMap(tempDir);
+
+    const code = await runMetroUpload({
+      ...baseCliOpts,
+      map: mapPath,
+      endpoint: 'https://faro.example.test',
+      appId: 'app',
+      stackId: 'stack',
+      apiKey: 'key',
+      applicationId: 'com.grafana.quickpizza.rn',
+      versionCode: '42',
+      versionName: '1.2.0',
+    });
+
+    expect(code).toBe(0);
+    const stdout = stdoutSpy.mock.calls.map((call) => String(call[0])).join('');
+    expect(stdout).toMatch(/bundleId   : com\.grafana\.quickpizza\.rn@42@1\.2\.0/);
+    expect(stdout).toMatch(
+      /endpoint   : https:\/\/faro\.example\.test\/app\/app\/sourcemaps\/com\.grafana\.quickpizza\.rn%4042%401\.2\.0/
+    );
+  });
+
+  it('URL-encodes query and fragment delimiters in versionName in the endpoint URL', async () => {
+    const mapPath = writeValidMap(tempDir);
+
+    const code = await runMetroUpload({
+      ...baseCliOpts,
+      map: mapPath,
+      endpoint: 'https://faro.example.test',
+      appId: 'app',
+      stackId: 'stack',
+      apiKey: 'key',
+      applicationId: 'com.grafana.quickpizza.rn',
+      versionCode: '42',
+      versionName: '1.2.0?beta#rc1',
+    });
+
+    expect(code).toBe(0);
+    const stdout = stdoutSpy.mock.calls.map((call) => String(call[0])).join('');
+    expect(stdout).toMatch(/bundleId   : com\.grafana\.quickpizza\.rn@42@1\.2\.0\?beta#rc1/);
+    expect(stdout).toMatch(
+      /endpoint   : https:\/\/faro\.example\.test\/app\/app\/sourcemaps\/com\.grafana\.quickpizza\.rn%4042%401\.2\.0%3Fbeta%23rc1/
+    );
+  });
+
+  it('returns exit code 2 when applicationId or versionName contains path separators', async () => {
+    const mapPath = writeValidMap(tempDir);
+
+    const code = await runMetroUpload({
+      ...baseCliOpts,
+      map: mapPath,
+      endpoint: 'https://faro.example.test',
+      appId: 'app',
+      stackId: 'stack',
+      apiKey: 'key',
+      applicationId: 'com.grafana.quickpizza.rn',
+      versionCode: '42',
+      versionName: '1.0/qa',
+    });
+
+    expect(code).toBe(2);
+    const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join('');
+    expect(stderr).toMatch(/versionName cannot contain path separators/);
+  });
+
+  it('returns exit code 2 when partial Android identity is provided without --bundle-id', async () => {
+    const mapPath = writeValidMap(tempDir);
+
+    const code = await runMetroUpload({
+      ...baseCliOpts,
+      map: mapPath,
+      endpoint: 'https://faro.example.test',
+      appId: 'app',
+      stackId: 'stack',
+      apiKey: 'key',
+      applicationId: 'com.grafana.quickpizza.rn',
+    });
+
+    expect(code).toBe(2);
+    const stderr = stderrSpy.mock.calls.map((call) => String(call[0])).join('');
+    expect(stderr).toMatch(/--version-code or FARO_ANDROID_VERSION_CODE/);
+    expect(stderr).toMatch(/--version-name or FARO_ANDROID_VERSION_NAME/);
   });
 });
 
