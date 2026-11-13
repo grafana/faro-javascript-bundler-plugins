@@ -1,10 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { create } from 'tar';
-import { execFileSync } from 'child_process';
 import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
-import { tmpdir } from 'os';
+import { post } from './upload';
 
 
 export interface UploadSourceMapOptions {
@@ -63,19 +62,6 @@ export interface InjectBundleIdResult {
 }
 
 /**
- * Creates a temporary gzipped version of a file
- * @param filePath Path to the file to gzip
- * @returns Path to the gzipped file
- */
-const createGzippedFile = (filePath: string): string => {
-  const fileContent = fs.readFileSync(filePath);
-  const gzippedContent = gzipSync(fileContent);
-  const tempFilePath = path.join(tmpdir(), `${path.basename(filePath)}.gz`);
-  fs.writeFileSync(tempFilePath, gzippedContent);
-  return tempFilePath;
-};
-
-/**
  * Checks if a file exceeds the maximum allowed size
  * @param filePath Path to the file to check
  * @param maxSize Optional custom max size in bytes (defaults to 30MB)
@@ -93,8 +79,6 @@ const buildUploadHeaders = (url: string, stackId: string, apiKey: string): Recor
   return headers;
 };
 
-const CURL_HTTP_STATUS_MARKER = '__FARO_HTTP_STATUS__:';
-
 const exceedsMaxSize = (filePath: string, maxSize?: number): boolean => {
   const { size } = fs.statSync(filePath);
   const maxAllowedSize = maxSize && maxSize > 0 ? maxSize : THIRTY_MB_IN_BYTES;
@@ -104,7 +88,7 @@ const exceedsMaxSize = (filePath: string, maxSize?: number): boolean => {
 };
 
 /**
- * Executes a cURL command to upload a file
+ * Uploads a file with an HTTP POST
  * @param url The URL to upload to
  * @param filePath The path to the file to upload
  * @param headers Headers to include in the request
@@ -115,7 +99,7 @@ const exceedsMaxSize = (filePath: string, maxSize?: number): boolean => {
  * @param proxyUser Optional username:password for proxy authentication
  * @returns Promise<boolean> indicating success or failure
  */
-const executeCurl = (
+const uploadFile = async (
   url: string,
   filePath: string,
   headers: Record<string, string>,
@@ -124,83 +108,42 @@ const executeCurl = (
   maxUploadSize?: number,
   proxy?: string,
   proxyUser?: string
-): boolean => {
+): Promise<boolean> => {
   try {
-    let fileToUpload = filePath;
-    let finalContentType = contentType;
-    let tempFile: string | null = null;
-
     // Check file size before uploading
     if (exceedsMaxSize(filePath, maxUploadSize)) {
       console.error(`Error: File ${path.basename(filePath)} exceeds the maximum allowed size for upload.`);
       return false;
     }
 
-    // If gzipping is requested and the file isn't already gzipped
-    if (gzipPayload && !filePath.endsWith('.gz') && !contentType.includes('gzip')) {
-      tempFile = createGzippedFile(filePath);
-      fileToUpload = tempFile;
-    }
+    const encodeGzip = gzipPayload && !contentType.includes('gzip');
+    const content = fs.readFileSync(filePath);
+    // Only compress files that aren't already gzipped
+    const payload = encodeGzip && !filePath.endsWith('.gz') ? gzipSync(content) : content;
 
-    // Build headers for curl command
-    const uploadHeaders = Object.entries({
+    const uploadHeaders = {
       ...headers,
-      'Content-Type': finalContentType,
-      ...(gzipPayload && !contentType.includes('gzip') ? { 'Content-Encoding': 'gzip' } : {})
-    });
+      'Content-Type': contentType,
+      ...(encodeGzip ? { 'Content-Encoding': 'gzip' } : {})
+    };
 
-    // Build curl arguments (avoid shell interpretation)
-    const curlArgs: string[] = ['-sS', '-w', `\n${CURL_HTTP_STATUS_MARKER}%{http_code}`, '-X', 'POST'];
+    const { status, body } = await post(url, uploadHeaders, payload, proxy, proxyUser);
 
-    if (proxy) {
-      curlArgs.push('--proxy', proxy);
+    if (status < 200 || status >= 300) {
+      const detail = body.trim();
+      console.error(`Error: source map upload failed with HTTP ${status}${detail ? ` — ${detail}` : ''}`);
+      return false;
     }
 
-    if (proxyUser) {
-      curlArgs.push('--proxy-user', proxyUser);
-    }
-
-    curlArgs.push(url);
-
-    for (const [key, value] of uploadHeaders) {
-      curlArgs.push('-H', `${key}: ${value}`);
-    }
-
-    curlArgs.push('--data-binary', `@${fileToUpload}`);
-
-    // Execute curl without invoking a shell
-    // Use try-finally to ensure temp file cleanup even if execFileSync throws
-    try {
-      const result = execFileSync('curl', curlArgs, { encoding: 'utf8' });
-
-      const markerIndex = result.lastIndexOf(CURL_HTTP_STATUS_MARKER);
-      const body = markerIndex >= 0 ? result.slice(0, markerIndex).trimEnd() : result.trimEnd();
-      const statusText = markerIndex >= 0 ? result.slice(markerIndex + CURL_HTTP_STATUS_MARKER.length).trim() : '';
-      const httpStatus = Number.parseInt(statusText, 10);
-
-      if (!Number.isFinite(httpStatus) || httpStatus < 200 || httpStatus >= 300) {
-        const detail = body.trim();
-        console.error(
-          `Error: source map upload failed with HTTP ${Number.isFinite(httpStatus) ? httpStatus : 'unknown'}${detail ? ` — ${detail}` : ''}`
-        );
-        return false;
-      }
-
-      return true;
-    } finally {
-      // Clean up temporary file if created (runs even if execFileSync throws)
-      if (tempFile && fs.existsSync(tempFile)) {
-        fs.unlinkSync(tempFile);
-      }
-    }
+    return true;
   } catch (error) {
-    console.error('Error executing cURL command:', error);
+    console.error('Error uploading source map:', error);
     return false;
   }
 };
 
 /**
- * Uploads a single sourcemap file to the Faro API using cURL
+ * Uploads a single sourcemap file to the Faro API
  * @param options Options for uploading the sourcemap
  * @returns Promise<boolean> indicating success or failure
  */
@@ -235,8 +178,7 @@ export const uploadSourceMap = async (
   verbose && consoleInfoOrange(`Uploading ${filename} to ${sourcemapEndpoint}${gzipPayload ? ' (gzipped)' : ''}`);
 
   try {
-    // Execute curl command to upload the file
-    success = executeCurl(
+    success = await uploadFile(
       sourcemapEndpoint,
       filePath,
       buildUploadHeaders(sourcemapEndpoint, stackId, apiKey),
@@ -267,7 +209,7 @@ export const uploadSourceMap = async (
 };
 
 /**
-* Uploads multiple sourcemap files a gzipped tarball to the Faro API using cURL
+* Uploads multiple sourcemap files a gzipped tarball to the Faro API
 * @param options Options for uploading the sourcemaps
  * @returns Promise<boolean> indicating success or failure
  */
@@ -333,9 +275,8 @@ export const uploadCompressedSourceMaps = async (
           .join(", ")} to ${sourcemapEndpoint}${gzipPayload ? ' (with additional gzip compression)' : ''}`
       );
 
-    // Execute curl command to upload the tarball
     // Note: tarball is already gzipped, so we don't need to gzip it again
-    success = executeCurl(
+    success = await uploadFile(
       sourcemapEndpoint,
       tarball,
       buildUploadHeaders(sourcemapEndpoint, stackId, apiKey),
@@ -611,7 +552,7 @@ export const findMapFiles = (dir: string, recursive: boolean = false): string[] 
 };
 
 /**
- * Uploads sourcemaps to the Faro API using cURL
+ * Uploads sourcemaps to the Faro API
  * @param endpoint The Faro API endpoint
  * @param appId The app ID
  * @param apiKey The API key

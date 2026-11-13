@@ -2,18 +2,21 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockedFunction, type MockInstance } from 'vitest';
+import { FormData } from 'undici';
 
 import { buildTestAgpZip } from './helpers/buildTestAgpZip';
 
 vi.doMock('child_process', () => ({
-  execFileSync: vi.fn(),
   execSync: vi.fn(() => { throw new Error('git not available'); }),
 }));
+vi.doMock('../upload', () => ({
+  post: vi.fn(),
+}));
 
-const { execFileSync } = await import('child_process');
+const { post } = await import('../upload');
 const { buildAndroidSymbolsUploadRequests, runAndroidSymbolsUpload } = await import('../androidSymbols');
 
-const mockedExecFileSync = execFileSync as MockedFunction<typeof import('child_process').execFileSync>;
+const mockedPost = post as MockedFunction<typeof import('../upload').post>;
 
 const baseConnection = {
   endpoint: 'https://e.test/',
@@ -37,9 +40,9 @@ describe('runAndroidSymbolsUpload', () => {
     fs.writeFileSync(mappingPath, 'com.example.Foo -> a:\n');
     stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    mockedExecFileSync.mockReset();
-    // Mock successful curl response by default
-    mockedExecFileSync.mockReturnValue('{"uploaded": true}\n201');
+    mockedPost.mockReset();
+    // Mock successful upload response by default
+    mockedPost.mockResolvedValue({ status: 201, body: '{"uploaded": true}' });
   });
 
   afterEach(() => {
@@ -56,7 +59,7 @@ describe('runAndroidSymbolsUpload', () => {
     });
 
     expect(code).toBe(2);
-    expect(mockedExecFileSync).not.toHaveBeenCalled();
+    expect(mockedPost).not.toHaveBeenCalled();
     const stderr = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(stderr).toMatch(/Missing required settings/);
   });
@@ -124,7 +127,7 @@ describe('runAndroidSymbolsUpload', () => {
     expect(stderr).toMatch(/mapping file not found/);
   });
 
-  it('does not call curl on a dry run', async () => {
+  it('does not upload on a dry run', async () => {
     const code = await runAndroidSymbolsUpload({
       ...baseConnection,
       mapping: mappingPath,
@@ -133,7 +136,7 @@ describe('runAndroidSymbolsUpload', () => {
     });
 
     expect(code).toBe(0);
-    expect(mockedExecFileSync).not.toHaveBeenCalled();
+    expect(mockedPost).not.toHaveBeenCalled();
     const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(stdout).toMatch(/\[dry-run\] would upload mapping/);
   });
@@ -154,7 +157,7 @@ describe('runAndroidSymbolsUpload', () => {
   });
 
   it('uploads mapping and returns 0 on a 2xx response', async () => {
-    mockedExecFileSync.mockReturnValue('\n201' as never);
+    mockedPost.mockResolvedValue({ status: 201, body: '' });
 
     const code = await runAndroidSymbolsUpload({
       ...baseConnection,
@@ -164,8 +167,14 @@ describe('runAndroidSymbolsUpload', () => {
     });
 
     expect(code).toBe(0);
-    expect(mockedExecFileSync).toHaveBeenCalledTimes(1);
-    expect(mockedExecFileSync).toHaveBeenCalledWith('curl', expect.any(Array), expect.any(Object));
+    expect(mockedPost).toHaveBeenCalledTimes(1);
+    expect(mockedPost).toHaveBeenCalledWith(
+      'https://e.test/app/aid/symbols/android/com.grafana.quickpizza%4042%401.0',
+      { Authorization: 'Bearer sid:secret' },
+      expect.any(FormData),
+      undefined,
+      undefined,
+    );
     const stdout = stdoutSpy.mock.calls.map((c) => String(c[0])).join('');
     expect(stdout).toMatch(/Upload complete \(1 POSTs\)/);
   });
@@ -190,7 +199,7 @@ describe('runAndroidSymbolsUpload', () => {
   });
 
   it('returns 1 on a non-2xx response', async () => {
-    mockedExecFileSync.mockReturnValue('bad request\n400' as never);
+    mockedPost.mockResolvedValue({ status: 400, body: 'bad request' });
 
     const code = await runAndroidSymbolsUpload({
       ...baseConnection,
@@ -204,10 +213,8 @@ describe('runAndroidSymbolsUpload', () => {
     expect(stderr).toMatch(/HTTP 400/);
   });
 
-  it('returns 1 when curl throws', async () => {
-    mockedExecFileSync.mockImplementation(() => {
-      throw new Error('curl: command not found');
-    });
+  it('returns 1 when the request throws', async () => {
+    mockedPost.mockRejectedValue(new Error('fetch failed'));
 
     const code = await runAndroidSymbolsUpload({
       ...baseConnection,
@@ -247,13 +254,11 @@ describe('buildAndroidSymbolsUploadRequests', () => {
     expect(requests).toHaveLength(1);
     expect(requests[0].label).toBe('mapping');
     
-    // Check args array (used for execution)
-    const args = requests[0].curlArgs;
-    expect(args).toContain('https://e.test/app/aid/symbols/android/com.grafana.quickpizza%4042%401.0');
-    expect(args).toContain(`Authorization: Bearer sid:secret`);
-    expect(args).toContain(`mapping=@${localMappingPath};type=text/plain`);
-    // Remote endpoint must not leak a stack-id header
-    expect(args.some(arg => arg.includes('X-Scope-OrgID'))).toBe(false);
+    const req = requests[0];
+    expect(req.url).toBe('https://e.test/app/aid/symbols/android/com.grafana.quickpizza%4042%401.0');
+    expect(req.headers).toEqual({ Authorization: 'Bearer sid:secret' });
+    expect(req.fields).toEqual({});
+    expect(req.file).toEqual({ field: 'mapping', path: localMappingPath, type: 'text/plain' });
     
     // Check display command (for verbose output)
     const cmd = requests[0].curlCommand;
@@ -267,8 +272,7 @@ describe('buildAndroidSymbolsUploadRequests', () => {
       { verbose: false, dryRun: false },
       [],
     );
-    const args = requests[0].curlArgs;
-    expect(args).toContain('X-Scope-OrgID: sid');
+    expect(requests[0].headers['X-Scope-OrgID']).toBe('sid');
   });
 
   it('builds per-ABI native requests with abi form field', () => {
@@ -295,18 +299,12 @@ describe('buildAndroidSymbolsUploadRequests', () => {
     );
 
     expect(requests).toHaveLength(3);
-    expect(requests[1].curlArgs).toContain('abi=arm64-v8a');
-    expect(requests[2].curlArgs).toContain('abi=x86_64');
-  });
-
-  it('builds curl args array with proper -w flag format', () => {
-    const requests = buildAndroidSymbolsUploadRequests(config(), { verbose: false, dryRun: false }, []);
-    expect(requests).toHaveLength(1);
-    const args = requests[0].curlArgs;
-    
-    // Verify -w flag and its value are separate args (not concatenated)
-    const wIndex = args.indexOf('-w');
-    expect(wIndex).toBeGreaterThan(-1);
-    expect(args[wIndex + 1]).toBe('\n%{http_code}');
+    expect(requests[1].fields).toEqual({ abi: 'arm64-v8a' });
+    expect(requests[1].file).toEqual({
+      field: 'native-symbols',
+      path: abiArtifacts[0].zipPath,
+      type: 'application/zip',
+    });
+    expect(requests[2].fields).toEqual({ abi: 'x86_64' });
   });
 });
