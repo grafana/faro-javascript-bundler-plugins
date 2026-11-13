@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.14.0](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.13.4...faro-cli-v0.14.0) (2026-11-13)
+
+
+### Features
+
+* **cli:** support Android identity flags in metro upload ([#703](https://github.com/grafana/faro-javascript-bundler-plugins/issues/703)) ([8e863d0](https://github.com/grafana/faro-javascript-bundler-plugins/commit/8e863d0c991cd7f07586585676368c5d71852c4f))
+* **faro-cli:** print server warnings on Android symbol uploads ([#706](https://github.com/grafana/faro-javascript-bundler-plugins/issues/706)) ([01ee5c7](https://github.com/grafana/faro-javascript-bundler-plugins/commit/01ee5c7a09d6b34150b978550b27e038a26afd37))
+
+
+### Bug Fixes
+
+* **security/medium/packages/faro-cli:** update dependency glob to v14 [security] ([#699](https://github.com/grafana/faro-javascript-bundler-plugins/issues/699)) ([f614ab9](https://github.com/grafana/faro-javascript-bundler-plugins/commit/f614ab9183c49c4fdce87550633a9a208f2d19fc))
+
 ## [0.13.4](https://github.com/grafana/faro-javascript-bundler-plugins/compare/faro-cli-v0.13.3...faro-cli-v0.13.4) (2026-11-06)
 
 
