@@ -260,6 +260,23 @@ function runCurl(args: string[]): { statusCode: number; body: string } {
   return { statusCode, body };
 }
 
+function parseUploadWarning(body: string): string | undefined {
+  const trimmed = body.trim();
+  if (!trimmed.startsWith('{')) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(trimmed) as { status?: unknown; message?: unknown };
+    const status = trimmedString(parsed.status);
+    if (status !== 'warn' && status !== 'warning') {
+      return undefined;
+    }
+    return trimmedString(parsed.message);
+  } catch {
+    return undefined;
+  }
+}
+
 /**
  * Resolves config, splits native symbols by ABI, then uploads via sequential curl POSTs.
  */
@@ -318,6 +335,10 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
           process.stderr.write(`${body}\n`);
         }
         return 1;
+      }
+      const warning = parseUploadWarning(body);
+      if (warning) {
+        process.stderr.write(`[Faro] WARNING: ${warning}\n`);
       }
       process.stdout.write(`Uploaded ${req.label} (${req.localBytes} bytes, HTTP ${statusCode}).\n`);
     }

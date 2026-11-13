@@ -170,6 +170,25 @@ describe('runAndroidSymbolsUpload', () => {
     expect(stdout).toMatch(/Upload complete \(1 POSTs\)/);
   });
 
+  it('prints warning to stderr when a 201 response includes status=warn', async () => {
+    mockedExecFileSync.mockReturnValue(
+      '{"status":"warn","message":"Native symbols uploaded, but 1 library was skipped because the decompressed ELF exceeded the per-library size limit: arm64-v8a/libreactnative.so (93 MiB > 64 MiB limit).","skipped_libraries":[{"abi":"arm64-v8a","name":"libreactnative.so","size_bytes":97517568,"limit_bytes":67108864,"reason":"per_library_size_limit"}]}\n201' as never
+    );
+
+    const code = await runAndroidSymbolsUpload({
+      ...baseConnection,
+      mapping: mappingPath,
+      verbose: false,
+      dryRun: false,
+    });
+
+    expect(code).toBe(0);
+    const stderr = stderrSpy.mock.calls.map((c) => String(c[0])).join('');
+    expect(stderr).toContain(
+      '[Faro] WARNING: Native symbols uploaded, but 1 library was skipped because the decompressed ELF exceeded the per-library size limit: arm64-v8a/libreactnative.so (93 MiB > 64 MiB limit).'
+    );
+  });
+
   it('returns 1 on a non-2xx response', async () => {
     mockedExecFileSync.mockReturnValue('bad request\n400' as never);
 
