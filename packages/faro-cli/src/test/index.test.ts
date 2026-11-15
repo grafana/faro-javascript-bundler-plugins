@@ -23,9 +23,8 @@ const mockPath = {
 const mockTar = {
   create: vi.fn(() => Promise.resolve()),
 };
-const mockExecFileSync = vi.fn();
+const mockPost = vi.fn();
 const mockGzipSync = vi.fn();
-const mockTmpdir = vi.fn();
 const mockConsoleInfoOrange = vi.fn();
 const mockEnsureSourceMapFileProperties = vi.fn();
 
@@ -38,14 +37,11 @@ vi.doMock('path', () => ({
   ...mockPath,
 }));
 vi.doMock('tar', () => mockTar);
-vi.doMock('child_process', () => ({
-  execFileSync: mockExecFileSync,
+vi.doMock('../upload', () => ({
+  post: mockPost,
 }));
 vi.doMock('zlib', () => ({
   gzipSync: mockGzipSync,
-}));
-vi.doMock('os', () => ({
-  tmpdir: mockTmpdir,
 }));
 vi.doMock('@grafana/faro-bundlers-shared', () => ({
   consoleInfoOrange: mockConsoleInfoOrange,
@@ -59,9 +55,8 @@ vi.doMock('@grafana/faro-bundlers-shared', () => ({
 const fs = (await import('fs')).default;
 const path = (await import('path')).default;
 const tar = await import('tar');
-const { execFileSync } = await import('child_process');
+const { post } = await import('../upload');
 const { gzipSync } = await import('zlib');
-const { tmpdir } = await import('os');
 const { consoleInfoOrange, THIRTY_MB_IN_BYTES, ensureSourceMapFileProperties } = await import('@grafana/faro-bundlers-shared');
 const {
   uploadSourceMap,
@@ -115,14 +110,11 @@ describe('faro-cli', () => {
     vi.mocked(path.basename).mockImplementation((filePath: string) => filePath.split('/').pop() || '');
     vi.mocked(path.join).mockImplementation((...args: string[]) => args.join('/'));
 
-    // Mock child_process
-    vi.mocked(execFileSync).mockReturnValue('{"success":true}\n__FARO_HTTP_STATUS__:201');
+    // Mock HTTP upload
+    vi.mocked(post).mockResolvedValue({ status: 201, body: '{"success":true}' });
 
     // Mock zlib
     vi.mocked(gzipSync).mockReturnValue(Buffer.from('gzipped content'));
-
-    // Mock os
-    vi.mocked(tmpdir).mockReturnValue('/tmp');
 
     // Mock shared functions
     vi.mocked(consoleInfoOrange).mockImplementation(() => {});
@@ -140,9 +132,8 @@ describe('faro-cli', () => {
     vi.doUnmock('fs');
     vi.doUnmock('path');
     vi.doUnmock('tar');
-    vi.doUnmock('child_process');
+    vi.doUnmock('../upload');
     vi.doUnmock('zlib');
-    vi.doUnmock('os');
     vi.doUnmock('@grafana/faro-bundlers-shared');
   });
 
@@ -163,11 +154,13 @@ describe('faro-cli', () => {
       const result = await uploadSourceMap(mockOptions);
 
       expect(result).toBe(true);
-      expect(execFileSync).toHaveBeenCalledTimes(1);
-      expect(execFileSync).toHaveBeenCalledWith(
-        'curl',
-        expect.any(Array),
-        expect.any(Object)
+      expect(post).toHaveBeenCalledTimes(1);
+      expect(post).toHaveBeenCalledWith(
+        `${mockEndpoint}/app/${mockAppId}/sourcemaps/${mockBundleId}`,
+        expect.objectContaining({ 'Content-Type': 'application/json' }),
+        expect.any(Buffer),
+        undefined,
+        undefined
       );
     });
 
@@ -195,12 +188,12 @@ describe('faro-cli', () => {
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('exceeds the maximum allowed size')
       );
-      expect(execFileSync).not.toHaveBeenCalled();
+      expect(post).not.toHaveBeenCalled();
     });
 
 
     it('should report non-2xx HTTP status as upload failure', async () => {
-      vi.mocked(execFileSync).mockReturnValue('Unauthorized\n__FARO_HTTP_STATUS__:401');
+      vi.mocked(post).mockResolvedValue({ status: 401, body: 'Unauthorized' });
 
       const result = await uploadSourceMap(mockOptions);
 
@@ -210,10 +203,8 @@ describe('faro-cli', () => {
       );
     });
 
-    it('should handle curl execution errors', async () => {
-      vi.mocked(execFileSync).mockImplementation(() => {
-        throw new Error('curl error');
-      });
+    it('should handle network errors', async () => {
+      vi.mocked(post).mockRejectedValue(new Error('fetch failed'));
 
       const result = await uploadSourceMap(mockOptions);
 
@@ -227,10 +218,13 @@ describe('faro-cli', () => {
         gzipPayload: true
       });
 
-      expect(execFileSync).toHaveBeenCalledWith(
-        'curl',
-        expect.arrayContaining([expect.stringMatching(/Content-Encoding.*gzip/)]),
-        expect.any(Object)
+      expect(gzipSync).toHaveBeenCalled();
+      expect(post).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ 'Content-Encoding': 'gzip' }),
+        Buffer.from('gzipped content'),
+        undefined,
+        undefined
       );
     });
 
@@ -240,12 +234,12 @@ describe('faro-cli', () => {
         bundleId: 'com.grafana.quickpizza@42@1.2.0?beta#rc1',
       });
 
-      expect(execFileSync).toHaveBeenCalledWith(
-        'curl',
-        expect.arrayContaining([
-          `${mockEndpoint}/app/${mockAppId}/sourcemaps/com.grafana.quickpizza%4042%401.2.0%3Fbeta%23rc1`,
-        ]),
-        expect.any(Object)
+      expect(post).toHaveBeenCalledWith(
+        `${mockEndpoint}/app/${mockAppId}/sourcemaps/com.grafana.quickpizza%4042%401.2.0%3Fbeta%23rc1`,
+        expect.any(Object),
+        expect.anything(),
+        undefined,
+        undefined
       );
     });
   });
@@ -271,7 +265,7 @@ describe('faro-cli', () => {
         expect.objectContaining({ z: true }),
         expect.arrayContaining([mockFilePath])
       );
-      expect(execFileSync).toHaveBeenCalledTimes(1);
+      expect(post).toHaveBeenCalledTimes(1);
     });
 
     it('should delete the sourcemap files if keepSourcemaps is false', async () => {
@@ -309,12 +303,12 @@ describe('faro-cli', () => {
         bundleId: 'com.grafana.quickpizza@42@1.2.0?beta#rc1',
       });
 
-      expect(execFileSync).toHaveBeenCalledWith(
-        'curl',
-        expect.arrayContaining([
-          `${mockEndpoint}/app/${mockAppId}/sourcemaps/com.grafana.quickpizza%4042%401.2.0%3Fbeta%23rc1`,
-        ]),
-        expect.any(Object)
+      expect(post).toHaveBeenCalledWith(
+        `${mockEndpoint}/app/${mockAppId}/sourcemaps/com.grafana.quickpizza%4042%401.2.0%3Fbeta%23rc1`,
+        expect.any(Object),
+        expect.anything(),
+        undefined,
+        undefined
       );
     });
   });
@@ -432,7 +426,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // 5 files with batchSize=2 → 3 batches (2, 2, 1), each creating a tarball
       expect(tar.create).toHaveBeenCalledTimes(3);
-      expect(execFileSync).toHaveBeenCalledTimes(3);
+      expect(post).toHaveBeenCalledTimes(3);
     });
 
     it('should upload all files in a single batch when batchSize exceeds file count', async () => {
@@ -452,7 +446,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // All 3 files fit in one batch
       expect(tar.create).toHaveBeenCalledTimes(1);
-      expect(execFileSync).toHaveBeenCalledTimes(1);
+      expect(post).toHaveBeenCalledTimes(1);
     });
 
     it('should split files into batches by maxUploadSize', async () => {
@@ -473,7 +467,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // 3 files at 20MB each, 30MB limit → batches of 1 file each
       expect(tar.create).toHaveBeenCalledTimes(3);
-      expect(execFileSync).toHaveBeenCalledTimes(3);
+      expect(post).toHaveBeenCalledTimes(3);
     });
 
     it('should respect whichever limit is hit first: batchSize or maxUploadSize', async () => {
@@ -494,7 +488,7 @@ describe('faro-cli', () => {
       expect(result).toBe(true);
       // batchSize=1 forces 4 batches even though size limit wouldn't require it
       expect(tar.create).toHaveBeenCalledTimes(4);
-      expect(execFileSync).toHaveBeenCalledTimes(4);
+      expect(post).toHaveBeenCalledTimes(4);
     });
 
     it('should use batchSize for non-gzip chunked uploads (>10 files)', async () => {
@@ -513,8 +507,8 @@ describe('faro-cli', () => {
       );
 
       expect(result).toBe(true);
-      // 12 files, batchSize=5, no gzip → individual uploads but chunked: 5+5+2 = 12 curl calls
-      expect(execFileSync).toHaveBeenCalledTimes(12);
+      // 12 files, batchSize=5, no gzip → individual uploads but chunked: 5+5+2 = 12 uploads
+      expect(post).toHaveBeenCalledTimes(12);
       // No tarballs created
       expect(tar.create).not.toHaveBeenCalled();
     });

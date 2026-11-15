@@ -55,7 +55,7 @@ program
 
 program
   .command('upload')
-  .description('Upload sourcemaps to the Faro source map API using cURL')
+  .description('Upload sourcemaps to the Faro source map API')
   .requiredOption('-e, --endpoint <url>', 'Faro API endpoint URL')
   .requiredOption('-a, --app-id <id>', 'Faro application ID')
   .option('-k, --api-key <key>', 'Faro API key (env: FARO_SOURCEMAP_API_KEY)')
@@ -70,7 +70,7 @@ program
   .option('-r, --recursive', 'Recursively search subdirectories for sourcemaps', false)
   .option('-i, --max-upload-size <size>', 'Maximum upload size in bytes per batch (default: 30MB)', (value) => parseInt(value, 10))
   .option('-c, --batch-size <count>', 'Maximum number of files per upload batch (default: unlimited)', (value) => parseInt(value, 10))
-  .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
+  .option('-x, --proxy <url>', 'Proxy URL to use for upload requests')
   .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
   .action(async (options: UploadOptions) => {
     try {
@@ -108,7 +108,7 @@ program
         process.exit(1);
       }
 
-      options.verbose && consoleInfoOrange(`Uploading sourcemaps from ${outputPath} to ${options.endpoint} using cURL${options.gzipPayload ? ' with gzipped payload' : ''}`);
+      options.verbose && consoleInfoOrange(`Uploading sourcemaps from ${outputPath} to ${options.endpoint}${options.gzipPayload ? ' with gzipped payload' : ''}`);
 
       // Upload sourcemaps
       const success = await uploadSourceMaps(
@@ -375,7 +375,7 @@ metro
   .option('-v, --verbose', 'Verbose logging', false)
   .option('--dry-run', 'Show what would be uploaded and exit', false)
   .option('-i, --max-upload-size <size>', 'Maximum upload size in bytes (default: 30MB)', (value) => parseInt(value, 10))
-  .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
+  .option('-x, --proxy <url>', 'Proxy URL to use for upload requests')
   .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
   .addHelpText('after', `
 Examples:
@@ -460,7 +460,7 @@ android
   .option('--version-name <name>', 'Android versionName (env: FARO_ANDROID_VERSION_NAME)')
   .option('-v, --verbose', 'Verbose logging', false)
   .option('--dry-run', 'Show what would be uploaded and exit', false)
-  .option('-x, --proxy <url>', 'Proxy URL to use for cURL requests')
+  .option('-x, --proxy <url>', 'Proxy URL to use for upload requests')
   .option('-U, --proxy-user <user:password>', 'Username and password for proxy authentication')
   .addHelpText('after', `
 Examples:
