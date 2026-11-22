@@ -7,7 +7,7 @@ import { consoleInfoOrange, isLocalEndpoint } from '@grafana/faro-bundlers-share
 import { FormData } from 'undici';
 
 import { AbiZipArtifact, packNativeSymbolsByAbi } from './nativeSymbolsByAbi';
-import { post } from './upload';
+import { describeError, post } from './upload';
 import { formatBundleId } from './utils';
 
 /**
@@ -360,7 +360,7 @@ export const runAndroidSymbolsUpload = async (opts: AndroidSymbolsUploadOptions)
     process.stdout.write(`Upload complete (${requests.length} POSTs).\n`);
     return 0;
   } catch (error) {
-    process.stderr.write(`Error uploading Android symbols: ${error instanceof Error ? error.message : String(error)}\n`);
+    process.stderr.write(`Error uploading Android symbols: ${describeError(error)}\n`);
     return 1;
   } finally {
     if (tempDir) {

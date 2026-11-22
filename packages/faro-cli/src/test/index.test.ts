@@ -37,7 +37,8 @@ vi.doMock('path', () => ({
   ...mockPath,
 }));
 vi.doMock('tar', () => mockTar);
-vi.doMock('../upload', () => ({
+vi.doMock('../upload', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../upload')>()),
   post: mockPost,
 }));
 vi.doMock('zlib', () => ({

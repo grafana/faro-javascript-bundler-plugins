@@ -8,6 +8,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 
 import { runAndroidSymbolsUpload } from '../androidSymbols';
 import { uploadCompressedSourceMaps, uploadSourceMap } from '../index';
+import { describeError } from '../upload';
 
 interface Received {
   url: string;
@@ -47,6 +48,15 @@ const startProxy = async () => {
   return { server, requests, url: `http://127.0.0.1:${port}` };
 };
 
+// An endpoint on a port that was just freed, so connecting to it is refused.
+const closedPortEndpoint = async () => {
+  const server = http.createServer();
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address() as net.AddressInfo;
+  await new Promise<void>((resolve) => server.close(() => resolve()));
+  return `http://127.0.0.1:${port}`;
+};
+
 describe('uploads without curl on PATH', () => {
   let server: http.Server;
   let endpoint: string;
@@ -62,7 +72,11 @@ describe('uploads without curl on PATH', () => {
       req.on('data', (c: Buffer) => chunks.push(c));
       req.on('end', () => {
         received.push({ url: req.url ?? '', headers: req.headers, body: Buffer.concat(chunks) });
-        res.writeHead(status).end(status === 401 ? 'invalid api key' : '{}');
+        if (status === 302 && req.url !== '/login') {
+          res.writeHead(302, { location: '/login' }).end();
+          return;
+        }
+        res.writeHead(req.url === '/login' ? 200 : status).end(status === 401 ? 'invalid api key' : '{}');
       });
     });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -223,6 +237,58 @@ describe('uploads without curl on PATH', () => {
     }
   });
 
+  it('treats a schemeless proxy from the environment as http', async () => {
+    const proxy = await startProxy();
+    try {
+      process.env.HTTP_PROXY = proxy.url.replace('http://', '');
+
+      expect(await uploadSourceMap(baseOptions(writeMap()))).toBe(true);
+      expect(proxy.requests).toHaveLength(1);
+    } finally {
+      proxy.server.close();
+    }
+  });
+
+  it('ignores a schemeless https_proxy for hosts in NO_PROXY', async () => {
+    process.env.https_proxy = 'proxy.corp:3128';
+    process.env.NO_PROXY = '127.0.0.1';
+
+    expect(await uploadSourceMap(baseOptions(writeMap()))).toBe(true);
+    expect(received).toHaveLength(1);
+  });
+
+  it('does not follow redirects and reports them as a failure', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    status = 302;
+
+    const ok = await uploadSourceMap(baseOptions(writeMap()));
+
+    expect(ok).toBe(false);
+    expect(received.map((r) => r.url)).toEqual(['/app/app/sourcemaps/bundle']);
+    const output = errorSpy.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(output).toContain('source map upload failed with HTTP 302');
+    expect(output).toContain('redirect to /login not followed');
+  });
+
+  it('includes the network error cause when the endpoint is unreachable', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const unreachable = await closedPortEndpoint();
+
+    const ok = await uploadSourceMap({ ...baseOptions(writeMap()), endpoint: unreachable });
+
+    expect(ok).toBe(false);
+    const output = errorSpy.mock.calls.map((c) => String(c[0])).join('\n');
+    expect(output).toMatch(/Error uploading source map: fetch failed: .*ECONNREFUSED/);
+  });
+
+  it('describeError falls back to the cause code when its message is empty', () => {
+    const cause = Object.assign(new AggregateError([], ''), { code: 'ECONNREFUSED' });
+
+    expect(describeError(new TypeError('fetch failed', { cause }))).toBe('fetch failed: ECONNREFUSED');
+    expect(describeError(new Error('boom'))).toBe('boom');
+    expect(describeError('plain')).toBe('plain');
+  });
+
   it('uploads android mapping files as multipart form data', async () => {
     vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const mapping = path.join(tempDir, 'mapping.txt');
@@ -250,5 +316,30 @@ describe('uploads without curl on PATH', () => {
     expect(body).toContain('name="mapping"; filename="mapping.txt"');
     expect(body).toContain('Content-Type: text/plain');
     expect(body).toContain('com.example.Foo -> a:');
+  });
+
+  it('includes the network error cause for android uploads', async () => {
+    vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const mapping = path.join(tempDir, 'mapping.txt');
+    fs.writeFileSync(mapping, 'com.example.Foo -> a:\n');
+    const unreachable = await closedPortEndpoint();
+
+    const code = await runAndroidSymbolsUpload({
+      endpoint: unreachable,
+      appId: 'app',
+      stackId: '42',
+      apiKey: 'key',
+      applicationId: 'com.example',
+      versionCode: '1',
+      versionName: '1.0',
+      mapping,
+      verbose: false,
+      dryRun: false,
+    });
+
+    expect(code).toBe(1);
+    const output = stderr.mock.calls.map((c) => String(c[0])).join('');
+    expect(output).toMatch(/Error uploading Android symbols: fetch failed: .*ECONNREFUSED/);
   });
 });

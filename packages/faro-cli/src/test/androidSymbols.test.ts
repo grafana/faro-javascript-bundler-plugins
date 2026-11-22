@@ -9,7 +9,8 @@ import { buildTestAgpZip } from './helpers/buildTestAgpZip';
 vi.doMock('child_process', () => ({
   execSync: vi.fn(() => { throw new Error('git not available'); }),
 }));
-vi.doMock('../upload', () => ({
+vi.doMock('../upload', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../upload')>()),
   post: vi.fn(),
 }));
 

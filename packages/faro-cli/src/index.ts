@@ -3,7 +3,7 @@ import path from 'path';
 import { create } from 'tar';
 import { consoleInfoOrange, THIRTY_MB_IN_BYTES, faroBundleIdSnippet, faroGitHashSnippet, ensureSourceMapFileProperties, isLocalEndpoint } from '@grafana/faro-bundlers-shared';
 import { gzipSync } from 'zlib';
-import { post } from './upload';
+import { describeError, post } from './upload';
 
 
 export interface UploadSourceMapOptions {
@@ -137,7 +137,7 @@ const uploadFile = async (
 
     return true;
   } catch (error) {
-    console.error('Error uploading source map:', error);
+    console.error(`Error uploading source map: ${describeError(error)}`);
     return false;
   }
 };
